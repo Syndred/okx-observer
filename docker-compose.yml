@@ -6,5 +6,7 @@ services:
       - "./user_data:/freqtrade/user_data"
       - "./tests:/freqtrade/tests:ro"
       - "./scripts:/freqtrade/scripts:ro"
+      - "./config:/freqtrade/config:ro"
+      - "./reports:/freqtrade/reports"
     working_dir: /freqtrade
     command: --version
