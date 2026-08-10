@@ -70,6 +70,7 @@ def paginate_older(
     limit: int,
     timestamp_of: Callable[[Any], int],
     pause: float = 0.12,
+    requester: Callable[[str, dict[str, Any]], dict[str, Any]] = request_json,
 ) -> list[Any]:
     rows: list[Any] = []
     cursor: int | None = None
@@ -80,7 +81,7 @@ def paginate_older(
             params["bar"] = bar
         if cursor is not None:
             params["after"] = cursor
-        page = request_json(endpoint, params).get("data", [])
+        page = requester(endpoint, params).get("data", [])
         if not page:
             break
         timestamps = [timestamp_of(row) for row in page]

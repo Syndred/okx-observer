@@ -83,6 +83,28 @@ class V2BacktesterTests(unittest.TestCase):
         self.assertGreater(result.trades[0].net_pnl, 0)
         self.assertTrue(result.trades[0].partial_taken)
 
+    def test_positive_funding_is_paid_by_long_position(self) -> None:
+        candles = {"A": frame([100.2, 100.2], [99.8, 99.8], [100, 100])}
+        funding = {
+            "A": pd.DataFrame(
+                {
+                    "date": [pd.Timestamp("2025-01-01 00:15", tz="UTC")],
+                    "rate": [0.01],
+                }
+            )
+        }
+        event = EntryEvent(pd.Timestamp("2025-01-01", tz="UTC"), "A", "long", 95, 1)
+
+        result = simulate_portfolio(
+            candles,
+            [event],
+            BacktestOptions(fee_rate=0, slippage_rate=0, min_notional=0),
+            funding_frames=funding,
+        )
+
+        self.assertAlmostEqual(result.trades[0].funding, 0.15)
+        self.assertAlmostEqual(result.trades[0].net_pnl, -0.15)
+
 
 if __name__ == "__main__":
     unittest.main()

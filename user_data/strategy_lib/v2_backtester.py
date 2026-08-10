@@ -46,6 +46,7 @@ class TradeResult:
     exit_reason: str
     partial_taken: bool
     fees: float
+    funding: float
     category: str
 
 
@@ -74,6 +75,7 @@ class _Position:
     risk_pct: float
     rank: int
     fees: float
+    funding: float
     realized_pnl: float
     partial_taken: bool = False
 
@@ -139,6 +141,7 @@ def _finalize(
         exit_reason=reason,
         partial_taken=position.partial_taken,
         fees=position.fees,
+        funding=position.funding,
         category=position.category,
     )
 
@@ -150,6 +153,7 @@ def simulate_portfolio(
     *,
     start: pd.Timestamp | None = None,
     end: pd.Timestamp | None = None,
+    funding_frames: dict[str, pd.DataFrame] | None = None,
 ) -> BacktestResult:
     active = options or BacktestOptions()
     if active.exit_mode not in {"hybrid", "fixed3", "fixed5"}:
@@ -157,6 +161,13 @@ def simulate_portfolio(
     if active.time_mode not in {"default", "none", "24h"}:
         raise ValueError("unsupported time_mode")
     data = _normalize_frames(frames)
+    funding_data: dict[str, pd.DataFrame] = {}
+    for pair, frame in (funding_frames or {}).items():
+        source = frame.copy()
+        source["date"] = pd.to_datetime(source["date"], utc=True)
+        funding_data[pair] = source.sort_values("date").drop_duplicates(
+            "date", keep="last"
+        ).set_index("date", drop=False)
     events_by_date: dict[pd.Timestamp, list[EntryEvent]] = {}
     for event in entry_events:
         timestamp = pd.Timestamp(event.date)
@@ -187,6 +198,18 @@ def simulate_portfolio(
         if day != current_day:
             daily_loss_r = 0.0
             current_day = day
+        for pair, position in positions.items():
+            funding = funding_data.get(pair)
+            if funding is None or timestamp not in funding.index or timestamp not in data[pair].index:
+                continue
+            rate = float(funding.loc[timestamp]["rate"])
+            mark = float(data[pair].loc[timestamp]["open"])
+            payment = position.amount * mark * rate * (
+                1 if position.side == "long" else -1
+            )
+            equity -= payment
+            position.realized_pnl -= payment
+            position.funding += payment
         for event in sorted(events_by_date.get(timestamp, []), key=lambda item: (item.rank, item.pair)):
             if event.pair in positions or event.pair not in data or timestamp not in data[event.pair].index:
                 skipped += 1
@@ -249,6 +272,7 @@ def simulate_portfolio(
                 risk_pct=actual_risk / max(equity, 1e-12),
                 rank=event.rank,
                 fees=entry_fee,
+                funding=0.0,
                 realized_pnl=-entry_fee,
             )
             max_concurrent = max(max_concurrent, len(positions))
@@ -420,4 +444,5 @@ def summarize_backtest(result: BacktestResult) -> dict[str, float | int]:
         "max_concurrent_positions": result.max_concurrent_positions,
         "skipped_entries": result.skipped_entries,
         "fees": sum(trade.fees for trade in result.trades),
+        "funding": sum(trade.funding for trade in result.trades),
     }

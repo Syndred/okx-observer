@@ -48,6 +48,15 @@ def load_frame(data_dir: Path, instrument: str, timeframe: str) -> pd.DataFrame:
     return frame.sort_values("date").drop_duplicates("date", keep="last").reset_index(drop=True)
 
 
+def load_funding(data_dir: Path, instrument: str) -> pd.DataFrame:
+    path = data_dir / f"{instrument}-funding.feather"
+    if not path.exists():
+        return pd.DataFrame(columns=["date", "rate"])
+    frame = pd.read_feather(path)
+    frame["date"] = pd.to_datetime(frame["date"], utc=True)
+    return frame.sort_values("date").drop_duplicates("date", keep="last").reset_index(drop=True)
+
+
 def available_trade_pairs(
     data_dir: Path, instruments: dict[str, str], explicit: list[str] | None
 ) -> list[str]:
@@ -178,6 +187,9 @@ def main() -> None:
     universe = pd.read_feather(args.universe)
     universe["date"] = pd.to_datetime(universe["date"], utc=True)
     base_frames = {pair: timeframes["15m"] for pair, timeframes in frames.items()}
+    funding_frames = {
+        pair: load_funding(args.data_dir, instruments[pair]) for pair in pairs
+    }
     start = min(frame["date"].min() for frame in base_frames.values())
     end = max(frame["date"].max() for frame in base_frames.values()) + pd.Timedelta(minutes=15)
     holdout_days = 2 if args.smoke else 60
@@ -215,6 +227,7 @@ def main() -> None:
                 BacktestOptions(),
                 start=window_start,
                 end=window_end,
+                funding_frames=funding_frames,
             )
             stressed = simulate_portfolio(
                 base_frames,
@@ -222,6 +235,7 @@ def main() -> None:
                 BacktestOptions(fee_rate=0.001, slippage_rate=0.001),
                 start=window_start,
                 end=window_end,
+                funding_frames=funding_frames,
             )
             normal_metrics = summarize_backtest(normal)
             stress_metrics = summarize_backtest(stressed)
@@ -292,6 +306,7 @@ def main() -> None:
                         options,
                         start=selection_end,
                         end=end,
+                        funding_frames=funding_frames,
                     )
                     variant_rows.append(
                         {
@@ -312,6 +327,7 @@ def main() -> None:
         BacktestOptions(),
         start=selection_end,
         end=end,
+        funding_frames=funding_frames,
     )
     pd.DataFrame(trade_rows(default_result)).to_csv(output_dir / "pseudo-holdout-trades.csv", index=False)
     default_result.equity_curve.to_csv(output_dir / "pseudo-holdout-equity.csv", index=False)
