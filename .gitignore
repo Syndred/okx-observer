@@ -4,6 +4,7 @@ __pycache__/
 *.py[cod]
 .venv/
 .worktrees/
+work/
 
 user_data/data/
 user_data/backtest_results/

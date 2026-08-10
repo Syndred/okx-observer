@@ -31,16 +31,29 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--mask", type=Path, default=Path("user_data/data/okx_v2/universe_top30.feather"))
     parser.add_argument("--snapshot", type=Path, default=Path("config/okx_v2_universe.json"))
-    parser.add_argument("--min-selected-hours", type=int, default=24)
+    parser.add_argument("--min-selected-hours", type=int, default=1)
+    parser.add_argument(
+        "--include",
+        nargs="*",
+        default=["BEAT-USDT-SWAP", "BLEND-USDT-SWAP", "XRP-USDT-SWAP"],
+    )
     parser.add_argument("--output", type=Path, default=Path("config/okx_v2_research_cohort.json"))
     args = parser.parse_args()
     mask = pd.read_feather(args.mask)
     snapshot = json.loads(args.snapshot.read_text(encoding="utf-8"))
     instruments = selected_instruments(mask, snapshot, args.min_selected_hours)
+    eligible_trades = {
+        row["instId"]
+        for row in snapshot["instruments"]
+        if row.get("eligible") and row.get("role") == "trade"
+    }
+    supplemental = sorted(set(args.include) & eligible_trades)
+    instruments = sorted(set(instruments + supplemental))
     references = ["BTC-USDT-SWAP", "ETH-USDT-SWAP"]
     payload = {
         "selection_rule": f"historical_top30_selected_hours>={args.min_selected_hours}",
         "trade_instruments": instruments,
+        "supplemental_research_instruments": supplemental,
         "reference_instruments": references,
         "download_instruments": sorted(set(instruments + references)),
     }

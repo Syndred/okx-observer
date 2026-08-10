@@ -85,10 +85,10 @@ def main() -> None:
     parser.add_argument("--output-dir", type=Path, default=Path("user_data/data/okx_v2"))
     parser.add_argument("--report", type=Path, default=Path("reports/okx-v2/data-availability.csv"))
     parser.add_argument("--workers", type=int, default=4)
-    parser.add_argument("--pause", type=float, default=0.08)
+    parser.add_argument("--pause", type=float, default=0.02)
     args = parser.parse_args()
-    if args.workers < 1 or args.workers > 4:
-        raise SystemExit("workers must be between 1 and 4")
+    if args.workers < 1 or args.workers > 8:
+        raise SystemExit("workers must be between 1 and 8")
     payload = json.loads(args.cohort.read_text(encoding="utf-8"))
     instruments = payload["download_instruments"]
     start_ms, end_ms = utc_ms(args.start), utc_ms(args.end)

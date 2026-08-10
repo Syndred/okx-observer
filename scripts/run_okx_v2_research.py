@@ -167,6 +167,7 @@ def main() -> None:
     parser.add_argument("--output-dir", type=Path, default=Path("user_data/backtest_results/okx-v2"))
     parser.add_argument("--pairs", nargs="*")
     parser.add_argument("--smoke", action="store_true")
+    parser.add_argument("--exhaustive", action="store_true")
     args = parser.parse_args()
     instruments, categories = load_snapshot(args.snapshot)
     pairs = available_trade_pairs(args.data_dir, instruments, args.pairs)
@@ -201,7 +202,7 @@ def main() -> None:
     output_dir.mkdir(parents=True, exist_ok=True)
     result_rows: list[dict[str, object]] = []
     event_cache: dict[str, list[EntryEvent]] = {}
-    candidates = candidate_grid(smoke=args.smoke)
+    candidates = candidate_grid(smoke=args.smoke, exhaustive=args.exhaustive)
     for candidate_index, params in enumerate(candidates, start=1):
         key = json.dumps(parameter_dict(params), sort_keys=True)
         print(f"candidate {candidate_index}/{len(candidates)} {key}", flush=True)
@@ -290,33 +291,57 @@ def main() -> None:
     write_json(output_dir / manifest_name, frozen)
 
     variant_rows = []
-    for exit_mode in ("hybrid", "fixed3", "fixed5"):
-        for time_mode in ("default", "none", "24h"):
-            for leverage in (1.0, 3.0, 5.0):
-                for cap in (None, 2.0):
-                    options = BacktestOptions(
-                        leverage=leverage,
-                        exit_mode=exit_mode,
-                        time_mode=time_mode,
-                        compounding_cap_multiple=cap,
-                    )
-                    result = simulate_portfolio(
-                        base_frames,
-                        best_events,
-                        options,
-                        start=selection_end,
-                        end=end,
-                        funding_frames=funding_frames,
-                    )
-                    variant_rows.append(
-                        {
-                            "exit_mode": exit_mode,
-                            "time_mode": time_mode,
-                            "leverage": leverage,
-                            "cap_multiple": cap,
-                            **summarize_backtest(result),
-                        }
-                    )
+    risk_profiles = (
+        ("conservative", 0.005, 0.015),
+        ("default", 0.0075, 0.020),
+        ("aggressive", 0.010, 0.030),
+    )
+    default_risk = risk_profiles[1]
+    variant_specs = {
+        (exit_mode, time_mode, 3.0, default_risk, None)
+        for exit_mode in ("hybrid", "fixed3", "fixed5")
+        for time_mode in ("default", "none", "24h")
+    }
+    variant_specs.update(
+        {("hybrid", "default", leverage, default_risk, None) for leverage in (3.0, 5.0, 10.0)}
+    )
+    variant_specs.update(
+        {("hybrid", "default", 3.0, profile, None) for profile in risk_profiles}
+    )
+    variant_specs.add(("hybrid", "default", 3.0, default_risk, 2.0))
+    for exit_mode, time_mode, leverage, risk_profile, cap in sorted(
+        variant_specs, key=str
+    ):
+        risk_name, trade_risk, portfolio_risk = risk_profile
+        options = BacktestOptions(
+            leverage=leverage,
+            exit_mode=exit_mode,
+            time_mode=time_mode,
+            compounding_cap_multiple=cap,
+            normal_trade_risk=trade_risk,
+            reduced_trade_risk=0.005,
+            max_portfolio_risk=portfolio_risk,
+        )
+        result = simulate_portfolio(
+            base_frames,
+            best_events,
+            options,
+            start=selection_end,
+            end=end,
+            funding_frames=funding_frames,
+        )
+        variant_rows.append(
+            {
+                "exit_mode": exit_mode,
+                "time_mode": time_mode,
+                "leverage": leverage,
+                "risk_profile": risk_name,
+                "trade_risk": trade_risk,
+                "portfolio_risk": portfolio_risk,
+                "cap_multiple": cap,
+                **summarize_backtest(result),
+            }
+        )
     variants = pd.DataFrame(variant_rows).sort_values(
         ["pf", "drawdown", "final_equity"], ascending=[False, True, False]
     )
@@ -341,6 +366,9 @@ def main() -> None:
             "argv": sys.argv,
             "smoke": args.smoke,
             "candidate_count": len(candidates),
+            "search_mode": "exhaustive_288" if args.exhaustive else (
+                "smoke" if args.smoke else "balanced_32"
+            ),
             "window_count": len(validation_windows),
             "window_mode": window_mode,
             "pairs": pairs,

@@ -21,7 +21,7 @@ class V2PortfolioTests(unittest.TestCase):
         )
 
     def test_third_same_direction_trade_is_rejected(self) -> None:
-        self.assertEqual(
+        self.assertAlmostEqual(
             risk_budget([0.0075, 0.0075], ["long", "long"], "long", 0),
             0,
         )
@@ -30,6 +30,20 @@ class V2PortfolioTests(unittest.TestCase):
         self.assertEqual(risk_budget([], [], "long", 0.20), 0.005)
         self.assertEqual(risk_budget([], [], "long", 0.30), 0)
         self.assertEqual(risk_budget([], [], "long", 0, daily_loss_r=4.0), 0)
+
+    def test_research_can_compare_one_percent_three_percent_profile(self) -> None:
+        self.assertAlmostEqual(
+            risk_budget(
+                [0.01, 0.01],
+                ["long", "short"],
+                "long",
+                0,
+                normal_trade_risk=0.01,
+                reduced_trade_risk=0.005,
+                max_portfolio_risk=0.03,
+            ),
+            0.01,
+        )
 
     def test_two_r_reduces_forty_percent_and_moves_to_break_even(self) -> None:
         action = exit_decision(

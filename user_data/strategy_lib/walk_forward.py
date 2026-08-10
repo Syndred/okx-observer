@@ -63,10 +63,10 @@ def rolling_windows(
     return windows
 
 
-def candidate_grid(smoke: bool = False) -> list[V2Parameters]:
+def candidate_grid(smoke: bool = False, exhaustive: bool = False) -> list[V2Parameters]:
     if smoke:
         return [V2Parameters(), V2Parameters(compression_atr=0.8, breakout_atr=0.2)]
-    return [
+    full = [
         V2Parameters(
             compression_atr=compression,
             breakout_atr=breakout,
@@ -82,6 +82,26 @@ def candidate_grid(smoke: bool = False) -> list[V2Parameters]:
             (False, True),
         )
     ]
+    if exhaustive:
+        return full
+    selected = [V2Parameters()]
+    for value in (0.4, 0.6, 0.8, 1.0):
+        selected.append(V2Parameters(compression_atr=value))
+    for value in (0.05, 0.10, 0.20, 0.30):
+        selected.append(V2Parameters(breakout_atr=value))
+    for value in (0.10, 0.20, 0.30):
+        selected.append(V2Parameters(pullback_atr=value))
+    for value in (4, 8, 12):
+        selected.append(V2Parameters(pullback_wait_15m=value))
+    selected.append(V2Parameters(strict_market_consensus=True))
+    unique = list(dict.fromkeys(selected))
+    for index in range(64):
+        candidate = full[round(index * (len(full) - 1) / 63)]
+        if candidate not in unique:
+            unique.append(candidate)
+        if len(unique) >= 32:
+            break
+    return unique
 
 
 def parameter_dict(params: V2Parameters) -> dict[str, object]:

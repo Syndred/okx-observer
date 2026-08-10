@@ -3,10 +3,23 @@ from __future__ import annotations
 from datetime import date
 import unittest
 
-from user_data.strategy_lib.walk_forward import candidate_score, rolling_windows
+from user_data.strategy_lib.walk_forward import candidate_grid, candidate_score, rolling_windows
 
 
 class WalkForwardTests(unittest.TestCase):
+    def test_balanced_grid_covers_every_option_without_full_cartesian_cost(self) -> None:
+        grid = candidate_grid()
+
+        self.assertLessEqual(len(grid), 32)
+        self.assertEqual({item.compression_atr for item in grid}, {0.4, 0.6, 0.8, 1.0})
+        self.assertEqual({item.breakout_atr for item in grid}, {0.05, 0.1, 0.2, 0.3})
+        self.assertEqual({item.pullback_atr for item in grid}, {0.1, 0.2, 0.3})
+        self.assertEqual({item.pullback_wait_15m for item in grid}, {4, 8, 12})
+        self.assertEqual({item.strict_market_consensus for item in grid}, {False, True})
+
+    def test_exhaustive_grid_remains_available(self) -> None:
+        self.assertEqual(len(candidate_grid(exhaustive=True)), 288)
+
     def test_windows_never_overlap_training_with_validation(self) -> None:
         windows = rolling_windows(date(2023, 1, 1), date(2026, 1, 1))
 

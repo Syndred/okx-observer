@@ -20,6 +20,9 @@ class BacktestOptions:
     slippage_rate: float = 0.0005
     min_notional: float = 5.0
     compounding_cap_multiple: float | None = None
+    normal_trade_risk: float = 0.0075
+    reduced_trade_risk: float = 0.005
+    max_portfolio_risk: float = 0.02
 
 
 @dataclass(frozen=True)
@@ -221,7 +224,12 @@ def simulate_portfolio(
             )
             stop_distance = abs(entry - event.stop_price)
             correctly_sided = event.stop_price < entry if event.side == "long" else event.stop_price > entry
-            if not correctly_sided or stop_distance <= 0:
+            liquidation_buffer = 0.85 / active.leverage
+            if (
+                not correctly_sided
+                or stop_distance <= 0
+                or stop_distance / entry >= liquidation_buffer
+            ):
                 skipped += 1
                 continue
             open_risks = [position.risk_pct for position in positions.values()]
@@ -233,6 +241,9 @@ def simulate_portfolio(
                 event.side,
                 drawdown,
                 daily_loss_r=daily_loss_r,
+                normal_trade_risk=active.normal_trade_risk,
+                reduced_trade_risk=active.reduced_trade_risk,
+                max_portfolio_risk=active.max_portfolio_risk,
             )
             if budget <= 0:
                 skipped += 1
@@ -283,12 +294,18 @@ def simulate_portfolio(
             if frame is None or timestamp not in frame.index:
                 continue
             row = frame.loc[timestamp]
+            candle_open = float(row["open"])
             high, low, close = float(row["high"]), float(row["low"]), float(row["close"])
             stop_hit = low <= position.stop if position.side == "long" else high >= position.stop
             if stop_hit:
                 reason = "trailing_stop" if position.partial_taken else "initial_stop"
+                stop_fill = (
+                    min(position.stop, candle_open)
+                    if position.side == "long"
+                    else max(position.stop, candle_open)
+                )
                 equity, fill, _ = _close_amount(
-                    position, position.amount, position.stop, equity, active
+                    position, position.amount, stop_fill, equity, active
                 )
                 result = _finalize(position, timestamp, fill, reason)
                 trades.append(result)

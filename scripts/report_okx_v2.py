@@ -90,7 +90,10 @@ def main() -> None:
     holdout_payload = json.loads((args.research_dir / "pseudo-holdout-metrics.json").read_text())
     metrics = holdout_payload["metrics"]
     trades_path = args.research_dir / "pseudo-holdout-trades.csv"
-    trades = pd.read_csv(trades_path) if trades_path.stat().st_size else pd.DataFrame()
+    try:
+        trades = pd.read_csv(trades_path)
+    except (pd.errors.EmptyDataError, FileNotFoundError):
+        trades = pd.DataFrame()
     equity = pd.read_csv(args.research_dir / "pseudo-holdout-equity.csv")
     variants = pd.read_csv(args.research_dir / "pseudo-holdout-variants.csv")
     candidates = pd.read_csv(args.research_dir / "candidate-results.csv")
@@ -126,10 +129,17 @@ def main() -> None:
     render_equity_png(output / "equity.png", equity)
     crossings = threshold_crossings(equity, (1_000, 10_000)) if not equity.empty else {1000: "never", 10000: "never"}
     selection_passed = frozen["status"] == "passed"
+    holdout_pf = float(metrics["pf"]) if metrics.get("pf") is not None else 0.0
+    holdout_drawdown = (
+        float(metrics["drawdown"]) if metrics.get("drawdown") is not None else 1.0
+    )
+    holdout_equity = (
+        float(metrics["final_equity"]) if metrics.get("final_equity") is not None else 0.0
+    )
     holdout_passed = (
-        float(metrics.get("pf") or 0) >= 1.15
-        and float(metrics.get("drawdown") or 1) <= 0.35
-        and float(metrics.get("final_equity") or 0) > 0
+        holdout_pf >= 1.15
+        and holdout_drawdown <= 0.35
+        and holdout_equity > 0
     )
     feasible = selection_passed and holdout_passed
     verdict = "有条件可行，仍必须先做前向模拟盘" if feasible else "当前证据下不可实盘"
@@ -151,6 +161,24 @@ def main() -> None:
             f"{availability['first_candle'].dropna().min()}，最晚数据 "
             f"{availability['last_candle'].dropna().max()}。"
         )
+    if args.data_report.exists():
+        detailed = pd.read_csv(args.data_report)
+        data_limit += (
+            f" 高频 15m/资金费率研究集覆盖 {len(detailed)} 个合约；实际 15m 范围 "
+            f"{detailed['first_candle'].dropna().min()} 至 "
+            f"{detailed['last_candle'].dropna().max()}。"
+        )
+        examples = detailed.loc[
+            detailed["instrument"].isin(
+                ["BEAT-USDT-SWAP", "BLEND-USDT-SWAP", "XRP-USDT-SWAP"]
+            )
+        ]
+        if not examples.empty:
+            example_text = "；".join(
+                f"{row.instrument}: {row.first_candle} → {row.last_candle}"
+                for row in examples.itertuples()
+            )
+            data_limit += f" 指定示例：{example_text}。"
     report = f"""# OKX U 本位永续短线系统 V2 最终报告
 
 ## 最终结论
@@ -204,6 +232,8 @@ def main() -> None:
 - 只使用已确认 K 线；1H/4H 信息在收盘后才允许进入 15m 决策。
 - 当前 OKX 合约快照存在“现存合约幸存者偏差”，无法恢复已下架合约的完整历史币池。
 - 同根 K 线同时触发止损和止盈时按止损处理；普通成本假设为单边 0.05% 手续费 + 0.05% 滑点，压力测试翻倍。
+- 跳空越过止损时按更差的开盘价成交；止损距离超过约 `0.85 / 杠杆` 的订单视为清算缓冲不足并跳过。
+- 正式组合回测使用成交 K 线和实际资金费率；未额外下载全量 mark K 线，Freqtrade 兼容导出中的 mark 仅用于前视分析的数据占位，不用于收益结论。
 - 伪留出不是未来模拟盘；任何“通过”仍需至少 60–90 天 OKX dry-run 才能进入小额实盘。
 - KO-USDT-SWAP 在本次快照时上市不足 30 天且属于 OKX 股票类合约，因此被自动排除；BEAT、BLEND、XRP 是否进入交易由历史 Top30 每小时决定。
 

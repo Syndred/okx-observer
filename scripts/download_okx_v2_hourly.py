@@ -25,6 +25,17 @@ from user_data.strategy_lib.okx_candles import confirmed_candles
 
 
 _thread_state = threading.local()
+_rate_lock = threading.Lock()
+_last_request_started = 0.0
+
+
+def throttle_request_start(max_requests_per_second: float = 8.0) -> None:
+    global _last_request_started
+    with _rate_lock:
+        delay = 1 / max_requests_per_second - (time.monotonic() - _last_request_started)
+        if delay > 0:
+            time.sleep(delay)
+        _last_request_started = time.monotonic()
 
 
 def pooled_request_json(
@@ -37,6 +48,7 @@ def pooled_request_json(
         _thread_state.session = session
     for attempt in range(retries):
         try:
+            throttle_request_start()
             response = session.get(f"{API_ROOT}{endpoint}", params=params, timeout=30)
             if response.status_code == 429 or response.status_code >= 500:
                 raise requests.HTTPError(f"retryable HTTP {response.status_code}")
@@ -107,11 +119,11 @@ def main() -> None:
     parser.add_argument("--output-dir", type=Path, default=Path("user_data/data/okx_v2_hourly"))
     parser.add_argument("--report", type=Path, default=Path("reports/okx-v2/hourly-availability.csv"))
     parser.add_argument("--workers", type=int, default=4)
-    parser.add_argument("--pause", type=float, default=0.08)
+    parser.add_argument("--pause", type=float, default=0.02)
     parser.add_argument("--max-symbols", type=int)
     args = parser.parse_args()
-    if args.workers < 1 or args.workers > 4:
-        raise SystemExit("workers must be between 1 and 4 to respect OKX public limits")
+    if args.workers < 1 or args.workers > 8:
+        raise SystemExit("workers must be between 1 and 8")
     symbols = snapshot_symbols(args.snapshot)
     if args.max_symbols:
         symbols = symbols[: args.max_symbols]

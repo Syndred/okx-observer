@@ -40,6 +40,19 @@ class V2BacktesterTests(unittest.TestCase):
         self.assertEqual(result.trades[0].exit_reason, "initial_stop")
         self.assertLess(result.trades[0].net_pnl, 0)
 
+    def test_gap_through_stop_fills_at_worse_open_price(self) -> None:
+        candles = {"A": frame([100.2, 98.2], [99.8, 97.5], [100, 98])}
+        candles["A"].loc[1, "open"] = 98.0
+        event = EntryEvent(pd.Timestamp("2025-01-01", tz="UTC"), "A", "long", 99, 1)
+
+        result = simulate_portfolio(
+            candles,
+            [event],
+            BacktestOptions(fee_rate=0, slippage_rate=0),
+        )
+
+        self.assertEqual(result.trades[0].exit_price, 98.0)
+
     def test_portfolio_caps_three_positions_and_two_per_direction(self) -> None:
         candles = {
             pair: frame([100.2, 100.2], [99.8, 99.8], [100, 100])
@@ -62,6 +75,19 @@ class V2BacktesterTests(unittest.TestCase):
         self.assertEqual(len(result.trades), 3)
         self.assertEqual({trade.pair for trade in result.trades}, {"A", "B", "C"})
         self.assertEqual(result.max_concurrent_positions, 3)
+
+    def test_entry_is_skipped_when_stop_is_beyond_liquidation_buffer(self) -> None:
+        candles = {"A": frame([100.2, 100.2], [99.8, 99.8], [100, 100])}
+        event = EntryEvent(pd.Timestamp("2025-01-01", tz="UTC"), "A", "long", 80, 1)
+
+        result = simulate_portfolio(
+            candles,
+            [event],
+            BacktestOptions(leverage=10, fee_rate=0, slippage_rate=0, min_notional=0),
+        )
+
+        self.assertEqual(result.trades, [])
+        self.assertEqual(result.skipped_entries, 1)
 
     def test_hybrid_takes_forty_percent_then_protects_runner(self) -> None:
         candles = {

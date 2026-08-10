@@ -17,6 +17,9 @@ def risk_budget(
     equity_drawdown: float,
     *,
     daily_loss_r: float = 0.0,
+    normal_trade_risk: float = NORMAL_TRADE_RISK,
+    reduced_trade_risk: float = REDUCED_TRADE_RISK,
+    max_portfolio_risk: float = MAX_PORTFOLIO_RISK,
 ) -> float:
     if len(open_risks) != len(open_sides):
         raise ValueError("open_risks and open_sides must have equal length")
@@ -28,8 +31,8 @@ def risk_budget(
         return 0.0
     if equity_drawdown >= 0.30 or daily_loss_r >= 4.0:
         return 0.0
-    per_trade = REDUCED_TRADE_RISK if equity_drawdown >= 0.20 else NORMAL_TRADE_RISK
-    remaining = max(0.0, MAX_PORTFOLIO_RISK - sum(open_risks))
+    per_trade = reduced_trade_risk if equity_drawdown >= 0.20 else normal_trade_risk
+    remaining = max(0.0, max_portfolio_risk - sum(open_risks))
     return min(per_trade, remaining)
 
 
