@@ -1,0 +1,3 @@
+instrument,first_candle,last_candle,rows_15m,rows_1h,rows_4h,mark_rows_15m,funding_events
+BTC-USDT-SWAP,2026-08-03T11:45:00+00:00,2026-08-10T11:15:00+00:00,671,167,41,671,21
+ETH-USDT-SWAP,2026-08-03T11:45:00+00:00,2026-08-10T11:15:00+00:00,671,167,41,671,21

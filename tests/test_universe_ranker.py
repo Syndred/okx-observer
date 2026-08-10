@@ -9,11 +9,20 @@ from user_data.strategy_lib.universe_ranker import (
     PairFeatures,
     UniverseRules,
     build_universe_mask,
+    eligible_trade_symbols,
     rank_hour,
 )
 
 
 class UniverseRankerTests(unittest.TestCase):
+    def test_reference_contracts_are_not_ranked_as_trade_candidates(self) -> None:
+        rows = [
+            {"instId": "BTC-USDT-SWAP", "symbol": "BTC/USDT:USDT", "eligible": True, "role": "reference"},
+            {"instId": "ALT-USDT-SWAP", "symbol": "ALT/USDT:USDT", "eligible": True, "role": "trade"},
+        ]
+
+        self.assertEqual(eligible_trade_symbols(rows), {"ALT-USDT-SWAP": "ALT/USDT:USDT"})
+
     def test_rank_rejects_missing_illiquid_and_extreme_pairs(self) -> None:
         rules = UniverseRules(min_notional_24h=1_000_000, max_atr_ratio=0.15)
         features = {

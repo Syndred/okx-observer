@@ -66,6 +66,7 @@ def add_v2_indicators(frame: pd.DataFrame) -> pd.DataFrame:
 def _informative(frame: pd.DataFrame, timeframe: str, prefix: str) -> pd.DataFrame:
     hours = {"1h": 1, "4h": 4}[timeframe]
     source = add_v2_indicators(frame)
+    source["date"] = pd.to_datetime(source["date"], utc=True).dt.as_unit("ns")
     source["available_at"] = pd.to_datetime(source["date"], utc=True) + pd.Timedelta(hours=hours)
     if timeframe == "1h":
         source["cluster_high"] = source.loc[:, SIX_AVERAGES].max(axis=1)
@@ -124,7 +125,7 @@ def _universe_hours(universe_mask: pd.DataFrame, pair: str) -> set[pd.Timestamp]
     source = universe_mask.loc[universe_mask["pair"] == pair].copy()
     if "eligible" in source:
         source = source.loc[source["eligible"].fillna(False)]
-    return set(pd.to_datetime(source["date"], utc=True).dt.floor("h"))
+    return set(pd.to_datetime(source["date"], utc=True).dt.as_unit("ns").dt.floor("h"))
 
 
 def scan_v2_setups(
@@ -142,7 +143,7 @@ def scan_v2_setups(
     """Return causal long/short entries and the cluster-side initial stop."""
     original_index = candles15m.index
     base = add_v2_indicators(candles15m)
-    base["date"] = pd.to_datetime(base["date"], utc=True)
+    base["date"] = pd.to_datetime(base["date"], utc=True).dt.as_unit("ns")
     base = _merge_informative(base, candles1h, "1h", "signal")
     base = _merge_informative(base, candles4h, "4h", "own")
     base = _merge_informative(base, btc4h, "4h", "btc")

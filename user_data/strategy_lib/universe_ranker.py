@@ -25,6 +25,14 @@ class UniverseRules:
     liquidity_weight: float = 0.75
 
 
+def eligible_trade_symbols(rows: list[dict[str, object]]) -> dict[str, str]:
+    return {
+        str(row["instId"]): str(row["symbol"])
+        for row in rows
+        if row.get("eligible") is True and row.get("role") == "trade"
+    }
+
+
 def _valid(feature: PairFeatures, rules: UniverseRules) -> bool:
     values = (feature.notional_24h, feature.nonzero_ratio, feature.atr_ratio)
     return (

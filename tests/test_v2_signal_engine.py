@@ -93,6 +93,15 @@ class V2SignalEngineTests(unittest.TestCase):
 
         self.assertEqual(result["enter_long"].sum(), 0)
 
+    def test_mixed_datetime_resolutions_merge_without_error(self) -> None:
+        fixture = long_fixture(inst_category="1")
+        fixture["candles15m"]["date"] = fixture["candles15m"]["date"].dt.as_unit("ms")
+        fixture["candles1h"]["date"] = fixture["candles1h"]["date"].dt.as_unit("us")
+
+        result = scan_v2_setups(**fixture)
+
+        self.assertEqual(result["enter_long"].sum(), 1)
+
     def test_appending_future_rows_does_not_change_historical_signals(self) -> None:
         fixture = long_fixture(inst_category="1")
         old = scan_v2_setups(**fixture)

@@ -9,16 +9,16 @@ from pathlib import Path
 
 import pandas as pd
 
-from user_data.strategy_lib.universe_ranker import UniverseRules, build_universe_mask
+from user_data.strategy_lib.universe_ranker import (
+    UniverseRules,
+    build_universe_mask,
+    eligible_trade_symbols,
+)
 
 
 def load_frames(data_dir: Path, snapshot_path: Path) -> dict[str, pd.DataFrame]:
     snapshot = json.loads(snapshot_path.read_text(encoding="utf-8"))
-    instrument_to_symbol = {
-        row["instId"]: row["symbol"]
-        for row in snapshot["instruments"]
-        if row["eligible"]
-    }
+    instrument_to_symbol = eligible_trade_symbols(snapshot["instruments"])
     frames: dict[str, pd.DataFrame] = {}
     for path in sorted(data_dir.glob("*-1h.feather")):
         if "-mark-" in path.name:
