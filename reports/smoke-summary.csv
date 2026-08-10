@@ -1,0 +1,2 @@
+scenario,start,end,starting_balance,final_balance,return_pct,total_trades,long_trades,short_trades,wins,losses,winrate_pct,average_win_usdt,average_loss_usdt,payoff_ratio,profit_factor,max_drawdown_pct,max_consecutive_losses,minimum_balance,reached_1000,reached_10000
+backtest_results,2025-01-01 00:00:00,2025-02-01 00:00:00,100.0,96.94611,-3.05389,19,7,12,3,16,15.789474,4.688861,-1.07003,4.381992,0.821624,12.830366,13,93.520102,False,False

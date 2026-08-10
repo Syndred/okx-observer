@@ -1,18 +1,19 @@
 from __future__ import annotations
 
 from datetime import datetime
+import os
 
 from pandas import DataFrame
 
 from freqtrade.persistence import Trade
 from freqtrade.strategy import CategoricalParameter, IStrategy, stoploss_from_absolute
 
-try:
-    from .risk_model import collateral_for_risk
-    from .v1_signal_engine import V1Parameters, add_six_averages, scan_v1_setups
-except ImportError:  # Freqtrade loads strategy modules from their directory.
-    from risk_model import collateral_for_risk
-    from v1_signal_engine import V1Parameters, add_six_averages, scan_v1_setups
+from user_data.strategies.risk_model import collateral_for_risk
+from user_data.strategies.v1_signal_engine import (
+    V1Parameters,
+    add_six_averages,
+    scan_v1_setups,
+)
 
 
 def encode_entry_tag(side: str, stop_price: float) -> str:
@@ -61,6 +62,12 @@ class MA_EMA_Trend_Strategy(IStrategy):
     )
     sell_reward_risk = CategoricalParameter([3, 5, 8, 10], default=5, space="sell")
 
+    def configured_leverage(self) -> float:
+        return float(os.getenv("V1_LEVERAGE", str(self.buy_leverage.value)))
+
+    def configured_risk_pct(self) -> float:
+        return float(os.getenv("V1_RISK_PCT", str(self.buy_risk_pct.value)))
+
     def populate_indicators(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
         return add_six_averages(dataframe)
 
@@ -100,7 +107,7 @@ class MA_EMA_Trend_Strategy(IStrategy):
         side: str,
         **kwargs,
     ) -> float:
-        return min(float(self.buy_leverage.value), max_leverage)
+        return min(self.configured_leverage(), max_leverage)
 
     def custom_stake_amount(
         self,
@@ -122,7 +129,7 @@ class MA_EMA_Trend_Strategy(IStrategy):
         try:
             return collateral_for_risk(
                 equity=float(self.wallets.get_total_stake_amount()),
-                risk_pct=float(self.buy_risk_pct.value),
+                risk_pct=self.configured_risk_pct(),
                 stop_distance_ratio=stop_distance_ratio,
                 leverage=leverage,
                 max_collateral=max_stake,

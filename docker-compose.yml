@@ -9,4 +9,6 @@ services:
       - "./config:/freqtrade/config:ro"
       - "./reports:/freqtrade/reports"
     working_dir: /freqtrade
+    environment:
+      PYTHONPATH: /freqtrade
     command: --version

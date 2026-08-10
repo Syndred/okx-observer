@@ -1,6 +1,12 @@
 from __future__ import annotations
 
 import unittest
+import base64
+import importlib.util
+from pathlib import Path
+import subprocess
+import sys
+from unittest.mock import patch
 
 import pandas as pd
 
@@ -9,6 +15,35 @@ from user_data.strategies.MA_EMA_Trend_Strategy import MA_EMA_Trend_Strategy
 
 
 class FreqtradeStrategyTests(unittest.TestCase):
+    def test_strategy_dependencies_can_unpickle_in_hyperopt_worker(self) -> None:
+        strategy_dir = Path("/freqtrade/user_data/strategies")
+        sys.path.insert(0, str(strategy_dir))
+        try:
+            spec = importlib.util.spec_from_file_location(
+                "resolver_loaded_strategy", strategy_dir / "MA_EMA_Trend_Strategy.py"
+            )
+            assert spec and spec.loader
+            module = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(module)
+            payload = base64.b64encode(module.collateral_for_risk.__module__.encode()).decode()
+        finally:
+            sys.path.remove(str(strategy_dir))
+
+        child = subprocess.run(
+            [
+                sys.executable,
+                "-c",
+                "import base64,importlib,sys; "
+                "name=base64.b64decode(sys.argv[1]).decode(); importlib.import_module(name)",
+                payload,
+            ],
+            cwd="/freqtrade",
+            capture_output=True,
+            text=True,
+        )
+
+        self.assertEqual(child.returncode, 0, child.stderr)
+
     def test_populates_long_and_short_first_pullback_signals(self) -> None:
         strategy = MA_EMA_Trend_Strategy(config={})
         closes = [100.0] * 125 + [101.0, 100.5, 100.0, 99.0, 99.5]
@@ -48,6 +83,17 @@ class FreqtradeStrategyTests(unittest.TestCase):
         )
 
         self.assertEqual(leverage, 7.0)
+
+    def test_matrix_environment_overrides_leverage_and_risk(self) -> None:
+        strategy = MA_EMA_Trend_Strategy(config={})
+
+        with patch.dict(
+            "os.environ",
+            {"V1_LEVERAGE": "3", "V1_RISK_PCT": "0.02"},
+            clear=False,
+        ):
+            self.assertEqual(strategy.configured_leverage(), 3.0)
+            self.assertEqual(strategy.configured_risk_pct(), 0.02)
 
     def test_stop_and_roi_are_derived_from_entry_cluster_risk(self) -> None:
         strategy = MA_EMA_Trend_Strategy(config={})
