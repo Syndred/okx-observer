@@ -1,0 +1,33 @@
+{
+  "strategy_name": "MA_EMA_Trend_Strategy",
+  "params": {
+    "roi": {
+      "0": 100.0
+    },
+    "stoploss": {
+      "stoploss": -0.99
+    },
+    "trailing": {
+      "trailing_stop": false,
+      "trailing_stop_positive": null,
+      "trailing_stop_positive_offset": 0.0,
+      "trailing_only_offset_is_reached": false
+    },
+    "max_open_trades": {
+      "max_open_trades": 3
+    },
+    "buy": {
+      "buy_leverage": 5,
+      "buy_risk_pct": 0.01,
+      "buy_breakout_threshold": 0.001,
+      "buy_compression_threshold": 0.02,
+      "buy_pullback_max_candles": 12,
+      "buy_pullback_tolerance": 0.01
+    },
+    "sell": {
+      "sell_reward_risk": 3
+    }
+  },
+  "ft_stratparam_v": 1,
+  "export_time": "2026-08-10 10:14:03.945998+00:00"
+}
