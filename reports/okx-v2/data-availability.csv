@@ -1,0 +1,3 @@
+instrument,first_candle,last_candle,rows_15m,rows_1h,rows_4h,mark_rows_15m,funding_events
+XRP-USDT-SWAP,2026-08-03T11:15:00+00:00,2026-08-10T10:45:00+00:00,671,167,41,672,21
+BLEND-USDT-SWAP,2026-08-03T11:15:00+00:00,2026-08-10T11:00:00+00:00,672,167,41,672,42
