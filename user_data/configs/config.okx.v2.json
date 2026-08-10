@@ -52,8 +52,8 @@
     "listen_port": 8081,
     "verbosity": "error",
     "enable_openapi": false,
-    "jwt_secret_key": "local-v2-backtest-only",
-    "ws_token": "local-v2-websocket-token",
+    "jwt_secret_key": "local-v2-backtest-only-change-before-live-2026",
+    "ws_token": "local-v2-websocket-token-change-before-live-2026",
     "CORS_origins": [],
     "username": "local",
     "password": "local-v2-backtest-only"
