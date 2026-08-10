@@ -3,7 +3,7 @@ from __future__ import annotations
 import pandas as pd
 import unittest
 
-from user_data.strategies.v1_signal_engine import V1Parameters, scan_v1_setups
+from user_data.strategy_lib.v1_signal_engine import V1Parameters, scan_v1_setups
 
 
 SIX_AVERAGES = ("ma20", "ma60", "ma120", "ema20", "ema60", "ema120")

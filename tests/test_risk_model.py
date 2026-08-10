@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import unittest
 
-from user_data.strategies.risk_model import collateral_for_risk
+from user_data.strategy_lib.risk_model import collateral_for_risk
 
 
 class RiskModelTests(unittest.TestCase):

@@ -7,9 +7,18 @@ result_root="${2:-/freqtrade/user_data/backtest_results/capital-matrix}"
 
 cd "$project_dir"
 mkdir -p reports/logs
+if [[ "$result_root" != /freqtrade/* ]]; then
+  echo "result_root must be inside /freqtrade so Docker and the host share it" >&2
+  exit 2
+fi
+host_result_root="$project_dir/${result_root#/freqtrade/}"
+mkdir -p "$host_result_root"
 
-for leverage in 3 5 10; do
-  for risk_pct in 0.01 0.02 0.05; do
+run_scenario() {
+    local leverage="$1"
+    local risk_pct="$2"
+    local risk_label
+    local scenario
     risk_label="$(printf '%s' "$risk_pct" | tr -d '.')"
     scenario="${leverage}x-risk-${risk_label}"
     echo "Running $scenario on $timerange"
@@ -26,5 +35,15 @@ for leverage in 3 5 10; do
       --backtest-directory "$result_root/$scenario" \
       --notes "capital-matrix:$scenario" \
       >"reports/logs/${scenario}.log" 2>&1
+}
+
+for leverage in 3 5 10; do
+  pids=()
+  for risk_pct in 0.01 0.02 0.05; do
+    run_scenario "$leverage" "$risk_pct" &
+    pids+=("$!")
+  done
+  for pid in "${pids[@]}"; do
+    wait "$pid"
   done
 done

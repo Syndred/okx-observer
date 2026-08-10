@@ -1,8 +1,9 @@
 from __future__ import annotations
 
 import unittest
+from pathlib import Path
 
-from scripts.analyze_backtests import equity_curve, summarize_strategy
+from scripts.analyze_backtests import equity_curve, scenario_from_path, summarize_strategy
 
 
 class AnalyzeBacktestsTests(unittest.TestCase):
@@ -33,11 +34,17 @@ class AnalyzeBacktestsTests(unittest.TestCase):
         self.assertEqual(row["average_loss_usdt"], -2.0)
         self.assertEqual(row["payoff_ratio"], 2.25)
         self.assertEqual(row["return_pct"], 7.0)
+        self.assertEqual(row["maximum_balance"], 107.0)
 
     def test_equity_curve_orders_trades_by_close_time(self) -> None:
         curve = equity_curve(self.result)
 
         self.assertEqual([point[1] for point in curve], [98.0, 102.0, 107.0])
+
+    def test_scenario_is_read_from_freqtrade_prefixed_filename(self) -> None:
+        path = Path("candidate-validation/epoch-49-2026-08-10_10-14-00.zip")
+
+        self.assertEqual(scenario_from_path(path), "epoch-49")
 
 
 if __name__ == "__main__":

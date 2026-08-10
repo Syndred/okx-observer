@@ -8,8 +8,8 @@ from pandas import DataFrame
 from freqtrade.persistence import Trade
 from freqtrade.strategy import CategoricalParameter, IStrategy, stoploss_from_absolute
 
-from user_data.strategies.risk_model import collateral_for_risk
-from user_data.strategies.v1_signal_engine import (
+from user_data.strategy_lib.risk_model import collateral_for_risk
+from user_data.strategy_lib.v1_signal_engine import (
     V1Parameters,
     add_six_averages,
     scan_v1_setups,

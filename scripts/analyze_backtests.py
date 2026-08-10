@@ -8,6 +8,7 @@ import csv
 from datetime import datetime, timezone
 import json
 from pathlib import Path
+import re
 import zipfile
 
 
@@ -53,6 +54,7 @@ def summarize_strategy(result: dict, scenario: str) -> dict:
         "max_drawdown_pct": round(float(result["max_drawdown_account"]) * 100, 6),
         "max_consecutive_losses": result["max_consecutive_losses"],
         "minimum_balance": round(min(balances), 6),
+        "maximum_balance": round(max(balances), 6),
         "reached_1000": max(balances) >= 1000,
         "reached_10000": max(balances) >= 10000,
     }
@@ -67,10 +69,17 @@ def equity_curve(result: dict) -> list[tuple[int, float]]:
     return points
 
 
+def scenario_from_path(path: Path) -> str:
+    match = re.match(r"(.+)-\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}$", path.stem)
+    if match and not match.group(1).startswith("backtest-result"):
+        return match.group(1)
+    return path.parent.name
+
+
 def discover_latest(root: Path) -> list[tuple[str, Path]]:
     grouped: dict[str, list[Path]] = {}
     for path in root.rglob("*.zip"):
-        grouped.setdefault(path.parent.name, []).append(path)
+        grouped.setdefault(scenario_from_path(path), []).append(path)
     return [
         (scenario, max(paths, key=lambda item: item.stat().st_mtime))
         for scenario, paths in sorted(grouped.items())
