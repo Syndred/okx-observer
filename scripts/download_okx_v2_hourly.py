@@ -120,15 +120,36 @@ def main() -> None:
     parser.add_argument("--report", type=Path, default=Path("reports/okx-v2/hourly-availability.csv"))
     parser.add_argument("--workers", type=int, default=4)
     parser.add_argument("--pause", type=float, default=0.02)
+    parser.add_argument("--symbols", nargs="*")
+    parser.add_argument("--report-only", action="store_true")
     parser.add_argument("--max-symbols", type=int)
     args = parser.parse_args()
-    if args.workers < 1 or args.workers > 8:
-        raise SystemExit("workers must be between 1 and 8")
-    symbols = snapshot_symbols(args.snapshot)
+    if args.workers < 1 or args.workers > 16:
+        raise SystemExit("workers must be between 1 and 16; request rate remains globally capped")
+    symbols = args.symbols or snapshot_symbols(args.snapshot)
     if args.max_symbols:
         symbols = symbols[: args.max_symbols]
     start_ms, end_ms = utc_ms(args.start), utc_ms(args.end)
     summaries = []
+    if args.report_only:
+        for symbol in symbols:
+            path = args.output_dir / f"{symbol}-1h.feather"
+            if not path.exists():
+                continue
+            frame = pd.read_feather(path)
+            frame["date"] = pd.to_datetime(frame["date"], utc=True)
+            summaries.append(
+                {
+                    "instrument": symbol,
+                    "first_candle": frame["date"].min().isoformat(),
+                    "last_candle": frame["date"].max().isoformat(),
+                    "rows_1h": len(frame),
+                }
+            )
+        args.report.parent.mkdir(parents=True, exist_ok=True)
+        pd.DataFrame(summaries).sort_values("instrument").to_csv(args.report, index=False)
+        print(f"Reported {len(summaries)} local hourly instruments to {args.report}")
+        return
     lock = threading.Lock()
     completed = 0
     with ThreadPoolExecutor(max_workers=args.workers) as executor:

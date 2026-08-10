@@ -25,13 +25,17 @@ def download_instrument(
 ) -> dict[str, object]:
     candle_path = output_dir / f"{instrument}-15m.feather"
     existing_complete = False
+    expected_hourly_path = Path("user_data/data/okx_v2_hourly") / f"{instrument}-1h.feather"
     if candle_path.exists():
         existing = pd.read_feather(candle_path)
         if not existing.empty:
             existing["date"] = pd.to_datetime(existing["date"], utc=True)
+            expected_rows = 0
+            if expected_hourly_path.exists():
+                expected_rows = len(pd.read_feather(expected_hourly_path)) * 4
             existing_complete = (
-                int(existing["date"].max().timestamp() * 1000) >= end_ms - 30 * 60_000
-                and int(existing["date"].min().timestamp() * 1000) <= start_ms + 15 * 60_000
+                int(existing["date"].max().timestamp() * 1000) >= end_ms - 4 * 3_600_000
+                and (expected_rows == 0 or len(existing) >= expected_rows * 0.995)
             )
     if existing_complete:
         candles15 = existing
@@ -48,20 +52,29 @@ def download_instrument(
             requester=pooled_request_json,
         )
         candles15 = merge_feather(candle_path, confirmed_candles(rows))
-    funding_rows = paginate_older(
-        "/api/v5/public/funding-rate-history",
-        instrument,
-        start_ms,
-        end_ms,
-        bar=None,
-        limit=100,
-        timestamp_of=lambda row: int(row["fundingTime"]),
-        pause=pause,
-        requester=pooled_request_json,
-    )
-    funding = merge_feather(
-        output_dir / f"{instrument}-funding.feather", funding_events(funding_rows)
-    )
+    funding_path = output_dir / f"{instrument}-funding.feather"
+    funding_complete = False
+    if funding_path.exists():
+        funding = pd.read_feather(funding_path)
+        if not funding.empty:
+            funding["date"] = pd.to_datetime(funding["date"], utc=True)
+            funding_complete = (
+                funding["date"].max() >= candles15["date"].max() - pd.Timedelta(hours=12)
+                and funding["date"].min() <= candles15["date"].min() + pd.Timedelta(hours=12)
+            )
+    if not funding_complete:
+        funding_rows = paginate_older(
+            "/api/v5/public/funding-rate-history",
+            instrument,
+            start_ms,
+            end_ms,
+            bar=None,
+            limit=100,
+            timestamp_of=lambda row: int(row["fundingTime"]),
+            pause=pause,
+            requester=pooled_request_json,
+        )
+        funding = merge_feather(funding_path, funding_events(funding_rows))
     candles1h = resample_confirmed(candles15, "1h")
     candles4h = resample_confirmed(candles15, "4h")
     candles1h.to_feather(output_dir / f"{instrument}-1h.feather")
@@ -79,7 +92,7 @@ def download_instrument(
 
 def main() -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--cohort", type=Path, default=Path("config/okx_v2_research_cohort.json"))
+    parser.add_argument("--cohort", type=Path, default=Path("user_data/okx_v2_research_cohort.json"))
     parser.add_argument("--start", default="2025-01-01T00:00:00Z")
     parser.add_argument("--end", default=datetime.now(timezone.utc).isoformat())
     parser.add_argument("--output-dir", type=Path, default=Path("user_data/data/okx_v2"))
@@ -87,8 +100,8 @@ def main() -> None:
     parser.add_argument("--workers", type=int, default=4)
     parser.add_argument("--pause", type=float, default=0.02)
     args = parser.parse_args()
-    if args.workers < 1 or args.workers > 8:
-        raise SystemExit("workers must be between 1 and 8")
+    if args.workers < 1 or args.workers > 16:
+        raise SystemExit("workers must be between 1 and 16; request rate remains globally capped")
     payload = json.loads(args.cohort.read_text(encoding="utf-8"))
     instruments = payload["download_instruments"]
     start_ms, end_ms = utc_ms(args.start), utc_ms(args.end)

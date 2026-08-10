@@ -11,6 +11,7 @@ import pandas as pd
 
 from user_data.strategy_lib.universe_ranker import (
     UniverseRules,
+    apply_persistence_filter,
     build_universe_mask,
     eligible_trade_symbols,
 )
@@ -62,12 +63,19 @@ def main() -> None:
     )
     parser.add_argument("--limit", type=int, default=30)
     parser.add_argument("--min-notional", type=float, default=1_000_000)
+    parser.add_argument("--persistence-lookback", type=int, default=720)
+    parser.add_argument("--persistence-min-hours", type=int, default=360)
     args = parser.parse_args()
     frames = load_frames(args.data_dir, args.snapshot)
     if not frames:
         raise SystemExit("No eligible 1h OKX data files found")
     rules = UniverseRules(min_notional_24h=args.min_notional)
     mask = build_universe_mask(frames, limit=args.limit, rules=rules)
+    mask = apply_persistence_filter(
+        mask,
+        lookback_hours=args.persistence_lookback,
+        min_selected_hours=args.persistence_min_hours,
+    )
     args.output.parent.mkdir(parents=True, exist_ok=True)
     mask.to_feather(args.output)
     report = summary(mask)

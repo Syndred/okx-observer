@@ -417,6 +417,10 @@ def simulate_portfolio(
 
 def summarize_backtest(result: BacktestResult) -> dict[str, float | int]:
     pnls = [trade.net_pnl for trade in result.trades]
+    holding_hours = [
+        (pd.Timestamp(trade.close_date) - pd.Timestamp(trade.open_date)).total_seconds() / 3600
+        for trade in result.trades
+    ]
     wins = [pnl for pnl in pnls if pnl > 0]
     losses = [pnl for pnl in pnls if pnl < 0]
     gross_profit = sum(wins)
@@ -453,6 +457,12 @@ def summarize_backtest(result: BacktestResult) -> dict[str, float | int]:
         "pf": profit_factor,
         "drawdown": max_drawdown,
         "max_consecutive_losses": maximum,
+        "average_holding_hours": (
+            sum(holding_hours) / len(holding_hours) if holding_hours else 0.0
+        ),
+        "median_holding_hours": (
+            float(pd.Series(holding_hours).median()) if holding_hours else 0.0
+        ),
         "initial_equity": result.initial_equity,
         "final_equity": result.final_equity,
         "return_pct": (result.final_equity / result.initial_equity - 1) * 100,

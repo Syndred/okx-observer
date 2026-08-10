@@ -107,6 +107,8 @@ def build_events(
         next_row = signals.iloc[index + 1]
         date = pd.Timestamp(next_row["date"])
         rank = int(ranks.get(date.floor("h"), 999))
+        if rank == 999:
+            continue
         events.append(
             EntryEvent(
                 date=date,

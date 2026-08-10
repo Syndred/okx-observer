@@ -30,7 +30,7 @@ def funding_ohlcv(candles: pd.DataFrame, funding: pd.DataFrame) -> pd.DataFrame:
 
 def main() -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--cohort", type=Path, default=Path("config/okx_v2_research_cohort.json"))
+    parser.add_argument("--cohort", type=Path, default=Path("user_data/okx_v2_research_cohort.json"))
     parser.add_argument("--snapshot", type=Path, default=Path("config/okx_v2_universe.json"))
     parser.add_argument("--source", type=Path, default=Path("user_data/data/okx_v2"))
     parser.add_argument("--output", type=Path, default=Path("user_data/data/okx/futures"))

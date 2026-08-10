@@ -69,6 +69,24 @@ class OkxV2StrategyTests(unittest.TestCase):
 
         self.assertAlmostEqual(stake, 25.0)
 
+    def test_entry_is_rejected_if_pair_left_current_top30(self) -> None:
+        strategy = OKX_Shortline_V2(config={})
+        strategy._current_universe_allows = Mock(return_value=False)
+        now = pd.Timestamp("2025-01-01", tz="UTC").to_pydatetime()
+
+        allowed = strategy.confirm_trade_entry(
+            pair="XRP/USDT:USDT",
+            order_type="limit",
+            amount=1,
+            rate=100,
+            time_in_force="GTC",
+            current_time=now,
+            entry_tag=encode_v2_entry_tag("long", 99, 0.0075),
+            side="long",
+        )
+
+        self.assertFalse(allowed)
+
 
 if __name__ == "__main__":
     unittest.main()

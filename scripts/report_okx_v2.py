@@ -94,6 +94,13 @@ def main() -> None:
         trades = pd.read_csv(trades_path)
     except (pd.errors.EmptyDataError, FileNotFoundError):
         trades = pd.DataFrame()
+    if not trades.empty and {"open_date", "close_date"}.issubset(trades.columns):
+        holding_hours = (
+            pd.to_datetime(trades["close_date"], utc=True)
+            - pd.to_datetime(trades["open_date"], utc=True)
+        ).dt.total_seconds() / 3600
+        metrics.setdefault("average_holding_hours", float(holding_hours.mean()))
+        metrics.setdefault("median_holding_hours", float(holding_hours.median()))
     equity = pd.read_csv(args.research_dir / "pseudo-holdout-equity.csv")
     variants = pd.read_csv(args.research_dir / "pseudo-holdout-variants.csv")
     candidates = pd.read_csv(args.research_dir / "candidate-results.csv")
@@ -192,6 +199,7 @@ def main() -> None:
 - 4H：币种自身趋势；加密合约再叠加 BTC/ETH 宽松一致过滤。
 - 1H：六均线 MA20/60/120 + EMA20/60/120，ATR 标准化压缩与突破。
 - 15m：突破后首次回踩入场，最多等待 {params['pullback_wait_15m']} 根。
+- 币池：合约历史上已满 30 天、当小时原始 Top30，且过去 30 天至少 360 小时曾入榜；只使用当时已知数据。
 - 参数：compression `{params['compression_atr']}` ATR，breakout `{params['breakout_atr']}` ATR，pullback `{params['pullback_atr']}` ATR。
 - 默认退出：2R 平 40%，剩余移保本并跟踪 EMA20，5R 强制退出，6/12/24 小时时间门槛。
 - 风控：100 USDT 初始资金，逐仓 3x，最多 3 仓，同向最多 2 仓，总开放风险 2%。
@@ -214,6 +222,8 @@ def main() -> None:
 - Profit Factor：{float(metrics.get('pf') or 0):.3f}
 - 最大回撤：{percent(float(metrics.get('drawdown') or 0))}
 - 最大连续亏损：{int(metrics.get('max_consecutive_losses') or 0)}
+- 平均持仓：{float(metrics.get('average_holding_hours') or 0):.2f} 小时
+- 中位持仓：{float(metrics.get('median_holding_hours') or 0):.2f} 小时
 - 初始 / 最终资金：{money(float(metrics.get('initial_equity') or 100))} / {money(float(metrics.get('final_equity') or 0))}
 - 最低 / 最高资金：{money(float(metrics.get('min_equity') or 0))} / {money(float(metrics.get('max_equity') or 0))}
 - 费用：{money(float(metrics.get('fees') or 0))}

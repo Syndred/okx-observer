@@ -37,7 +37,7 @@ def main() -> None:
         nargs="*",
         default=["BEAT-USDT-SWAP", "BLEND-USDT-SWAP", "XRP-USDT-SWAP"],
     )
-    parser.add_argument("--output", type=Path, default=Path("config/okx_v2_research_cohort.json"))
+    parser.add_argument("--output", type=Path, default=Path("user_data/okx_v2_research_cohort.json"))
     args = parser.parse_args()
     mask = pd.read_feather(args.mask)
     snapshot = json.loads(args.snapshot.read_text(encoding="utf-8"))

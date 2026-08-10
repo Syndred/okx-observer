@@ -140,6 +140,34 @@ class OKX_Shortline_V2(IStrategy):
     ) -> float:
         return min(3.0, max_leverage)
 
+    def _current_universe_allows(self, pair: str, current_time: datetime) -> bool:
+        try:
+            universe = pd.read_feather(self._universe_path)
+        except (FileNotFoundError, ValueError):
+            return False
+        hour = pd.Timestamp(current_time)
+        hour = hour.tz_localize("UTC") if hour.tz is None else hour.tz_convert("UTC")
+        dates = pd.to_datetime(universe["date"], utc=True).dt.floor("h")
+        matches = universe.loc[(universe["pair"] == pair) & (dates == hour.floor("h"))]
+        return not matches.empty and bool(matches["eligible"].fillna(False).any())
+
+    def confirm_trade_entry(
+        self,
+        pair: str,
+        order_type: str,
+        amount: float,
+        rate: float,
+        time_in_force: str,
+        current_time: datetime,
+        entry_tag: str | None,
+        side: str,
+        **kwargs,
+    ) -> bool:
+        return (
+            parse_v2_entry_tag(entry_tag) is not None
+            and self._current_universe_allows(pair, current_time)
+        )
+
     def _portfolio_snapshot(self) -> tuple[list[float], list[str], float]:
         try:
             open_trades = Trade.get_open_trades()

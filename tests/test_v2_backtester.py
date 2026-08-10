@@ -8,6 +8,7 @@ from user_data.strategy_lib.v2_backtester import (
     BacktestOptions,
     EntryEvent,
     simulate_portfolio,
+    summarize_backtest,
 )
 
 
@@ -130,6 +131,20 @@ class V2BacktesterTests(unittest.TestCase):
 
         self.assertAlmostEqual(result.trades[0].funding, 0.15)
         self.assertAlmostEqual(result.trades[0].net_pnl, -0.15)
+
+    def test_summary_reports_holding_time_in_hours(self) -> None:
+        candles = {"A": frame([100.2, 100.2, 100.2], [99.8, 99.8, 99.8], [100, 100, 100])}
+        event = EntryEvent(pd.Timestamp("2025-01-01", tz="UTC"), "A", "long", 95, 1)
+
+        result = simulate_portfolio(
+            candles,
+            [event],
+            BacktestOptions(fee_rate=0, slippage_rate=0, min_notional=0),
+        )
+        summary = summarize_backtest(result)
+
+        self.assertAlmostEqual(summary["average_holding_hours"], 0.5)
+        self.assertAlmostEqual(summary["median_holding_hours"], 0.5)
 
 
 if __name__ == "__main__":

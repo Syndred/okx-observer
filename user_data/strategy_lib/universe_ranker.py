@@ -23,6 +23,7 @@ class UniverseRules:
     max_atr_ratio: float = 0.15
     target_atr_ratio: float = 0.04
     liquidity_weight: float = 0.75
+    min_history_hours: int = 720
 
 
 def eligible_trade_symbols(rows: list[dict[str, object]]) -> dict[str, str]:
@@ -31,6 +32,36 @@ def eligible_trade_symbols(rows: list[dict[str, object]]) -> dict[str, str]:
         for row in rows
         if row.get("eligible") is True and row.get("role") == "trade"
     }
+
+
+def apply_persistence_filter(
+    mask: pd.DataFrame,
+    *,
+    lookback_hours: int = 720,
+    min_selected_hours: int = 360,
+) -> pd.DataFrame:
+    if mask.empty or min_selected_hours <= 0:
+        output = mask.copy()
+        output["prior_selected_hours"] = 0
+        return output
+    source = mask.copy()
+    source["date"] = pd.to_datetime(source["date"], utc=True)
+    full_index = pd.date_range(source["date"].min(), source["date"].max(), freq="1h", tz="UTC")
+    kept = []
+    for _, group in source.groupby("pair", sort=False):
+        selected = pd.Series(0, index=full_index, dtype="int16")
+        selected.loc[group["date"]] = 1
+        prior = (
+            selected.rolling(lookback_hours, min_periods=1).sum().shift(1).fillna(0)
+        )
+        enriched = group.copy()
+        enriched["prior_selected_hours"] = enriched["date"].map(prior).astype(int)
+        kept.append(
+            enriched.loc[enriched["prior_selected_hours"] >= min_selected_hours]
+        )
+    return pd.concat(kept, ignore_index=True).sort_values(
+        ["date", "rank", "pair"]
+    ).reset_index(drop=True)
 
 
 def _valid(feature: PairFeatures, rules: UniverseRules) -> bool:
@@ -75,7 +106,10 @@ def rank_hour(
     return [pair for pair, _ in scored_hour(snapshot, rules)[:limit]]
 
 
-def pair_feature_frame(frame: pd.DataFrame) -> pd.DataFrame:
+def pair_feature_frame(
+    frame: pd.DataFrame, rules: UniverseRules | None = None
+) -> pd.DataFrame:
+    active_rules = rules or UniverseRules()
     source = frame.sort_values("date").drop_duplicates("date", keep="last").copy()
     source["date"] = pd.to_datetime(source["date"], utc=True)
     previous_close = source["close"].shift(1)
@@ -94,6 +128,9 @@ def pair_feature_frame(frame: pd.DataFrame) -> pd.DataFrame:
     source["atr_ratio"] = (
         true_range.rolling(14, min_periods=14).mean().shift(1) / source["close"].shift(1)
     )
+    age = source["date"] - source["date"].min()
+    immature = age < pd.Timedelta(hours=active_rules.min_history_hours)
+    source.loc[immature, ["notional_24h", "nonzero_ratio", "atr_ratio"]] = float("nan")
     return source.loc[:, ["date", "notional_24h", "nonzero_ratio", "atr_ratio"]]
 
 
@@ -105,7 +142,7 @@ def build_universe_mask(
     feature_frames: dict[str, pd.DataFrame] = {}
     dates: set[pd.Timestamp] = set()
     for pair, frame in frames.items():
-        features = pair_feature_frame(frame).set_index("date")
+        features = pair_feature_frame(frame, rules).set_index("date")
         feature_frames[pair] = features
         dates.update(features.dropna().index)
     rows = []

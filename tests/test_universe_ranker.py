@@ -8,6 +8,7 @@ import pandas as pd
 from user_data.strategy_lib.universe_ranker import (
     PairFeatures,
     UniverseRules,
+    apply_persistence_filter,
     build_universe_mask,
     eligible_trade_symbols,
     rank_hour,
@@ -15,6 +16,17 @@ from user_data.strategy_lib.universe_ranker import (
 
 
 class UniverseRankerTests(unittest.TestCase):
+    def test_persistence_filter_uses_only_prior_selection_hours(self) -> None:
+        dates = pd.date_range("2025-01-01", periods=400, freq="1h", tz="UTC")
+        mask = pd.DataFrame(
+            {"date": dates, "pair": "ALT", "rank": 1, "score": 1.0, "eligible": True}
+        )
+
+        result = apply_persistence_filter(mask, lookback_hours=720, min_selected_hours=360)
+
+        self.assertEqual(result["date"].min(), dates[360])
+        self.assertEqual(result.iloc[0]["prior_selected_hours"], 360)
+
     def test_reference_contracts_are_not_ranked_as_trade_candidates(self) -> None:
         rows = [
             {"instId": "BTC-USDT-SWAP", "symbol": "BTC/USDT:USDT", "eligible": True, "role": "reference"},
@@ -57,8 +69,9 @@ class UniverseRankerTests(unittest.TestCase):
             for pair, frame in old.items()
         }
 
-        old_mask = build_universe_mask(old, limit=1)
-        new_mask = build_universe_mask(extended, limit=1)
+        rules = UniverseRules(min_history_hours=24)
+        old_mask = build_universe_mask(old, limit=1, rules=rules)
+        new_mask = build_universe_mask(extended, limit=1, rules=rules)
         cutoff = old_mask["date"].max()
 
         pd.testing.assert_frame_equal(
@@ -73,10 +86,21 @@ class UniverseRankerTests(unittest.TestCase):
         }
         frames["BBB"].loc[29, "quote_volume"] = 100_000_000
 
-        mask = build_universe_mask(frames, limit=1)
+        mask = build_universe_mask(
+            frames, limit=1, rules=UniverseRules(min_history_hours=24)
+        )
         latest = mask.loc[mask["date"] == mask["date"].max()]
 
         self.assertEqual(latest.iloc[0]["pair"], "AAA")
+
+    def test_pair_is_not_rankable_before_thirty_days_of_history(self) -> None:
+        frame = hourly_frame(750, quote_volume=100_000, atr_move=1.0)
+
+        mask = build_universe_mask({"NEW": frame}, limit=1)
+
+        self.assertGreaterEqual(
+            mask["date"].min(), frame["date"].min() + pd.Timedelta(hours=720)
+        )
 
 
 def hourly_frame(length: int, quote_volume: float, atr_move: float) -> pd.DataFrame:
