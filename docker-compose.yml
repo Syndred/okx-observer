@@ -1,0 +1,10 @@
+---
+services:
+  freqtrade:
+    image: freqtradeorg/freqtrade:2026.5.1
+    volumes:
+      - "./user_data:/freqtrade/user_data"
+      - "./tests:/freqtrade/tests:ro"
+      - "./scripts:/freqtrade/scripts:ro"
+    working_dir: /freqtrade
+    command: --version
