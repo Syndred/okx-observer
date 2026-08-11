@@ -11,6 +11,7 @@ from typing import Iterable
 
 from user_data.strategy_lib.v2_signal_engine import V2Parameters
 from user_data.strategy_lib.dual_ma_signal_engine import DualMaParameters
+from user_data.strategy_lib.six_ma_mtf_signal_engine import SixMaMtfParameters
 
 
 @dataclass(frozen=True)
@@ -160,7 +161,113 @@ def dual_ma_candidate_grid(
     return unique
 
 
-def parameter_dict(params: V2Parameters | DualMaParameters) -> dict[str, object]:
+def six_ma_mtf_candidate_grid(
+    smoke: bool = False, exhaustive: bool = False
+) -> list[SixMaMtfParameters]:
+    if smoke:
+        return [
+            SixMaMtfParameters(),
+            SixMaMtfParameters(
+                compression_4h_atr=2.0,
+                compression_15m_atr=2.0,
+                breakout_4h_atr=0.05,
+                breakout_15m_atr=0.05,
+                zone_max_age_4h=12,
+                setup_wait_15m=48,
+                require_full_4h_trend=False,
+            ),
+            SixMaMtfParameters(entry_trigger="pullback_rejection"),
+            SixMaMtfParameters(
+                compression_4h_atr=2.0,
+                compression_15m_atr=2.0,
+                breakout_4h_atr=0.05,
+                breakout_15m_atr=0.05,
+                zone_max_age_4h=12,
+                setup_wait_15m=48,
+                entry_trigger="pullback_rejection",
+                require_full_4h_trend=False,
+            ),
+        ]
+    full = [
+        SixMaMtfParameters(
+            compression_4h_atr=compression_4h,
+            breakout_4h_atr=breakout_4h,
+            compression_15m_atr=compression_15m,
+            breakout_15m_atr=breakout_15m,
+            stop_buffer_atr=stop_buffer,
+            zone_max_age_4h=zone_age,
+            setup_wait_15m=wait,
+            entry_trigger=entry_trigger,
+            require_full_4h_trend=require_full_trend,
+            strict_market_consensus=strict,
+        )
+        for compression_4h, breakout_4h, compression_15m, breakout_15m, stop_buffer, zone_age, wait, entry_trigger, require_full_trend, strict in product(
+            (0.8, 1.2, 1.6, 2.0),
+            (0.05, 0.10),
+            (0.8, 1.4, 2.0),
+            (0.05, 0.10),
+            (0.10, 0.20, 0.40),
+            (6, 12),
+            (24, 48),
+            ("nested_breakout", "pullback_rejection"),
+            (False, True),
+            (False, True),
+        )
+    ]
+    if exhaustive:
+        return full
+    selected = [
+        SixMaMtfParameters(),
+        SixMaMtfParameters(
+            compression_4h_atr=2.0,
+            compression_15m_atr=2.0,
+            breakout_4h_atr=0.05,
+            breakout_15m_atr=0.05,
+            zone_max_age_4h=12,
+            setup_wait_15m=48,
+            require_full_4h_trend=False,
+        ),
+        SixMaMtfParameters(
+            compression_4h_atr=2.0,
+            compression_15m_atr=2.0,
+            breakout_4h_atr=0.05,
+            breakout_15m_atr=0.05,
+            zone_max_age_4h=12,
+            setup_wait_15m=48,
+            entry_trigger="pullback_rejection",
+            require_full_4h_trend=False,
+        ),
+    ]
+    for value in (0.8, 1.2, 1.6, 2.0):
+        selected.append(SixMaMtfParameters(compression_4h_atr=value))
+    for value in (0.05, 0.10):
+        selected.append(SixMaMtfParameters(breakout_4h_atr=value))
+    for value in (0.8, 1.4, 2.0):
+        selected.append(SixMaMtfParameters(compression_15m_atr=value))
+    for value in (0.05, 0.10):
+        selected.append(SixMaMtfParameters(breakout_15m_atr=value))
+    for value in (0.10, 0.20, 0.40):
+        selected.append(SixMaMtfParameters(stop_buffer_atr=value))
+    for value in (6, 12):
+        selected.append(SixMaMtfParameters(zone_max_age_4h=value))
+    for value in (24, 48):
+        selected.append(SixMaMtfParameters(setup_wait_15m=value))
+    selected.append(SixMaMtfParameters(entry_trigger="pullback_rejection"))
+    selected.append(SixMaMtfParameters(require_full_4h_trend=False))
+    selected.append(SixMaMtfParameters(strict_market_consensus=True))
+    unique = list(dict.fromkeys(selected))
+    for index in range(96):
+        candidate = full[round(index * (len(full) - 1) / 95)]
+        if candidate not in unique:
+            unique.append(candidate)
+        if len(unique) >= 32:
+            break
+    return unique
+
+
+def parameter_dict(
+    params: V2Parameters | DualMaParameters | SixMaMtfParameters,
+) -> dict[str, object]:
     return asdict(params)
 
 

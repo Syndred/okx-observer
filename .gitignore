@@ -15,3 +15,4 @@ user_data/hyperopt_results/
 
 reports/equity-curves/*.png
 reports/logs/
+logs/

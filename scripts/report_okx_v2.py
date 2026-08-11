@@ -31,7 +31,7 @@ def percent(value: float) -> str:
     return f"{value * 100:.2f}%"
 
 
-def render_equity_png(path: Path, equity: pd.DataFrame) -> None:
+def render_equity_png(path: Path, equity: pd.DataFrame, title: str) -> None:
     from PIL import Image, ImageDraw, ImageFont
 
     width, height = 1600, 700
@@ -72,9 +72,58 @@ def render_equity_png(path: Path, equity: pd.DataFrame) -> None:
         x, y = points[0]
         draw.ellipse((x - 3, y - 3, x + 3, y + 3), fill="#4fd1c5")
     draw.rectangle((left, top, left + plot_width, top + plot_height), outline="#718096", width=2)
-    draw.text((left, 18), "OKX Shortline V2 - Pseudo-holdout Equity", fill="#f7fafc", font=font)
+    draw.text((left, 18), title, fill="#f7fafc", font=font)
     draw.text((left, height - 50), "UTC time", fill="#9fb0c8", font=small)
     image.save(path)
+
+
+def frozen_strategy_lines(frozen: dict[str, object]) -> list[str]:
+    params = frozen["parameters"]
+    mode = frozen.get("signal_mode", "v2")
+    if mode == "six_ma_mtf":
+        trigger = (
+            "六线再次突破"
+            if params["entry_trigger"] == "nested_breakout"
+            else "第一次回踩六线带后收回"
+        )
+        trend_rule = (
+            "要求完整 4H 均线趋势排列"
+            if params["require_full_4h_trend"]
+            else "由 4H 六线密集区突破定义方向，不额外要求完整均线排列"
+        )
+        return [
+            f"- 4H：MA20/60/120 + EMA20/60/120 六线 ATR 标准化压缩，随后方向突破；{trend_rule}。",
+            f"- 15m：六线压缩后以“{trigger}”确认；信号收盘后，下一根 15m 开盘执行。",
+            (
+                f"- 参数：4H 压缩 {params['compression_4h_atr']} ATR、突破 "
+                f"{params['breakout_4h_atr']} ATR；15m 压缩 "
+                f"{params['compression_15m_atr']} ATR、突破 "
+                f"{params['breakout_15m_atr']} ATR。"
+            ),
+            (
+                f"- 最长等待：4H 密集区 {params['zone_max_age_4h']} 根；"
+                f"15m 入场确认 {params['setup_wait_15m']} 根。"
+            ),
+        ]
+    if mode == "dual_ma":
+        return [
+            f"- 1H：EMA{params['fast_period']}/EMA{params['slow_period']} 定方向。",
+            f"- 15m：首次回踩快线入场，容差 {params['pullback_atr']} ATR。",
+        ]
+    return [
+        "- 1H：六均线 MA20/60/120 + EMA20/60/120，ATR 标准化压缩与突破。",
+        f"- 15m：突破后首次回踩，最多等待 {params['pullback_wait_15m']} 根。",
+        (
+            f"- 参数：compression {params['compression_atr']} ATR，breakout "
+            f"{params['breakout_atr']} ATR，pullback {params['pullback_atr']} ATR。"
+        ),
+    ]
+
+
+def market_filter_description(params: dict[str, object]) -> str:
+    if params.get("strict_market_consensus", False):
+        return "BTC 与 ETH 必须同时同向"
+    return "BTC/ETH 至少一个同向且两者均不反向"
 
 
 def main() -> None:
@@ -133,9 +182,20 @@ def main() -> None:
             output / "category-contribution.csv", index=False
         )
         side = pd.DataFrame(columns=["trades", "net_pnl"])
-    render_equity_png(output / "equity.png", equity)
+    mode_titles = {
+        "six_ma_mtf": "OKX Six-MA MTF - Pseudo-holdout Equity",
+        "dual_ma": "OKX Dual-MA - Pseudo-holdout Equity",
+        "v2": "OKX Shortline V2 - Pseudo-holdout Equity",
+    }
+    render_equity_png(
+        output / "equity.png",
+        equity,
+        mode_titles.get(frozen.get("signal_mode", "v2"), "OKX Research Equity"),
+    )
     crossings = threshold_crossings(equity, (1_000, 10_000)) if not equity.empty else {1000: "never", 10000: "never"}
-    selection_passed = frozen["status"] == "passed"
+    selection_passed = bool(
+        frozen.get("selection_passed", frozen["status"] == "passed")
+    )
     holdout_pf = float(metrics["pf"]) if metrics.get("pf") is not None else 0.0
     holdout_drawdown = (
         float(metrics["drawdown"]) if metrics.get("drawdown") is not None else 1.0
@@ -143,15 +203,30 @@ def main() -> None:
     holdout_equity = (
         float(metrics["final_equity"]) if metrics.get("final_equity") is not None else 0.0
     )
+    holdout_stress_pf = float(metrics.get("stress_pf") or 0.0)
+    funding_coverage_path = args.research_dir / "pseudo-holdout-funding-coverage.csv"
+    funding_complete = False
+    if funding_coverage_path.exists():
+        coverage = pd.read_csv(funding_coverage_path)
+        funding_complete = bool(
+            not coverage.empty
+            and coverage["complete"].astype(str).str.lower().eq("true").all()
+        )
     holdout_passed = (
         holdout_pf >= 1.15
         and holdout_drawdown <= 0.35
+        and int(metrics.get("trades") or 0) >= 300
+        and holdout_stress_pf >= 1.05
         and holdout_equity > 0
+        and funding_complete
     )
-    feasible = selection_passed and holdout_passed
+    purpose_is_formal = frozen.get("purpose") == "formal"
+    feasible = selection_passed and holdout_passed and purpose_is_formal
     verdict = "有条件可行，仍必须先做前向模拟盘" if feasible else "当前证据下不可实盘"
     selection = frozen["selection_score"]
     params = frozen["parameters"]
+    strategy_lines = frozen_strategy_lines(frozen)
+    market_rule = market_filter_description(params)
     side_lines = []
     for name in ("long", "short"):
         if name in side.index:
@@ -160,6 +235,13 @@ def main() -> None:
             )
     if not side_lines:
         side_lines = ["- 无交易"]
+    requested_pair_lines = []
+    for pair in ("BEAT/USDT:USDT", "BLEND/USDT:USDT", "XRP/USDT:USDT"):
+        pair_trades = trades.loc[trades["pair"] == pair] if not trades.empty else trades
+        requested_pair_lines.append(
+            f"- {pair.split('/')[0]}: {len(pair_trades)} 笔，净收益 "
+            f"{float(pair_trades['net_pnl'].sum()) if not pair_trades.empty else 0.0:.2f} USDT"
+        )
     data_limit = ""
     if args.hourly_report.exists():
         availability = pd.read_csv(args.hourly_report)
@@ -186,7 +268,7 @@ def main() -> None:
                 for row in examples.itertuples()
             )
             data_limit += f" 指定示例：{example_text}。"
-    report = f"""# OKX U 本位永续短线系统 V2 最终报告
+    report = f"""# OKX U 本位永续短线系统研究报告
 
 ## 最终结论
 
@@ -196,11 +278,9 @@ def main() -> None:
 
 ## 冻结版本
 
-- 4H：币种自身趋势；加密合约再叠加 BTC/ETH 宽松一致过滤。
-- 1H：六均线 MA20/60/120 + EMA20/60/120，ATR 标准化压缩与突破。
-- 15m：突破后首次回踩入场，最多等待 {params['pullback_wait_15m']} 根。
+{chr(10).join(strategy_lines)}
+- 加密合约市场过滤：{market_rule}；非加密合约不套用 BTC/ETH 方向。
 - 币池：合约历史上已满 30 天、当小时原始 Top30，且过去 30 天至少 360 小时曾入榜；只使用当时已知数据。
-- 参数：compression `{params['compression_atr']}` ATR，breakout `{params['breakout_atr']}` ATR，pullback `{params['pullback_atr']}` ATR。
 - 默认退出：2R 平 40%，剩余移保本并跟踪 EMA20，5R 强制退出，6/12/24 小时时间门槛。
 - 风控：100 USDT 初始资金，逐仓 3x，最多 3 仓，同向最多 2 仓，总开放风险 2%。
 
@@ -220,6 +300,7 @@ def main() -> None:
 - 平均亏损：{money(float(metrics.get('average_loss') or 0))}
 - 盈亏比：{float(metrics.get('payoff_ratio') or 0):.3f}
 - Profit Factor：{float(metrics.get('pf') or 0):.3f}
+- 双倍成本 Profit Factor：{f"{holdout_stress_pf:.3f}" if holdout_stress_pf else '未在本次旧格式产物中单独记录'}
 - 最大回撤：{percent(float(metrics.get('drawdown') or 0))}
 - 最大连续亏损：{int(metrics.get('max_consecutive_losses') or 0)}
 - 平均持仓：{float(metrics.get('average_holding_hours') or 0):.2f} 小时
@@ -228,6 +309,7 @@ def main() -> None:
 - 最低 / 最高资金：{money(float(metrics.get('min_equity') or 0))} / {money(float(metrics.get('max_equity') or 0))}
 - 费用：{money(float(metrics.get('fees') or 0))}
 - 净资金费（正数为支付）：{money(float(metrics.get('funding') or 0))}
+- 留出期资金费率覆盖完整：{'是' if funding_complete else '否'}
 - 首次达到 1,000 USDT：{crossings[1000]}
 - 首次达到 10,000 USDT：{crossings[10000]}
 
@@ -235,11 +317,16 @@ def main() -> None:
 
 {chr(10).join(side_lines)}
 
+## 用户指定合约
+
+{chr(10).join(requested_pair_lines)}
+- KO：快照时上市不足 30 天，按预设规则排除。
+
 ## 数据范围与限制
 
 {data_limit}
 
-- 只使用已确认 K 线；1H/4H 信息在收盘后才允许进入 15m 决策。
+- 只使用已确认 K 线；高周期信息在收盘后才允许进入 15m 决策。
 - 当前 OKX 合约快照存在“现存合约幸存者偏差”，无法恢复已下架合约的完整历史币池。
 - 同根 K 线同时触发止损和止盈时按止损处理；普通成本假设为单边 0.05% 手续费 + 0.05% 滑点，压力测试翻倍。
 - 跳空越过止损时按更差的开盘价成交；止损距离超过约 `0.85 / 杠杆` 的订单视为清算缓冲不足并跳过。

@@ -20,12 +20,17 @@ from user_data.strategy_lib.v2_backtester import (
 )
 from user_data.strategy_lib.v2_signal_engine import V2Parameters, scan_v2_setups
 from user_data.strategy_lib.dual_ma_signal_engine import DualMaParameters, scan_dual_ma_setups
+from user_data.strategy_lib.six_ma_mtf_signal_engine import (
+    SixMaMtfParameters,
+    scan_six_ma_mtf_setups,
+)
 from user_data.strategy_lib.walk_forward import (
     candidate_grid,
     candidate_score,
     dual_ma_candidate_grid,
     parameter_dict,
     rolling_windows,
+    six_ma_mtf_candidate_grid,
 )
 
 
@@ -134,11 +139,22 @@ def build_events(
     btc4h: pd.DataFrame,
     eth4h: pd.DataFrame,
     universe: pd.DataFrame,
-    params: V2Parameters | DualMaParameters,
+    params: V2Parameters | DualMaParameters | SixMaMtfParameters,
     signal_mode: str,
 ) -> list[EntryEvent]:
     source = frames[pair]
-    if signal_mode == "dual_ma":
+    if signal_mode == "six_ma_mtf":
+        signals = scan_six_ma_mtf_setups(
+            pair=pair,
+            inst_category=category,
+            candles15m=source["15m"],
+            candles4h=source["4h"],
+            btc4h=btc4h,
+            eth4h=eth4h,
+            universe_mask=universe,
+            params=params,  # type: ignore[arg-type]
+        )
+    elif signal_mode == "dual_ma":
         signals = scan_dual_ma_setups(
             pair=pair,
             inst_category=category,
@@ -287,9 +303,12 @@ def main() -> None:
     )
     parser.add_argument(
         "--signal-mode",
-        choices=("v2", "dual_ma"),
+        choices=("v2", "dual_ma", "six_ma_mtf"),
         default="v2",
-        help="v2=compression/breakout; dual_ma=dual EMA pullback + optional pyramid",
+        help=(
+            "v2=1H compression/pullback; dual_ma=dual EMA pullback; "
+            "six_ma_mtf=4H compression breakout plus 15m nested compression breakout"
+        ),
     )
     parser.add_argument("--smoke", action="store_true")
     parser.add_argument("--exhaustive", action="store_true")
@@ -378,11 +397,18 @@ def main() -> None:
     output_dir.mkdir(parents=True, exist_ok=True)
     result_rows: list[dict[str, object]] = []
     event_cache: dict[str, list[EntryEvent]] = {}
-    candidates = (
-        dual_ma_candidate_grid(smoke=args.smoke, exhaustive=args.exhaustive)
-        if args.signal_mode == "dual_ma"
-        else candidate_grid(smoke=args.smoke, exhaustive=args.exhaustive)
-    )
+    if args.signal_mode == "dual_ma":
+        candidates = dual_ma_candidate_grid(
+            smoke=args.smoke, exhaustive=args.exhaustive
+        )
+    elif args.signal_mode == "six_ma_mtf":
+        candidates = six_ma_mtf_candidate_grid(
+            smoke=args.smoke, exhaustive=args.exhaustive
+        )
+    else:
+        candidates = candidate_grid(
+            smoke=args.smoke, exhaustive=args.exhaustive
+        )
     with ThreadPoolExecutor(max_workers=args.signal_workers) as signal_pool:
         for candidate_index, params in enumerate(candidates, start=1):
             key = json.dumps(parameter_dict(params), sort_keys=True)
@@ -460,12 +486,14 @@ def main() -> None:
                     "candidate": candidate_index,
                     **parameter_dict(params),
                     **asdict(scored),
+                    "failed_gate_count": len(scored.failed_gates),
                     "failed_gates": ",".join(scored.failed_gates),
                     "events": len(events),
                 }
             )
     candidates_frame = pd.DataFrame(result_rows).sort_values(
-        ["passed", "score", "candidate"], ascending=[False, False, True]
+        ["passed", "trades", "failed_gate_count", "score", "candidate"],
+        ascending=[False, False, True, False, True],
     )
     candidates_frame.to_csv(output_dir / "candidate-results.csv", index=False)
     best_row = candidates_frame.iloc[0]
@@ -521,10 +549,6 @@ def main() -> None:
             "score", "profit_factor", "max_drawdown", "trades", "worst_window_pf", "stress_pf", "failed_gates"
         )},
     }
-    write_json(output_dir / "frozen-candidate.json", frozen)
-    manifest_name = "selected-candidate.json" if passed else "research-failed.json"
-    write_json(output_dir / manifest_name, frozen)
-
     best_pyramid = {}
     if isinstance(best_params, DualMaParameters):
         best_pyramid = {
@@ -598,22 +622,68 @@ def main() -> None:
         end=end,
         funding_frames=funding_frames,
     )
+    stress_result = simulate_portfolio(
+        base_frames,
+        best_events,
+        BacktestOptions(
+            fee_rate=0.001,
+            slippage_rate=0.001,
+            missing_funding_rate_per_8h=args.stress_imputed_funding_rate,
+            **best_pyramid,
+        ),
+        start=selection_end,
+        end=end,
+        funding_frames=funding_frames,
+    )
+    holdout_metrics = summarize_backtest(default_result)
+    holdout_stress_metrics = summarize_backtest(stress_result)
+    holdout_metrics["stress_pf"] = holdout_stress_metrics["pf"]
+    holdout_passed = bool(
+        holdout_metrics["trades"] >= 300
+        and holdout_metrics["pf"] >= 1.15
+        and holdout_metrics["drawdown"] <= 0.35
+        and holdout_metrics["stress_pf"] >= 1.05
+        and holdout_metrics["final_equity"] > 0
+        and funding_complete
+    )
+    overall_passed = passed and holdout_passed
+    live_claim_allowed = args.purpose == "formal" and overall_passed
+    frozen.update(
+        {
+            "status": "passed" if overall_passed else "research_failed",
+            "selection_passed": passed,
+            "holdout_passed": holdout_passed,
+            "live_claim_allowed": live_claim_allowed,
+            "holdout_score": {
+                "profit_factor": holdout_metrics["pf"],
+                "max_drawdown": holdout_metrics["drawdown"],
+                "trades": holdout_metrics["trades"],
+                "stress_pf": holdout_metrics["stress_pf"],
+                "funding_complete": funding_complete,
+            },
+        }
+    )
     pd.DataFrame(trade_rows(default_result)).to_csv(output_dir / "pseudo-holdout-trades.csv", index=False)
     default_result.equity_curve.to_csv(output_dir / "pseudo-holdout-equity.csv", index=False)
     write_json(
         output_dir / "pseudo-holdout-metrics.json",
-        {"metrics": summarize_backtest(default_result)},
+        {"metrics": holdout_metrics, "stress_metrics": holdout_stress_metrics},
     )
+    write_json(output_dir / "frozen-candidate.json", frozen)
+    manifest_name = "selected-candidate.json" if overall_passed else "research-failed.json"
+    write_json(output_dir / manifest_name, frozen)
     write_json(
         output_dir / "run-manifest.json",
         {
             "argv": sys.argv,
             "purpose": args.purpose,
             "signal_mode": args.signal_mode,
-            "live_claim_allowed": args.purpose == "formal" and passed,
+            "live_claim_allowed": live_claim_allowed,
+            "selection_passed": passed,
+            "holdout_passed": holdout_passed,
             "smoke": args.smoke,
             "candidate_count": len(candidates),
-            "search_mode": "exhaustive_288" if args.exhaustive else (
+            "search_mode": f"exhaustive_{len(candidates)}" if args.exhaustive else (
                 "smoke" if args.smoke else "balanced_32"
             ),
             "window_count": len(validation_windows),

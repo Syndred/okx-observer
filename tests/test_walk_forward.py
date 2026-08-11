@@ -3,7 +3,12 @@ from __future__ import annotations
 from datetime import date
 import unittest
 
-from user_data.strategy_lib.walk_forward import candidate_grid, candidate_score, rolling_windows
+from user_data.strategy_lib.walk_forward import (
+    candidate_grid,
+    candidate_score,
+    rolling_windows,
+    six_ma_mtf_candidate_grid,
+)
 
 
 class WalkForwardTests(unittest.TestCase):
@@ -19,6 +24,27 @@ class WalkForwardTests(unittest.TestCase):
 
     def test_exhaustive_grid_remains_available(self) -> None:
         self.assertEqual(len(candidate_grid(exhaustive=True)), 288)
+
+    def test_six_ma_balanced_grid_covers_every_structural_option(self) -> None:
+        grid = six_ma_mtf_candidate_grid()
+
+        self.assertLessEqual(len(grid), 32)
+        self.assertEqual({item.compression_4h_atr for item in grid}, {0.8, 1.2, 1.6, 2.0})
+        self.assertEqual({item.breakout_4h_atr for item in grid}, {0.05, 0.1})
+        self.assertEqual({item.compression_15m_atr for item in grid}, {0.8, 1.4, 2.0})
+        self.assertEqual({item.breakout_15m_atr for item in grid}, {0.05, 0.1})
+        self.assertEqual({item.stop_buffer_atr for item in grid}, {0.1, 0.2, 0.4})
+        self.assertEqual({item.zone_max_age_4h for item in grid}, {6, 12})
+        self.assertEqual({item.setup_wait_15m for item in grid}, {24, 48})
+        self.assertEqual(
+            {item.entry_trigger for item in grid},
+            {"nested_breakout", "pullback_rejection"},
+        )
+        self.assertEqual({item.require_full_4h_trend for item in grid}, {False, True})
+        self.assertEqual({item.strict_market_consensus for item in grid}, {False, True})
+
+    def test_six_ma_exhaustive_grid_size_is_recorded_exactly(self) -> None:
+        self.assertEqual(len(six_ma_mtf_candidate_grid(exhaustive=True)), 4608)
 
     def test_windows_never_overlap_training_with_validation(self) -> None:
         windows = rolling_windows(date(2023, 1, 1), date(2026, 1, 1))
