@@ -137,7 +137,11 @@ def scan_six_ma_mtf_setups(
     """Find 4H six-MA breakouts with a causal 15m six-MA entry trigger."""
     if min(params.zone_max_age_4h, params.setup_wait_15m) <= 0:
         raise ValueError("zone and setup lifetimes must be positive")
-    if params.entry_trigger not in {"nested_breakout", "pullback_rejection"}:
+    if params.entry_trigger not in {
+        "compression_close",
+        "nested_breakout",
+        "pullback_rejection",
+    }:
         raise ValueError(f"unsupported entry_trigger: {params.entry_trigger}")
     original_index = candles15m.index
     base = _add_cluster(candles15m)
@@ -228,6 +232,23 @@ def scan_six_ma_mtf_setups(
             local_high,
             local_low,
         ) and local_atr > 0
+
+        if params.entry_trigger == "compression_close":
+            if not local_valid or local_compression > params.compression_15m_atr:
+                continue
+            if bool(row["in_universe"]):
+                if side == "long":
+                    base.at[index, "enter_long"] = 1
+                    base.at[index, "initial_stop_price"] = (
+                        local_low - params.stop_buffer_atr * local_atr
+                    )
+                else:
+                    base.at[index, "enter_short"] = 1
+                    base.at[index, "initial_stop_price"] = (
+                        local_high + params.stop_buffer_atr * local_atr
+                    )
+            setup = None
+            continue
 
         if params.entry_trigger == "pullback_rejection":
             if not local_valid or local_compression > params.compression_15m_atr:

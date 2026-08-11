@@ -193,12 +193,19 @@ def build_events(
         rank = int(ranks.get(date.floor("h"), 999))
         if rank == 999:
             continue
+        entry_price = float(next_row["open"])
+        stop_price = float(row["initial_stop_price"])
+        correctly_sided = (
+            stop_price < entry_price if side == "long" else stop_price > entry_price
+        )
+        if not correctly_sided or not pd.notna(stop_price):
+            continue
         events.append(
             EntryEvent(
                 date=date,
                 pair=pair,
                 side=side,
-                stop_price=float(row["initial_stop_price"]),
+                stop_price=stop_price,
                 rank=rank,
                 category=category,
             )

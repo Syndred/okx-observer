@@ -43,6 +43,17 @@ class ReportOkxV2Tests(unittest.TestCase):
         rendered = "\n".join(frozen_strategy_lines(frozen))
 
         self.assertIn("不额外要求完整均线排列", rendered)
+        direct = {
+            **frozen,
+            "parameters": {
+                **frozen["parameters"],
+                "entry_trigger": "compression_close",
+            },
+        }
+        self.assertIn(
+            "六线密集收盘直接入场",
+            "\n".join(frozen_strategy_lines(direct)),
+        )
         self.assertEqual(
             market_filter_description({"strict_market_consensus": False}),
             "BTC/ETH 至少一个同向且两者均不反向",

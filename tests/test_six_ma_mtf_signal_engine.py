@@ -4,6 +4,7 @@ import unittest
 
 import pandas as pd
 
+from scripts.run_okx_v2_research import build_events
 from user_data.strategy_lib.six_ma_mtf_signal_engine import (
     SixMaMtfParameters,
     scan_six_ma_mtf_setups,
@@ -33,6 +34,59 @@ class SixMaMtfSignalEngineTests(unittest.TestCase):
         self.assertEqual(int(result["enter_long"].sum()), 0)
         self.assertEqual(int(result.loc[1, "enter_short"]), 0)
         self.assertGreater(float(result.loc[2, "initial_stop_price"]), 97.5)
+
+    def test_compression_close_signals_first_valid_compression_and_runs_next_open(self) -> None:
+        fixture = long_fixture()
+        fixture["params"] = compression_close_params()
+
+        result = scan_six_ma_mtf_setups(**fixture)
+        events = executable_events(fixture)
+
+        self.assertEqual(list(result.index[result["enter_long"] == 1]), [1])
+        self.assertEqual(int(result.loc[0, "enter_long"]), 0)
+        self.assertEqual(len(events), 1)
+        self.assertEqual(events[0].side, "long")
+        self.assertEqual(events[0].date, pd.Timestamp("2025-01-01 08:30", tz="UTC"))
+        self.assertAlmostEqual(events[0].stop_price, float(result.loc[1, "initial_stop_price"]))
+
+    def test_compression_close_short_uses_the_next_open_too(self) -> None:
+        fixture = short_fixture()
+        fixture["params"] = compression_close_params()
+
+        result = scan_six_ma_mtf_setups(**fixture)
+        events = executable_events(fixture)
+
+        self.assertEqual(list(result.index[result["enter_short"] == 1]), [1])
+        self.assertEqual(len(events), 1)
+        self.assertEqual(events[0].side, "short")
+        self.assertEqual(events[0].date, pd.Timestamp("2025-01-01 08:30", tz="UTC"))
+        self.assertGreater(events[0].stop_price, float(fixture["candles15m"].loc[2, "open"]))
+
+    def test_non_compressed_or_non_top30_compression_close_cannot_form_event(self) -> None:
+        non_compressed = long_fixture()
+        non_compressed["params"] = compression_close_params()
+        non_compressed["candles15m"].loc[1, list(SIX)] = [100.2, 100.5, 100.8, 101.2, 101.5, 101.8]
+        self.assertEqual(executable_events(non_compressed), [])
+
+        outside_top30 = long_fixture()
+        outside_top30["params"] = compression_close_params()
+        outside_top30["universe_mask"].loc[:, "eligible"] = False
+        self.assertEqual(executable_events(outside_top30), [])
+
+    def test_wrongly_sided_stop_is_not_an_executable_compression_close_event(self) -> None:
+        fixture = long_fixture()
+        fixture["params"] = compression_close_params()
+        # The first valid compressed candle closes at 102 while its six-line
+        # band is above price.  The scanner may mark a directional signal,
+        # but its long stop would be above the next-open entry and must be
+        # rejected before creating an executable event.
+        fixture["candles15m"].loc[1, list(SIX)] = [103.0] * 6
+        fixture["candles15m"].loc[1, ["open", "high", "low", "close"]] = [102.0, 102.2, 101.8, 102.0]
+
+        result = scan_six_ma_mtf_setups(**fixture)
+
+        self.assertEqual(list(result.index[result["enter_long"] == 1]), [1])
+        self.assertEqual(executable_events(fixture), [])
 
     def test_pullback_rejection_enters_on_first_compressed_15m_touch(self) -> None:
         fixture = long_fixture()
@@ -228,6 +282,19 @@ def _params(*, setup_wait_15m: int = 24) -> SixMaMtfParameters:
     )
 
 
+def compression_close_params() -> SixMaMtfParameters:
+    return SixMaMtfParameters(
+        compression_4h_atr=0.20,
+        breakout_4h_atr=0.10,
+        compression_15m_atr=0.20,
+        breakout_15m_atr=0.10,
+        stop_buffer_atr=0.10,
+        zone_max_age_4h=6,
+        setup_wait_15m=24,
+        entry_trigger="compression_close",
+    )
+
+
 def four_hour_fixture(side: str = "long") -> pd.DataFrame:
     dates = pd.date_range("2025-01-01 00:00", periods=4, freq="4h", tz="UTC")
     if side == "long":
@@ -392,6 +459,24 @@ def append_future(frame: pd.DataFrame) -> pd.DataFrame:
     future["date"] = future["date"] + pd.Timedelta(minutes=15)
     future[["open", "high", "low", "close"]] = [60.0, 140.0, 50.0, 130.0]
     return pd.concat([frame, future], ignore_index=True)
+
+
+def executable_events(fixture: dict[str, object]):
+    return build_events(
+        PAIR,
+        str(fixture["inst_category"]),
+        {
+            PAIR: {
+                "15m": fixture["candles15m"],
+                "4h": fixture["candles4h"],
+            }
+        },
+        fixture["btc4h"],
+        fixture["eth4h"],
+        fixture["universe_mask"],
+        fixture["params"],
+        "six_ma_mtf",
+    )
 
 
 if __name__ == "__main__":

@@ -38,13 +38,13 @@ class WalkForwardTests(unittest.TestCase):
         self.assertEqual({item.setup_wait_15m for item in grid}, {24, 48})
         self.assertEqual(
             {item.entry_trigger for item in grid},
-            {"nested_breakout", "pullback_rejection"},
+            {"compression_close", "nested_breakout", "pullback_rejection"},
         )
         self.assertEqual({item.require_full_4h_trend for item in grid}, {False, True})
         self.assertEqual({item.strict_market_consensus for item in grid}, {False, True})
 
     def test_six_ma_exhaustive_grid_size_is_recorded_exactly(self) -> None:
-        self.assertEqual(len(six_ma_mtf_candidate_grid(exhaustive=True)), 4608)
+        self.assertEqual(len(six_ma_mtf_candidate_grid(exhaustive=True)), 6912)
 
     def test_windows_never_overlap_training_with_validation(self) -> None:
         windows = rolling_windows(date(2023, 1, 1), date(2026, 1, 1))

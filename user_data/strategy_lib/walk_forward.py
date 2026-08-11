@@ -177,6 +177,7 @@ def six_ma_mtf_candidate_grid(
                 require_full_4h_trend=False,
             ),
             SixMaMtfParameters(entry_trigger="pullback_rejection"),
+            SixMaMtfParameters(entry_trigger="compression_close"),
             SixMaMtfParameters(
                 compression_4h_atr=2.0,
                 compression_15m_atr=2.0,
@@ -185,6 +186,16 @@ def six_ma_mtf_candidate_grid(
                 zone_max_age_4h=12,
                 setup_wait_15m=48,
                 entry_trigger="pullback_rejection",
+                require_full_4h_trend=False,
+            ),
+            SixMaMtfParameters(
+                compression_4h_atr=2.0,
+                compression_15m_atr=2.0,
+                breakout_4h_atr=0.05,
+                breakout_15m_atr=0.05,
+                zone_max_age_4h=12,
+                setup_wait_15m=48,
+                entry_trigger="compression_close",
                 require_full_4h_trend=False,
             ),
         ]
@@ -209,7 +220,7 @@ def six_ma_mtf_candidate_grid(
             (0.10, 0.20, 0.40),
             (6, 12),
             (24, 48),
-            ("nested_breakout", "pullback_rejection"),
+            ("compression_close", "nested_breakout", "pullback_rejection"),
             (False, True),
             (False, True),
         )
@@ -237,6 +248,16 @@ def six_ma_mtf_candidate_grid(
             entry_trigger="pullback_rejection",
             require_full_4h_trend=False,
         ),
+        SixMaMtfParameters(
+            compression_4h_atr=2.0,
+            compression_15m_atr=2.0,
+            breakout_4h_atr=0.05,
+            breakout_15m_atr=0.05,
+            zone_max_age_4h=12,
+            setup_wait_15m=48,
+            entry_trigger="compression_close",
+            require_full_4h_trend=False,
+        ),
     ]
     for value in (0.8, 1.2, 1.6, 2.0):
         selected.append(SixMaMtfParameters(compression_4h_atr=value))
@@ -253,6 +274,7 @@ def six_ma_mtf_candidate_grid(
     for value in (24, 48):
         selected.append(SixMaMtfParameters(setup_wait_15m=value))
     selected.append(SixMaMtfParameters(entry_trigger="pullback_rejection"))
+    selected.append(SixMaMtfParameters(entry_trigger="compression_close"))
     selected.append(SixMaMtfParameters(require_full_4h_trend=False))
     selected.append(SixMaMtfParameters(strict_market_consensus=True))
     unique = list(dict.fromkeys(selected))

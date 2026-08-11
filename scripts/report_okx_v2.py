@@ -81,11 +81,11 @@ def frozen_strategy_lines(frozen: dict[str, object]) -> list[str]:
     params = frozen["parameters"]
     mode = frozen.get("signal_mode", "v2")
     if mode == "six_ma_mtf":
-        trigger = (
-            "六线再次突破"
-            if params["entry_trigger"] == "nested_breakout"
-            else "第一次回踩六线带后收回"
-        )
+        trigger = {
+            "compression_close": "六线密集收盘直接入场",
+            "nested_breakout": "六线再次突破",
+            "pullback_rejection": "第一次回踩六线带后收回",
+        }[params["entry_trigger"]]
         trend_rule = (
             "要求完整 4H 均线趋势排列"
             if params["require_full_4h_trend"]
