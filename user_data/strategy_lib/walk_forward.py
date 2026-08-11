@@ -10,6 +10,7 @@ import math
 from typing import Iterable
 
 from user_data.strategy_lib.v2_signal_engine import V2Parameters
+from user_data.strategy_lib.dual_ma_signal_engine import DualMaParameters
 
 
 @dataclass(frozen=True)
@@ -104,7 +105,62 @@ def candidate_grid(smoke: bool = False, exhaustive: bool = False) -> list[V2Para
     return unique
 
 
-def parameter_dict(params: V2Parameters) -> dict[str, object]:
+def dual_ma_candidate_grid(
+    smoke: bool = False, exhaustive: bool = False
+) -> list[DualMaParameters]:
+    if smoke:
+        return [
+            DualMaParameters(),
+            DualMaParameters(fast_period=12, slow_period=26, pyramid_enabled=False),
+        ]
+    pairs = ((9, 21), (12, 26), (20, 60), (10, 30))
+    full = [
+        DualMaParameters(
+            fast_period=fast,
+            slow_period=slow,
+            pullback_atr=pullback,
+            pullback_wait_15m=wait,
+            strict_market_consensus=strict,
+            require_4h_trend=require_4h,
+            pyramid_enabled=pyramid,
+            pyramid_trigger_r=trigger,
+            pyramid_risk_fraction=fraction,
+            max_pyramids=adds,
+        )
+        for fast, slow in pairs
+        for pullback in (0.20, 0.30, 0.50)
+        for wait in (4, 8, 12)
+        for strict in (False, True)
+        for require_4h in (True, False)
+        for pyramid in (True, False)
+        for trigger in (1.0, 1.5)
+        for fraction in (0.35, 0.50)
+        for adds in (1, 2)
+    ]
+    if exhaustive:
+        return full
+    selected = [DualMaParameters()]
+    for fast, slow in pairs:
+        selected.append(DualMaParameters(fast_period=fast, slow_period=slow))
+    for pullback in (0.20, 0.30, 0.50):
+        selected.append(DualMaParameters(pullback_atr=pullback))
+    for wait in (4, 8, 12):
+        selected.append(DualMaParameters(pullback_wait_15m=wait))
+    selected.append(DualMaParameters(strict_market_consensus=True))
+    selected.append(DualMaParameters(require_4h_trend=False))
+    selected.append(DualMaParameters(pyramid_enabled=False))
+    selected.append(DualMaParameters(pyramid_trigger_r=1.5, max_pyramids=2))
+    unique = list(dict.fromkeys(selected))
+    for index in range(80):
+        candidate = full[round(index * (len(full) - 1) / 79)]
+        if candidate not in unique:
+            unique.append(candidate)
+        if len(unique) >= 32:
+            break
+    return unique
+
+
+def parameter_dict(params: V2Parameters | DualMaParameters) -> dict[str, object]:
     return asdict(params)
 
 

@@ -1,0 +1,2 @@
+scope,trades,wins,losses,win_rate,average_win,average_loss,payoff_ratio,gross_profit,gross_loss,pf,drawdown,max_consecutive_losses,average_holding_hours,median_holding_hours,initial_equity,final_equity,return_pct,min_equity,max_equity,max_concurrent_positions,skipped_entries,fees,funding,imputed_funding
+pseudo_holdout_default,2,0,2,0.0,0.0,-0.4263981382859549,0.0,0,0.8527962765719098,0.0,0.01343572448658999,2,6.0,6.0,100.0,99.14720372342809,-0.8527962765719099,98.86342953815597,100.20982108510593,1,0,0.0693891015806209,-0.0016189901292849628,0.0

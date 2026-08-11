@@ -146,6 +146,78 @@ class V2BacktesterTests(unittest.TestCase):
         self.assertAlmostEqual(summary["average_holding_hours"], 0.5)
         self.assertAlmostEqual(summary["median_holding_hours"], 0.5)
 
+    def test_missing_funding_is_charged_conservatively_every_eight_hours(self) -> None:
+        candles = {"A": frame([100.2] * 33, [99.8] * 33, [100] * 33)}
+        event = EntryEvent(pd.Timestamp("2025-01-01", tz="UTC"), "A", "short", 105, 1)
+
+        result = simulate_portfolio(
+            candles,
+            [event],
+            BacktestOptions(
+                fee_rate=0,
+                slippage_rate=0,
+                min_notional=0,
+                time_mode="none",
+                missing_funding_rate_per_8h=0.001,
+            ),
+            funding_frames={"A": pd.DataFrame(columns=["date", "rate"])},
+        )
+        summary = summarize_backtest(result)
+
+        self.assertGreater(result.trades[0].funding, 0)
+        self.assertAlmostEqual(result.trades[0].funding, result.trades[0].imputed_funding)
+        self.assertAlmostEqual(summary["imputed_funding"], result.trades[0].imputed_funding)
+
+    def test_drawdown_uses_adverse_intrabar_price_not_only_close(self) -> None:
+        candles = {"A": frame([100.2, 100.2], [99.8, 95.0], [100, 100])}
+        event = EntryEvent(pd.Timestamp("2025-01-01", tz="UTC"), "A", "long", 90, 1)
+
+        result = simulate_portfolio(
+            candles,
+            [event],
+            BacktestOptions(fee_rate=0, slippage_rate=0, min_notional=0),
+        )
+
+        self.assertGreater(summarize_backtest(result)["drawdown"], 0)
+
+    def test_pyramid_adds_to_winner_and_stays_within_risk_cap(self) -> None:
+        # Entry at 100, stop 99; bar1 reaches +1R open=101 and stays open for add.
+        candles = {
+            "A": pd.DataFrame(
+                {
+                    "date": pd.date_range("2025-01-01", periods=4, freq="15min", tz="UTC"),
+                    "open": [100.0, 101.0, 101.2, 101.0],
+                    "high": [100.2, 101.3, 101.5, 101.2],
+                    "low": [99.8, 100.8, 100.9, 99.5],
+                    "close": [100.0, 101.1, 101.3, 100.0],
+                    "volume": 1.0,
+                    "ema20": [100.0, 100.5, 100.8, 100.6],
+                }
+            )
+        }
+        event = EntryEvent(pd.Timestamp("2025-01-01", tz="UTC"), "A", "long", 99, 1)
+
+        result = simulate_portfolio(
+            candles,
+            [event],
+            BacktestOptions(
+                fee_rate=0,
+                slippage_rate=0,
+                min_notional=0,
+                pyramid_enabled=True,
+                pyramid_trigger_r=1.0,
+                pyramid_risk_fraction=0.5,
+                max_pyramids=1,
+                time_mode="none",
+                exit_mode="fixed3",
+            ),
+        )
+
+        self.assertEqual(len(result.trades), 1)
+        # Average entry should move above 100 after the add at ~101.
+        self.assertGreater(result.trades[0].entry_price, 100.0)
+        self.assertLessEqual(summarize_backtest(result)["drawdown"], 0.35)
+
 
 if __name__ == "__main__":
     unittest.main()

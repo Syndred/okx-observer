@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import asdict
 import json
 from pathlib import Path
@@ -18,9 +19,11 @@ from user_data.strategy_lib.v2_backtester import (
     summarize_backtest,
 )
 from user_data.strategy_lib.v2_signal_engine import V2Parameters, scan_v2_setups
+from user_data.strategy_lib.dual_ma_signal_engine import DualMaParameters, scan_dual_ma_setups
 from user_data.strategy_lib.walk_forward import (
     candidate_grid,
     candidate_score,
+    dual_ma_candidate_grid,
     parameter_dict,
     rolling_windows,
 )
@@ -57,6 +60,57 @@ def load_funding(data_dir: Path, instrument: str) -> pd.DataFrame:
     return frame.sort_values("date").drop_duplicates("date", keep="last").reset_index(drop=True)
 
 
+def parse_utc_timestamp(value: str | None) -> pd.Timestamp | None:
+    if value is None:
+        return None
+    return pd.Timestamp(value, tz="UTC")
+
+
+def clip_frame(
+    frame: pd.DataFrame, start: pd.Timestamp | None, end: pd.Timestamp | None
+) -> pd.DataFrame:
+    if frame.empty:
+        return frame
+    selected = frame
+    if start is not None:
+        selected = selected.loc[selected["date"] >= start]
+    if end is not None:
+        selected = selected.loc[selected["date"] < end]
+    return selected.reset_index(drop=True)
+
+
+def event_density_rows(
+    events: list[EntryEvent], start: pd.Timestamp, end: pd.Timestamp
+) -> list[dict[str, object]]:
+    in_period = [
+        event
+        for event in events
+        if start <= pd.Timestamp(event.date) < end
+    ]
+    if not in_period:
+        return []
+    frame = pd.DataFrame(
+        {
+            "date": [pd.Timestamp(event.date) for event in in_period],
+            "pair": [event.pair for event in in_period],
+            "side": [event.side for event in in_period],
+        }
+    )
+    frame["month"] = frame["date"].dt.strftime("%Y-%m")
+    rows = []
+    for month, group in frame.groupby("month", sort=True):
+        rows.append(
+            {
+                "month": month,
+                "events": int(len(group)),
+                "pairs": int(group["pair"].nunique()),
+                "long": int((group["side"] == "long").sum()),
+                "short": int((group["side"] == "short").sum()),
+            }
+        )
+    return rows
+
+
 def available_trade_pairs(
     data_dir: Path, instruments: dict[str, str], explicit: list[str] | None
 ) -> list[str]:
@@ -80,20 +134,34 @@ def build_events(
     btc4h: pd.DataFrame,
     eth4h: pd.DataFrame,
     universe: pd.DataFrame,
-    params: V2Parameters,
+    params: V2Parameters | DualMaParameters,
+    signal_mode: str,
 ) -> list[EntryEvent]:
     source = frames[pair]
-    signals = scan_v2_setups(
-        pair=pair,
-        inst_category=category,
-        candles15m=source["15m"],
-        candles1h=source["1h"],
-        candles4h=source["4h"],
-        btc4h=btc4h,
-        eth4h=eth4h,
-        universe_mask=universe,
-        params=params,
-    )
+    if signal_mode == "dual_ma":
+        signals = scan_dual_ma_setups(
+            pair=pair,
+            inst_category=category,
+            candles15m=source["15m"],
+            candles1h=source["1h"],
+            candles4h=source["4h"],
+            btc4h=btc4h,
+            eth4h=eth4h,
+            universe_mask=universe,
+            params=params,  # type: ignore[arg-type]
+        )
+    else:
+        signals = scan_v2_setups(
+            pair=pair,
+            inst_category=category,
+            candles15m=source["15m"],
+            candles1h=source["1h"],
+            candles4h=source["4h"],
+            btc4h=btc4h,
+            eth4h=eth4h,
+            universe_mask=universe,
+            params=params,  # type: ignore[arg-type]
+        )
     pair_mask = universe.loc[universe["pair"] == pair].copy()
     pair_mask["hour"] = pd.to_datetime(pair_mask["date"], utc=True).dt.floor("h")
     ranks = pair_mask.drop_duplicates("hour", keep="last").set_index("hour")["rank"].to_dict()
@@ -161,6 +229,40 @@ def trade_rows(result) -> list[dict[str, object]]:
     return [asdict(trade) for trade in result.trades]
 
 
+def funding_coverage_rows(
+    pairs: list[str],
+    base_frames: dict[str, pd.DataFrame],
+    funding_frames: dict[str, pd.DataFrame],
+    start: pd.Timestamp,
+    end: pd.Timestamp,
+) -> list[dict[str, object]]:
+    rows = []
+    for pair in pairs:
+        candles = base_frames[pair]
+        pair_start = max(start, pd.Timestamp(candles["date"].min()))
+        pair_end = min(end, pd.Timestamp(candles["date"].max()))
+        funding = funding_frames.get(pair, pd.DataFrame())
+        first = pd.NaT if funding.empty else pd.Timestamp(funding["date"].min())
+        last = pd.NaT if funding.empty else pd.Timestamp(funding["date"].max())
+        complete = bool(
+            pd.notna(first)
+            and pd.notna(last)
+            and first <= pair_start + pd.Timedelta(hours=12)
+            and last >= pair_end - pd.Timedelta(hours=12)
+        )
+        rows.append(
+            {
+                "pair": pair,
+                "period_start": pair_start,
+                "period_end": pair_end,
+                "funding_start": first,
+                "funding_end": last,
+                "complete": complete,
+            }
+        )
+    return rows
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--data-dir", type=Path, default=Path("user_data/data/okx_v2"))
@@ -168,9 +270,41 @@ def main() -> None:
     parser.add_argument("--universe", type=Path, default=Path("user_data/data/okx_v2/universe_top30.feather"))
     parser.add_argument("--output-dir", type=Path, default=Path("user_data/backtest_results/okx-v2"))
     parser.add_argument("--pairs", nargs="*")
+    parser.add_argument("--start", type=str, default=None, help="UTC research start, e.g. 2026-02-10")
+    parser.add_argument("--end", type=str, default=None, help="UTC research end exclusive, e.g. 2026-08-11")
+    parser.add_argument("--holdout-days", type=int, default=None)
+    parser.add_argument(
+        "--warmup-days",
+        type=int,
+        default=40,
+        help="Keep candles before --start for EMA/MA warm-up when date-clipped",
+    )
+    parser.add_argument(
+        "--purpose",
+        type=str,
+        default="formal",
+        help="Label for run-manifest; use half_year_diagnose for short samples",
+    )
+    parser.add_argument(
+        "--signal-mode",
+        choices=("v2", "dual_ma"),
+        default="v2",
+        help="v2=compression/breakout; dual_ma=dual EMA pullback + optional pyramid",
+    )
     parser.add_argument("--smoke", action="store_true")
     parser.add_argument("--exhaustive", action="store_true")
+    parser.add_argument("--signal-workers", type=int, default=4)
+    parser.add_argument("--imputed-funding-rate", type=float, default=0.0001)
+    parser.add_argument("--stress-imputed-funding-rate", type=float, default=0.0002)
     args = parser.parse_args()
+    if args.signal_workers < 1 or args.signal_workers > 8:
+        raise SystemExit("signal-workers must be between 1 and 8")
+    if args.warmup_days < 0:
+        raise SystemExit("warmup-days must be >= 0")
+    requested_start = parse_utc_timestamp(args.start)
+    requested_end = parse_utc_timestamp(args.end)
+    if requested_start is not None and requested_end is not None and requested_start >= requested_end:
+        raise SystemExit("--start must be earlier than --end")
     instruments, categories = load_snapshot(args.snapshot)
     pairs = available_trade_pairs(args.data_dir, instruments, args.pairs)
     if not pairs:
@@ -178,92 +312,158 @@ def main() -> None:
     for reference in ("BTC/USDT:USDT", "ETH/USDT:USDT"):
         if reference not in instruments:
             raise SystemExit(f"Missing reference in snapshot: {reference}")
-    btc4h = load_frame(args.data_dir, instruments["BTC/USDT:USDT"], "4h")
-    eth4h = load_frame(args.data_dir, instruments["ETH/USDT:USDT"], "4h")
+    load_start = (
+        None
+        if requested_start is None
+        else requested_start - pd.Timedelta(days=args.warmup_days)
+    )
+    btc4h = clip_frame(
+        load_frame(args.data_dir, instruments["BTC/USDT:USDT"], "4h"),
+        load_start,
+        requested_end,
+    )
+    eth4h = clip_frame(
+        load_frame(args.data_dir, instruments["ETH/USDT:USDT"], "4h"),
+        load_start,
+        requested_end,
+    )
     frames = {
         pair: {
-            timeframe: load_frame(args.data_dir, instruments[pair], timeframe)
+            timeframe: clip_frame(
+                load_frame(args.data_dir, instruments[pair], timeframe),
+                load_start,
+                requested_end,
+            )
             for timeframe in ("15m", "1h", "4h")
         }
         for pair in pairs
     }
     universe = pd.read_feather(args.universe)
     universe["date"] = pd.to_datetime(universe["date"], utc=True)
+    universe = clip_frame(universe, load_start, requested_end)
     base_frames = {pair: timeframes["15m"] for pair, timeframes in frames.items()}
     funding_frames = {
-        pair: load_funding(args.data_dir, instruments[pair]) for pair in pairs
+        pair: clip_frame(
+            load_funding(args.data_dir, instruments[pair]), load_start, requested_end
+        )
+        for pair in pairs
     }
-    start = min(frame["date"].min() for frame in base_frames.values())
-    end = max(frame["date"].max() for frame in base_frames.values()) + pd.Timedelta(minutes=15)
-    holdout_days = 2 if args.smoke else 60
+    data_start = min(frame["date"].min() for frame in base_frames.values() if not frame.empty)
+    data_end = (
+        max(frame["date"].max() for frame in base_frames.values() if not frame.empty)
+        + pd.Timedelta(minutes=15)
+    )
+    start = requested_start if requested_start is not None else data_start
+    end = requested_end if requested_end is not None else data_end
+    if start < data_start:
+        start = data_start
+    if end > data_end:
+        end = data_end
+    if args.holdout_days is not None:
+        holdout_days = args.holdout_days
+    else:
+        holdout_days = 2 if args.smoke else 60
+    if holdout_days < 0:
+        raise SystemExit("holdout-days must be >= 0")
     selection_end = end - pd.Timedelta(days=holdout_days)
     if selection_end <= start:
         selection_end = start + (end - start) * 0.70
     window_mode, validation_windows = window_specs(start, selection_end)
+    print(
+        f"research period {start} -> {end}; selection_end {selection_end}; "
+        f"window_mode={window_mode}; purpose={args.purpose}",
+        flush=True,
+    )
     output_dir = args.output_dir
     output_dir.mkdir(parents=True, exist_ok=True)
     result_rows: list[dict[str, object]] = []
     event_cache: dict[str, list[EntryEvent]] = {}
-    candidates = candidate_grid(smoke=args.smoke, exhaustive=args.exhaustive)
-    for candidate_index, params in enumerate(candidates, start=1):
-        key = json.dumps(parameter_dict(params), sort_keys=True)
-        print(f"candidate {candidate_index}/{len(candidates)} {key}", flush=True)
-        events: list[EntryEvent] = []
-        for pair in pairs:
-            events.extend(
-                build_events(
+    candidates = (
+        dual_ma_candidate_grid(smoke=args.smoke, exhaustive=args.exhaustive)
+        if args.signal_mode == "dual_ma"
+        else candidate_grid(smoke=args.smoke, exhaustive=args.exhaustive)
+    )
+    with ThreadPoolExecutor(max_workers=args.signal_workers) as signal_pool:
+        for candidate_index, params in enumerate(candidates, start=1):
+            key = json.dumps(parameter_dict(params), sort_keys=True)
+            print(f"candidate {candidate_index}/{len(candidates)} {key}", flush=True)
+
+            def scan_pair(pair: str, active_params=params) -> list[EntryEvent]:
+                return build_events(
                     pair,
                     categories[pair],
                     frames,
                     btc4h,
                     eth4h,
                     universe,
-                    params,
+                    active_params,
+                    args.signal_mode,
                 )
-            )
-        event_cache[key] = events
-        metrics = []
-        for window_index, (window_start, window_end) in enumerate(validation_windows, start=1):
-            normal = simulate_portfolio(
-                base_frames,
-                events,
-                BacktestOptions(),
-                start=window_start,
-                end=window_end,
-                funding_frames=funding_frames,
-            )
-            stressed = simulate_portfolio(
-                base_frames,
-                events,
-                BacktestOptions(fee_rate=0.001, slippage_rate=0.001),
-                start=window_start,
-                end=window_end,
-                funding_frames=funding_frames,
-            )
-            normal_metrics = summarize_backtest(normal)
-            stress_metrics = summarize_backtest(stressed)
-            normal_metrics["stress_pf"] = stress_metrics["pf"]
-            metrics.append(normal_metrics)
-            write_json(
-                output_dir / "windows" / f"candidate-{candidate_index:03d}-window-{window_index:02d}.json",
+
+            events = [
+                event
+                for pair_events in signal_pool.map(scan_pair, pairs)
+                for event in pair_events
+            ]
+            event_cache[key] = events
+            metrics = []
+            pyramid_options = {}
+            if isinstance(params, DualMaParameters):
+                pyramid_options = {
+                    "pyramid_enabled": params.pyramid_enabled,
+                    "pyramid_trigger_r": params.pyramid_trigger_r,
+                    "pyramid_risk_fraction": params.pyramid_risk_fraction,
+                    "max_pyramids": params.max_pyramids,
+                }
+            for window_index, (window_start, window_end) in enumerate(validation_windows, start=1):
+                normal = simulate_portfolio(
+                    base_frames,
+                    events,
+                    BacktestOptions(
+                        missing_funding_rate_per_8h=args.imputed_funding_rate,
+                        **pyramid_options,
+                    ),
+                    start=window_start,
+                    end=window_end,
+                    funding_frames=funding_frames,
+                )
+                stressed = simulate_portfolio(
+                    base_frames,
+                    events,
+                    BacktestOptions(
+                        fee_rate=0.001,
+                        slippage_rate=0.001,
+                        missing_funding_rate_per_8h=args.stress_imputed_funding_rate,
+                        **pyramid_options,
+                    ),
+                    start=window_start,
+                    end=window_end,
+                    funding_frames=funding_frames,
+                )
+                normal_metrics = summarize_backtest(normal)
+                stress_metrics = summarize_backtest(stressed)
+                normal_metrics["stress_pf"] = stress_metrics["pf"]
+                metrics.append(normal_metrics)
+                write_json(
+                    output_dir / "windows" / f"candidate-{candidate_index:03d}-window-{window_index:02d}.json",
+                    {
+                        "parameters": parameter_dict(params),
+                        "start": window_start,
+                        "end": window_end,
+                        "metrics": normal_metrics,
+                        "stress_metrics": stress_metrics,
+                    },
+                )
+            scored = candidate_score(metrics)
+            result_rows.append(
                 {
-                    "parameters": parameter_dict(params),
-                    "start": window_start,
-                    "end": window_end,
-                    "metrics": normal_metrics,
-                    "stress_metrics": stress_metrics,
-                },
+                    "candidate": candidate_index,
+                    **parameter_dict(params),
+                    **asdict(scored),
+                    "failed_gates": ",".join(scored.failed_gates),
+                    "events": len(events),
+                }
             )
-        scored = candidate_score(metrics)
-        result_rows.append(
-            {
-                "candidate": candidate_index,
-                **parameter_dict(params),
-                **asdict(scored),
-                "failed_gates": ",".join(scored.failed_gates),
-                "events": len(events),
-            }
-        )
     candidates_frame = pd.DataFrame(result_rows).sort_values(
         ["passed", "score", "candidate"], ascending=[False, False, True]
     )
@@ -273,17 +473,50 @@ def main() -> None:
     best_params = candidates[best_index - 1]
     best_key = json.dumps(parameter_dict(best_params), sort_keys=True)
     best_events = event_cache[best_key]
+    holdout_event_pairs = sorted(
+        {
+            event.pair
+            for event in best_events
+            if selection_end <= pd.Timestamp(event.date) < end
+        }
+    )
+    coverage = pd.DataFrame(
+        funding_coverage_rows(
+            holdout_event_pairs,
+            base_frames,
+            funding_frames,
+            selection_end,
+            end,
+        )
+    )
+    coverage.to_csv(output_dir / "pseudo-holdout-funding-coverage.csv", index=False)
+    funding_complete = bool(not coverage.empty and coverage["complete"].all())
     passed = bool(best_row["passed"])
+    density = pd.DataFrame(event_density_rows(best_events, start, end))
+    density.to_csv(output_dir / "event-density-by-month.csv", index=False)
+    period_events = int(density["events"].sum()) if not density.empty else 0
     frozen = {
         "status": "passed" if passed else "research_failed",
+        "purpose": args.purpose,
+        "signal_mode": args.signal_mode,
+        "live_claim_allowed": args.purpose == "formal" and passed,
         "window_mode": window_mode,
         "data_start": start,
         "selection_end": selection_end,
         "pseudo_holdout_start": selection_end,
         "data_end": end,
+        "holdout_days": holdout_days,
+        "warmup_days": args.warmup_days,
+        "period_events": period_events,
         "pairs": pairs,
         "candidate": best_index,
         "parameters": parameter_dict(best_params),
+        "funding_model": {
+            "observed_history_limit": "OKX public endpoint maximum three months",
+            "selection_missing_adverse_rate_per_8h": args.imputed_funding_rate,
+            "stress_missing_adverse_rate_per_8h": args.stress_imputed_funding_rate,
+            "pseudo_holdout_event_pair_coverage_complete": funding_complete,
+        },
         "selection_score": {key: best_row[key] for key in (
             "score", "profit_factor", "max_drawdown", "trades", "worst_window_pf", "stress_pf", "failed_gates"
         )},
@@ -292,6 +525,14 @@ def main() -> None:
     manifest_name = "selected-candidate.json" if passed else "research-failed.json"
     write_json(output_dir / manifest_name, frozen)
 
+    best_pyramid = {}
+    if isinstance(best_params, DualMaParameters):
+        best_pyramid = {
+            "pyramid_enabled": best_params.pyramid_enabled,
+            "pyramid_trigger_r": best_params.pyramid_trigger_r,
+            "pyramid_risk_fraction": best_params.pyramid_risk_fraction,
+            "max_pyramids": best_params.max_pyramids,
+        }
     variant_rows = []
     risk_profiles = (
         ("conservative", 0.005, 0.015),
@@ -323,6 +564,7 @@ def main() -> None:
             normal_trade_risk=trade_risk,
             reduced_trade_risk=0.005,
             max_portfolio_risk=portfolio_risk,
+            **best_pyramid,
         )
         result = simulate_portfolio(
             base_frames,
@@ -351,7 +593,7 @@ def main() -> None:
     default_result = simulate_portfolio(
         base_frames,
         best_events,
-        BacktestOptions(),
+        BacktestOptions(**best_pyramid),
         start=selection_end,
         end=end,
         funding_frames=funding_frames,
@@ -366,6 +608,9 @@ def main() -> None:
         output_dir / "run-manifest.json",
         {
             "argv": sys.argv,
+            "purpose": args.purpose,
+            "signal_mode": args.signal_mode,
+            "live_claim_allowed": args.purpose == "formal" and passed,
             "smoke": args.smoke,
             "candidate_count": len(candidates),
             "search_mode": "exhaustive_288" if args.exhaustive else (
@@ -373,12 +618,20 @@ def main() -> None:
             ),
             "window_count": len(validation_windows),
             "window_mode": window_mode,
+            "data_start": start,
+            "selection_end": selection_end,
+            "data_end": end,
+            "holdout_days": holdout_days,
+            "warmup_days": args.warmup_days,
+            "period_events": period_events,
             "pairs": pairs,
             "cost_assumptions": {
                 "normal_fee_per_side": 0.0005,
                 "normal_slippage_per_side": 0.0005,
                 "stress_fee_per_side": 0.001,
                 "stress_slippage_per_side": 0.001,
+                "selection_missing_funding_adverse_per_8h": args.imputed_funding_rate,
+                "stress_missing_funding_adverse_per_8h": args.stress_imputed_funding_rate,
             },
         },
     )
