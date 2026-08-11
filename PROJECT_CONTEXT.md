@@ -1,17 +1,18 @@
 # PROJECT_CONTEXT（GPT / 下一任 Agent 交接）
 
-更新时间：2026-08-11 08:35 CST  
-分支：`feat/v1-backtest`  
+更新时间：2026-08-11（六均线多周期半年研究已完成）
+分支：`feat/v1-backtest`
 交接原因：Codex 额度用尽 → Cursor 续跑 → 用户要求写成文档交 GPT 继续。
 
 ---
 
 ## 0. 一句话现状
 
-OKX U 本位永续短线系统已完成数据管道与两套信号路径研究：
+OKX U 本位永续短线系统已完成数据管道与三套信号路径研究：
 
 1. **V2 压缩/突破状态机** → **暂不可行**（有效成交太少）
 2. **双均线 + 回踩 + 滚仓** → 交易数已够（≥300），但 **PF 过不了硬门槛**（最佳约 0.74，要求 ≥1.15）→ **当前仍不可实盘**
+3. **4H/15m 六均线多周期** → 最近半年 32 组参数均未过门；冻结候选留出期 84 笔、PF 0.750、100→92.66 → **当前仍不可实盘**
 
 **硬门槛一律不放水。** 未全部通过时不得生成“可实盘配置”。
 
@@ -39,7 +40,7 @@ OKX U 本位永续短线系统已完成数据管道与两套信号路径研究�
 - 股票/商品合约：**不要**用 BTC 过滤（如 KO）；只用自身 4H
 - KO 因上市未满 30 天当时正确排除
 
-用户后续补充目标：**在双均线系统 + 滚仓前提下找最优解，测试到过硬门槛为止**（已选定用双均线替换压缩/突破核心）。
+用户后续补充目标：围绕原博主的六根均线，优先测试“4H 六线密集并突破定方向，15m 六线密集后入场”，时间范围以最近半年/数月为主。
 
 ---
 
@@ -119,6 +120,32 @@ docker compose run --rm --no-deps --entrypoint python freqtrade \
 - 滚仓开/关对平均 PF 几乎无差
 - 正式候选中 `9/21` 的验证 PF 最高；`10/30` 次之，不能写成 `10/30` 优于 `9/21`
 
+### 2.6 4H/15m 六均线多周期（最新）
+
+新增：
+
+- `user_data/strategy_lib/six_ma_mtf_signal_engine.py`
+  - 4H：MA20/60/120 + EMA20/60/120 六线 ATR 压缩，后续已收盘 4H 突破才武装方向
+  - 15m：对比“再次六线压缩后突破”与“第一次回踩六线带后收回”
+  - 信号只在 K 线收盘确认，外层于下一根 15m 开盘执行
+  - 保留动态 Top30、BTC/ETH 加密市场过滤、多空和组合风险限制
+- `tests/test_six_ma_mtf_signal_engine.py`：13 项因果/多空/首次回踩/跨周期测试
+- `walk_forward.py`：六均线 32 组平衡搜索与 4608 组穷举入口
+- `scripts/report_okx_v2.py`：支持六均线报告，并把留出期交易数和资金费率覆盖纳入报告通过条件
+
+最近半年平衡研究：`user_data/backtest_results/okx-v2-sixma-recent6m/`
+
+- 研究范围：2026-02-10 至 2026-08-10；最后 60 天完全留出
+- 32/32 均失败；没有生成实盘配置
+- 冻结候选：4H/15m 压缩均为 2.0 ATR，突破均为 0.05 ATR，嵌套突破，3x
+- 选择段：50 笔，PF 1.137，双倍成本 PF 0.740；PF、交易数、压力 PF 三项失败
+- 留出段：84 笔，PF 0.750，最大回撤 11.44%，100→92.66，最长连续亏损 6
+- 留出段 long：51 笔，PF 约 0.507，净 -9.11；short：33 笔，PF 约 1.163，净 +1.77
+- short-only 是看过留出结果后的事后发现，样本只有 33 笔，不能当作新的独立验证
+- 报告：`reports/okx-v2-sixma-recent6m/FINAL_REPORT.md`
+
+**最新结论：原版六均线逻辑可以作为低频扫描器继续观察，但当前数据不支持用于 100U→10000U 的实盘复利计划。**
+
 ---
 
 ## 3. 关键路径与命令
@@ -185,46 +212,30 @@ docker compose run --rm --no-deps --entrypoint python freqtrade \
 
 ---
 
-## 4. Git 状态（未提交，接手后勿盲目 commit）
+## 4. Git 状态与提交
 
-已修改：
-
-- `scripts/run_okx_v2_research.py`（日期裁剪、funding 覆盖、并发扫信号、`--signal-mode dual_ma`）
-- `user_data/strategy_lib/v2_backtester.py`（不利跳空、imputed funding、滚仓）
-- `user_data/strategy_lib/walk_forward.py`（`dual_ma_candidate_grid`）
-- `tests/test_v2_backtester.py`
-
-未跟踪：
-
-- `user_data/strategy_lib/dual_ma_signal_engine.py`
-- `tests/test_dual_ma_signal_engine.py`
-- `PROJECT_CONTEXT.md`
-- `reports/okx-v2/*`（含旧 FINAL_REPORT）
-- `logs/`（可忽略）
-- 大量 `user_data/backtest_results/okx-v2-*` 研究结果
-
-之前 Codex 已有多个 feat commit 在分支上（数据管道、信号、风控、walk-forward 等）。本轮 Cursor 改动**尚未 commit**。
+- Cursor 双均线基线与交接已经提交：`f4cf071 research: record dual-ma negative baseline`
+- Cursor 之前的因果研究队列提交：`2741eac feat: finalize causal OKX research cohort`
+- 六均线多周期代码、测试、报告与本交接文档应作为本轮独立提交保存。
+- `user_data/backtest_results/` 继续被忽略；可复现实验结果，不把大量中间文件塞进 Git。
+- `reports/okx-v2-sixma-recent6m/` 是本轮需保留的轻量最终报告、资金曲线、交易和参数摘要。
+- 根目录 `logs/` 已加入忽略，避免运行日志污染工作树。
 
 ---
 
 ## 5. 建议 GPT 下一步（按优先级）
 
-目标：在**不放宽硬门槛**前提下把 PF 从 ~0.74 抬到 ≥1.15，同时保住 trades≥300、DD≤35%。
+目标：不复用已经看过的留出期继续倒推参数；用真正的新数据确认空单优势是否存在。
 
-1. **多空拆分对照**：long-only / short-only（两边都亏，需确认谁拖累、是否单边可过门）
-2. **提质过滤网格**（牺牲一些笔数、换 PF）：
-   - 强制 `require_4h_trend=True` + 更严 pullback
-   - 均线以 `10/30`、`20/60` 为主
-   - 滚仓默认关或更晚触发（当前对 PF 几乎无帮助）
-   - 退出对照：`fixed5` / 去掉 `no_progress_6h` 或放宽时间门（变体里 fixed5 相对最好，但仍 <0.89）
-3. **成本与止损结构**：`initial_stop` 是主亏源 → 查止损是否过近/过远、是否慢线止损被洗
-4. **不要再靠“缩短样本”冲过门**；近半年只能诊断密度
-5. 若多轮提质后 PF 仍稳定 <1.0：按约定交付**明确暂不可行**，而不是继续无限搜参硬凑
+1. **冻结当前六均线候选做前向模拟**：both / long-only / short-only 三个只读信号账本并行记录 60–90 天；不因中途表现改参数。
+2. **空单只能视为新假设**：本轮 short 仅 33 笔且是看完留出后发现，必须用下一段时间验证，不能回写成本轮成功。
+3. **退出研究**：标准退出 PF 0.750；`fixed5 + 无时间退出` 也只有 PF 1.023，且仅 50 笔完成、跳过 45 个信号，不能作为优胜方案。可在新前向期预先固定对照。
+4. **优先补实盘模型缺口**：历史下架合约的时点币池、mark price / 强平与维护保证金、合约 `minSz/lotSz/ctVal`、费用/滑点计入最坏风险、回测和 Freqtrade 共用日损/组合风险账本。
+5. **不要扩大杠杆追终值**：3x/5x/10x 在相同止损风险下不会把负期望变正；100→10000 只能是长期结果指标，不是选参目标。
 
 通过后才做：
 
-- `scripts/report_okx_v2.py` 生成双均线版 FINAL_REPORT
-- Freqtrade 策略适配 `OKX_Shortline_V2` / 新策略文件接 dual_ma
+- Freqtrade 策略适配六均线信号
 - lookahead-analysis + dry-run 文档
 
 ---
@@ -245,9 +256,9 @@ docker compose run --rm --no-deps --entrypoint python freqtrade \
 
 ```text
 1. 读本文件 + docs/superpowers/specs/2026-08-10-okx-shortline-v2-design.md
-2. 读 user_data/backtest_results/okx-v2-dualma-full/research-failed.json
-   与 candidate-results.csv、pseudo-holdout-variants.csv
+2. 先读 reports/okx-v2-sixma-recent6m/FINAL_REPORT.md，再读对应
+   candidate-results.csv、option-comparison.csv、trades.csv
 3. 不要重下数据（118/404 已齐）
-4. 从“提 PF”实验继续，勿回到压缩突破主线（除非对照）
+4. 不要继续复用 2026-06-11 至 2026-08-10 留出期选参；它已经被看过
 5. 任何“通过”必须过全部硬门槛；否则写 research-failed，不写实盘配置
 ```
