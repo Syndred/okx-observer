@@ -1,6 +1,6 @@
 # PROJECT_CONTEXT（GPT / 下一任 Agent 交接）
 
-更新时间：2026-08-11（六均线多周期半年研究已完成）
+更新时间：2026-08-11（六均线方向与执行诊断已完成）
 分支：`feat/v1-backtest`
 交接原因：Codex 额度用尽 → Cursor 续跑 → 用户要求写成文档交 GPT 继续。
 
@@ -13,6 +13,7 @@ OKX U 本位永续短线系统已完成数据管道与三套信号路径研究�
 1. **V2 压缩/突破状态机** → **暂不可行**（有效成交太少）
 2. **双均线 + 回踩 + 滚仓** → 交易数已够（≥300），但 **PF 过不了硬门槛**（最佳约 0.74，要求 ≥1.15）→ **当前仍不可实盘**
 3. **4H/15m 六均线多周期** → 最近半年 32 组参数均未过门；冻结候选留出期 84 笔、PF 0.750、100→92.66 → **当前仍不可实盘**
+4. **六均线方向与执行诊断** → 证实原止损会洗掉部分后来走对的信号；事后筛出的“回踩确认 + 只做空 + 最长 24h”候选为 42 笔、PF 1.501、压力 PF 1.280，但它不是新样本外结果，只能冻结后做前向观察
 
 **硬门槛一律不放水。** 未全部通过时不得生成“可实盘配置”。
 
@@ -146,6 +147,45 @@ docker compose run --rm --no-deps --entrypoint python freqtrade \
 
 **最新结论：原版六均线逻辑可以作为低频扫描器继续观察，但当前数据不支持用于 100U→10000U 的实盘复利计划。**
 
+### 2.7 六均线方向与执行诊断（最新）
+
+用户认为看图时六均线信号方向经常正确，因此本轮没有继续盲目调均线参数，而是固定同一套 4H 条件，拆开比较三种 15m 执行：
+
+1. 六线首次密集收盘直接入场
+2. 六线再次突破
+3. 第一次回踩六线带并收回
+
+新增：
+
+- `user_data/strategy_lib/signal_path_analysis.py`：按原始止损距离计算 1/3/6/12/24h MFE、MAE、方向收益、先到目标还是先止损，以及止损后是否又到 3R/5R
+- `scripts/analyze_six_ma_signal_paths.py`：固定高周期参数比较三种触发
+- `scripts/analyze_six_ma_execution_variants.py`：比较方向、止损宽度、固定/混合止盈和时间退出
+- `scripts/report_six_ma_path_diagnostic.py`：生成中文报告、资金曲线和可复现结果
+
+核心诊断：
+
+| 15m 触发 | 完整路径 | 组合 PF | 压力 PF | 止损后又到 3R |
+|---|---:|---:|---:|---:|
+| 密集收盘直接入场 | 438 | 0.543 | 0.390 | 31.74% |
+| 再次突破 | 323 | 0.828 | 0.567 | 6.81% |
+| 第一次回踩并收回 | 138 | 0.962 | 0.703 | 11.59% |
+
+结论：用户的视觉判断部分成立——原密集区止损确实会把一部分后来方向正确的交易洗掉；但直接入场的假信号更多，净执行结果最差。三种方式中应继续观察第一次回踩确认。
+
+本轮在已经看过的同一半年数据上发现的前向候选：
+
+- 只做空；4H 六线压缩后向下突破；15m 第一次回踩并收回；下一根开盘执行
+- 4H 密集区最长 12 根 4H K；突破后最长等待 48 根 15m K；BTC/ETH 至少一个同向且两者均不反向
+- 原止损不放宽；2R 平 40% + 保本/EMA20 跟踪；取消 6h 无进展退出，最长持仓 24h
+- 3x；单笔风险 0.75%；组合风险 2%；最多 3 仓、同向最多 2 仓
+- 42 笔，胜率 50.00%，PF 1.501，双倍成本 PF 1.280，最大回撤 4.76%，100→107.41；压力成本后 100→104.11
+
+**证据状态：`diagnostic_only_requires_fresh_forward_data`。** 该候选是在查看这半年后选出的，不能把上述数字当成新的样本外验证，也不能生成实盘配置。下一步应冻结参数，用未来 60–90 天新数据观察，中途不得继续调参。
+
+报告：`reports/okx-sixma-path-diagnostic/FINAL_REPORT.md`
+
+验证：Docker 全量 `unittest` 共 118 项全部通过；路径完整性会拒绝中间缺失 15m K 线，报告会校验路径/执行两侧 manifest 的日期和来源一致性。
+
 ---
 
 ## 3. 关键路径与命令
@@ -172,7 +212,10 @@ docker compose run --rm --no-deps --entrypoint python freqtrade \
 | `user_data/backtest_results/okx-v2-halfyear/` | 近半年诊断（失败） |
 | `user_data/backtest_results/okx-v2-dualma-smoke/` | 双均线冒烟 |
 | `user_data/backtest_results/okx-v2-dualma-full/` | 双均线正式 32 候选（失败，交易够 PF 不够） |
+| `user_data/backtest_results/okx-sixma-paths-recent6m/` | 六均线三种 15m 触发的方向路径诊断 |
+| `user_data/backtest_results/okx-sixma-execution-recent6m-final/` | 回踩信号方向/止损/退出执行矩阵 |
 | `reports/okx-v2/FINAL_REPORT.md` | 压缩突破版中文结论（**不是**双均线最新结论） |
+| `reports/okx-sixma-path-diagnostic/FINAL_REPORT.md` | 最新六均线方向与执行诊断、前向候选和资金曲线 |
 
 ### 常用命令
 
@@ -202,6 +245,19 @@ docker compose run --rm --no-deps --entrypoint python freqtrade \
   scripts/report_okx_v2.py \
   --research-dir user_data/backtest_results/okx-v2-dualma-full \
   --output-dir reports/okx-v2-dualma
+
+# 六均线信号路径诊断
+docker compose run --rm --no-deps --entrypoint python freqtrade \
+  scripts/analyze_six_ma_signal_paths.py \
+  --start 2026-02-10 --end 2026-08-11 \
+  --output-dir user_data/backtest_results/okx-sixma-paths-recent6m
+
+# 六均线执行变体
+docker compose run --rm --no-deps --entrypoint python freqtrade \
+  scripts/analyze_six_ma_execution_variants.py \
+  --paths user_data/backtest_results/okx-sixma-paths-recent6m/pullback_rejection-paths.csv \
+  --start 2026-02-10 --end 2026-08-11 \
+  --output-dir user_data/backtest_results/okx-sixma-execution-recent6m-final
 ```
 
 运行环境注意：
@@ -217,6 +273,7 @@ docker compose run --rm --no-deps --entrypoint python freqtrade \
 - Cursor 双均线基线与交接已经提交：`f4cf071 research: record dual-ma negative baseline`
 - Cursor 之前的因果研究队列提交：`2741eac feat: finalize causal OKX research cohort`
 - 六均线多周期代码、测试、报告与本交接文档应作为本轮独立提交保存。
+- 六均线方向/执行诊断代码与测试：`2a45e06 feat: diagnose six-ma signal execution`
 - `user_data/backtest_results/` 继续被忽略；可复现实验结果，不把大量中间文件塞进 Git。
 - `reports/okx-v2-sixma-recent6m/` 是本轮需保留的轻量最终报告、资金曲线、交易和参数摘要。
 - 根目录 `logs/` 已加入忽略，避免运行日志污染工作树。
