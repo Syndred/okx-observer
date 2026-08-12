@@ -123,11 +123,69 @@ class OkxTrendCompressionScreenerTests(unittest.TestCase):
             ScreenerParameters(min_line_crossings=-1),
             ScreenerParameters(min_center_crossings=-1),
             ScreenerParameters(max_center_drift_atr=0.0),
+            ScreenerParameters(min_trailing_compressed_bars=0),
+            ScreenerParameters(min_line_crossing_bars=0),
         )
         for params in invalid:
             with self.subTest(params=params):
                 with self.assertRaises(ValueError):
                     coil_snapshot(frame, params)
+
+    def test_twelve_compressed_bars_with_only_one_bar_at_the_tail_are_not_ready(self) -> None:
+        frame = coil_frame(spreads=[1.0] * 11 + [5.0] * 4 + [1.0])
+        params = ScreenerParameters(
+            min_compressed_fraction=0.75,
+            min_trailing_compressed_bars=8,
+        )
+
+        snapshot = coil_snapshot(frame, params)
+
+        self.assertAlmostEqual(float(snapshot["compressed_fraction"]), 0.75)
+        self.assertEqual(int(snapshot["trailing_compressed_bars"]), 1)
+        self.assertFalse(bool(snapshot["coil_ready"]))
+
+    def test_pair_crossings_concentrated_in_one_transition_are_not_intertwined(self) -> None:
+        frame = transition_coil_frame(flip_rows=(8,))
+        params = ScreenerParameters(
+            min_line_crossings=4,
+            min_line_crossing_bars=3,
+        )
+
+        snapshot = coil_snapshot(frame, params)
+
+        self.assertGreaterEqual(int(snapshot["line_crossings"]), 4)
+        self.assertEqual(int(snapshot["line_crossing_bars"]), 1)
+        self.assertFalse(bool(snapshot["coil_ready"]))
+
+    def test_eight_trailing_compressed_bars_and_three_crossing_bars_meet_boundaries(self) -> None:
+        frame = transition_coil_frame(
+            flip_rows=(8, 10, 12),
+            spreads=[5.0] * 4 + [1.0] * 12,
+        )
+        params = ScreenerParameters(
+            min_compressed_fraction=0.75,
+            min_line_crossings=4,
+            min_line_crossing_bars=3,
+            min_trailing_compressed_bars=8,
+        )
+
+        snapshot = coil_snapshot(frame, params)
+
+        self.assertEqual(int(snapshot["trailing_compressed_bars"]), 12)
+        self.assertEqual(int(snapshot["line_crossing_bars"]), 3)
+        self.assertGreaterEqual(int(snapshot["line_crossings"]), 4)
+        self.assertTrue(bool(snapshot["coil_ready"]))
+
+    def test_missing_middle_15m_candle_is_not_treated_as_a_complete_coil(self) -> None:
+        frame = coil_frame()
+        extra = frame.iloc[-1:].copy()
+        extra["date"] = extra["date"] + pd.Timedelta(minutes=15)
+        frame = pd.concat([frame, extra], ignore_index=True).drop(index=7)
+
+        snapshot = coil_snapshot(frame, ScreenerParameters())
+
+        self.assertEqual(snapshot["coil_reason"], "non_contiguous_15m_data")
+        self.assertFalse(bool(snapshot["coil_ready"]))
 
     def test_long_trend_requires_close_ema_order_and_positive_slope(self) -> None:
         frame = trend_frame("long")
@@ -492,6 +550,39 @@ def coil_frame(
                 "close": close,
                 "volume": 1.0,
                 "atr14": atr,
+                **{column: float(values[line]) for line, column in enumerate(SIX)},
+            }
+        )
+    return pd.DataFrame(rows)
+
+
+def transition_coil_frame(
+    *,
+    flip_rows: tuple[int, ...],
+    spreads: list[float] | None = None,
+) -> pd.DataFrame:
+    """Make a coil whose ordered averages flip on selected bars only."""
+    count = 16
+    dates = pd.date_range(START, periods=count, freq="15min", tz=UTC)
+    spreads = spreads if spreads is not None else [1.0] * count
+    rows: list[dict[str, object]] = []
+    orientation = 1
+    for index, date in enumerate(dates):
+        if index in flip_rows:
+            orientation *= -1
+        center = 105.0
+        width = float(spreads[index])
+        values = center + orientation * np.linspace(-width / 2, width / 2, len(SIX))
+        close = center + (0.25 if index % 2 == 0 else -0.25)
+        rows.append(
+            {
+                "date": date,
+                "open": close,
+                "high": close + 0.2,
+                "low": close - 0.2,
+                "close": close,
+                "volume": 1.0,
+                "atr14": 2.0,
                 **{column: float(values[line]) for line, column in enumerate(SIX)},
             }
         )

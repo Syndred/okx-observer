@@ -17,7 +17,9 @@ class ScreenerParameters:
     min_age_days: int = 30
     coil_window_15m: int = 16
     min_compressed_fraction: float = 0.75
+    min_trailing_compressed_bars: int = 8
     min_line_crossings: int = 4
+    min_line_crossing_bars: int = 3
     min_center_crossings: int = 2
     max_center_drift_atr: float = 1.0
 
@@ -28,7 +30,9 @@ def _validate_parameters(params: ScreenerParameters) -> None:
         or params.min_age_days < 0
         or params.coil_window_15m < 2
         or not 0 < params.min_compressed_fraction <= 1
+        or not 1 <= params.min_trailing_compressed_bars <= params.coil_window_15m
         or params.min_line_crossings < 1
+        or not 1 <= params.min_line_crossing_bars < params.coil_window_15m
         or params.min_center_crossings < 1
         or params.max_center_drift_atr <= 0
     ):
@@ -128,7 +132,9 @@ def coil_snapshot(
         "current_compression_atr": np.nan,
         "compression_price": np.nan,
         "compressed_fraction": np.nan,
+        "trailing_compressed_bars": 0,
         "line_crossings": 0,
+        "line_crossing_bars": 0,
         "center_crossings": 0,
         "center_drift_atr": np.nan,
         "coil_score": 0.0,
@@ -162,10 +168,18 @@ def coil_snapshot(
     compressed_fraction = float(
         (compression_atr <= active.compression_15m_atr).mean()
     )
-    line_crossings = sum(
-        _sign_crossings(averages[left] - averages[right])
-        for left, right in combinations(SIX_AVERAGES, 2)
-    )
+    compressed_flags = (compression_atr <= active.compression_15m_atr).tolist()
+    trailing_compressed_bars = 0
+    for compressed in reversed(compressed_flags):
+        if not compressed:
+            break
+        trailing_compressed_bars += 1
+    crossing_counts_by_bar = np.zeros(len(window) - 1, dtype=int)
+    for left, right in combinations(SIX_AVERAGES, 2):
+        difference = (averages[left] - averages[right]).to_numpy(dtype=float)
+        crossing_counts_by_bar += ((difference[:-1] * difference[1:]) < 0).astype(int)
+    line_crossings = int(crossing_counts_by_bar.sum())
+    line_crossing_bars = int((crossing_counts_by_bar > 0).sum())
     center_crossings = _sign_crossings(numeric["close"] - cluster_center)
     median_atr = float(numeric["atr14"].median())
     center_drift_atr = (
@@ -175,16 +189,29 @@ def coil_snapshot(
 
     latest_compressed = current_compression <= active.compression_15m_atr
     sustained = compressed_fraction >= active.min_compressed_fraction
-    intertwined = line_crossings >= active.min_line_crossings
+    trailing_sustained = (
+        trailing_compressed_bars >= active.min_trailing_compressed_bars
+    )
+    intertwined = (
+        line_crossings >= active.min_line_crossings
+        and line_crossing_bars >= active.min_line_crossing_bars
+    )
     oscillating = center_crossings >= active.min_center_crossings
     sideways = center_drift_atr <= active.max_center_drift_atr
     coil_ready = bool(
-        latest_compressed and sustained and intertwined and oscillating and sideways
+        latest_compressed
+        and sustained
+        and trailing_sustained
+        and intertwined
+        and oscillating
+        and sideways
     )
     if not latest_compressed:
         reason = "latest_not_compressed"
     elif not sustained:
         reason = "compression_not_sustained"
+    elif not trailing_sustained:
+        reason = "compression_not_continuous_at_end"
     elif not intertwined:
         reason = "averages_not_intertwined"
     elif not oscillating:
@@ -196,6 +223,9 @@ def coil_snapshot(
 
     compression_score = compressed_fraction
     crossing_score = min(line_crossings / (2 * active.min_line_crossings), 1.0)
+    crossing_duration_score = min(
+        line_crossing_bars / (2 * active.min_line_crossing_bars), 1.0
+    )
     oscillation_score = min(
         center_crossings / (2 * active.min_center_crossings), 1.0
     )
@@ -203,8 +233,9 @@ def coil_snapshot(
         0.0, 1.0 - center_drift_atr / active.max_center_drift_atr
     )
     coil_score = 100 * (
-        0.35 * compression_score
-        + 0.30 * crossing_score
+        0.30 * compression_score
+        + 0.20 * crossing_score
+        + 0.15 * crossing_duration_score
         + 0.20 * oscillation_score
         + 0.15 * drift_score
     )
@@ -214,7 +245,9 @@ def coil_snapshot(
         "compression_price": float(cluster_high.iloc[-1] - cluster_low.iloc[-1])
         / close,
         "compressed_fraction": compressed_fraction,
+        "trailing_compressed_bars": int(trailing_compressed_bars),
         "line_crossings": int(line_crossings),
+        "line_crossing_bars": int(line_crossing_bars),
         "center_crossings": int(center_crossings),
         "center_drift_atr": float(center_drift_atr),
         "coil_score": float(coil_score),
@@ -306,7 +339,11 @@ def screen_instruments(
                 "compressed_fraction": float(
                     coil.get("compressed_fraction", np.nan)
                 ),
+                "trailing_compressed_bars": int(
+                    coil.get("trailing_compressed_bars", 0)
+                ),
                 "line_crossings": int(coil.get("line_crossings", 0)),
+                "line_crossing_bars": int(coil.get("line_crossing_bars", 0)),
                 "center_crossings": int(coil.get("center_crossings", 0)),
                 "center_drift_atr": float(
                     coil.get("center_drift_atr", np.nan)

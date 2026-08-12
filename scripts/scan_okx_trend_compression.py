@@ -95,15 +95,16 @@ def markdown_report(
         if frame.empty:
             return "当前没有符合条件的合约。"
         lines = [
-            "| 合约 | 方向 | 缠绕分 | 密集占比 | 六线穿越 | 价格穿越中心 | 中心漂移/ATR | 当前跨度/ATR | 最新价 |",
-            "|---|---|---:|---:|---:|---:|---:|---:|---:|",
+            "| 合约 | 方向 | 缠绕分 | 密集占比 | 末端连续密集 | 六线穿越次数/分布K数 | 价格穿越中心 | 中心漂移/ATR | 当前跨度/ATR | 最新价 |",
+            "|---|---|---:|---:|---:|---:|---:|---:|---:|---:|",
         ]
         for _, row in frame.iterrows():
             lines.append(
                 f"| {row['instrument']} | {'多' if row['direction'] == 'long' else '空'} | "
                 f"{float(row['coil_score']):.1f} | "
                 f"{float(row['compressed_fraction']):.0%} | "
-                f"{int(row['line_crossings'])} | "
+                f"{int(row['trailing_compressed_bars'])}根 | "
+                f"{int(row['line_crossings'])}/{int(row['line_crossing_bars'])} | "
                 f"{int(row['center_crossings'])} | "
                 f"{float(row['center_drift_atr']):.2f} | "
                 f"{float(row['compression_15m_atr']):.2f} | "
@@ -124,7 +125,8 @@ def markdown_report(
 - 趋势：日线和 4H 同时满足 EMA20/EMA60 同向、价格位于 EMA20 同侧、EMA60 斜率同向
 - 缠绕窗口：最近 {params.coil_window_15m} 根已收盘 15m K（{params.coil_window_15m / 4:g} 小时）
 - 持续密集：窗口内至少 {params.min_compressed_fraction:.0%} 的 K 线，六线跨度 ≤ {params.compression_15m_atr:.2f} ATR，且最新一根仍密集
-- 交织震荡：六线相互穿越至少 {params.min_line_crossings} 次，价格穿越六线中心至少 {params.min_center_crossings} 次
+- 密集连续性：窗口末端至少连续 {params.min_trailing_compressed_bars} 根 K 仍保持密集
+- 交织震荡：六线相互穿越至少 {params.min_line_crossings} 次，且交叉分布在至少 {params.min_line_crossing_bars} 根 K；价格穿越六线中心至少 {params.min_center_crossings} 次
 - 排除伪密集：六线中心在窗口内漂移不得超过 {params.max_center_drift_atr:.2f} ATR
 - 只使用已经收盘的 K 线；本表是筛选结果，不是自动开仓指令
 
@@ -150,7 +152,9 @@ def main() -> None:
     parser.add_argument("--min-age-days", type=int, default=30)
     parser.add_argument("--coil-window", type=int, default=16)
     parser.add_argument("--min-compressed-fraction", type=float, default=0.75)
+    parser.add_argument("--min-trailing-compressed-bars", type=int, default=8)
     parser.add_argument("--min-line-crossings", type=int, default=4)
+    parser.add_argument("--min-line-crossing-bars", type=int, default=3)
     parser.add_argument("--min-center-crossings", type=int, default=2)
     parser.add_argument("--max-center-drift-atr", type=float, default=1.0)
     parser.add_argument("--workers", type=int, default=6)
@@ -166,7 +170,9 @@ def main() -> None:
         min_age_days=args.min_age_days,
         coil_window_15m=args.coil_window,
         min_compressed_fraction=args.min_compressed_fraction,
+        min_trailing_compressed_bars=args.min_trailing_compressed_bars,
         min_line_crossings=args.min_line_crossings,
+        min_line_crossing_bars=args.min_line_crossing_bars,
         min_center_crossings=args.min_center_crossings,
         max_center_drift_atr=args.max_center_drift_atr,
     )
@@ -227,7 +233,9 @@ def main() -> None:
                     "min_age_days": params.min_age_days,
                     "coil_window_15m": params.coil_window_15m,
                     "min_compressed_fraction": params.min_compressed_fraction,
+                    "min_trailing_compressed_bars": params.min_trailing_compressed_bars,
                     "min_line_crossings": params.min_line_crossings,
+                    "min_line_crossing_bars": params.min_line_crossing_bars,
                     "min_center_crossings": params.min_center_crossings,
                     "max_center_drift_atr": params.max_center_drift_atr,
                     "trend": "daily_and_4h_ema20_above_or_below_ema60_with_slope",
