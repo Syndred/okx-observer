@@ -1,6 +1,6 @@
 # PROJECT_CONTEXT（GPT / 下一任 Agent 交接）
 
-更新时间：2026-08-11（六均线方向与执行诊断已完成）
+更新时间：2026-08-12（OKX 当前合约基础筛选器已完成）
 分支：`feat/v1-backtest`
 交接原因：Codex 额度用尽 → Cursor 续跑 → 用户要求写成文档交 GPT 继续。
 
@@ -14,6 +14,7 @@ OKX U 本位永续短线系统已完成数据管道与三套信号路径研究�
 2. **双均线 + 回踩 + 滚仓** → 交易数已够（≥300），但 **PF 过不了硬门槛**（最佳约 0.74，要求 ≥1.15）→ **当前仍不可实盘**
 3. **4H/15m 六均线多周期** → 最近半年 32 组参数均未过门；冻结候选留出期 84 笔、PF 0.750、100→92.66 → **当前仍不可实盘**
 4. **六均线方向与执行诊断** → 证实原止损会洗掉部分后来走对的信号；事后筛出的“回踩确认 + 只做空 + 最长 24h”候选为 42 笔、PF 1.501、压力 PF 1.280，但它不是新样本外结果，只能冻结后做前向观察
+5. **当前合约筛选器** → 扫描 OKX 全部 live USDT 永续，以日线+4H EMA20/60 同向趋势和 15m 六线密集筛选，先解决人工翻找大量合约的问题
 
 **硬门槛一律不放水。** 未全部通过时不得生成“可实盘配置”。
 
@@ -186,6 +187,23 @@ docker compose run --rm --no-deps --entrypoint python freqtrade \
 
 验证：Docker 全量 `unittest` 共 118 项全部通过；路径完整性会拒绝中间缺失 15m K 线，报告会校验路径/执行两侧 manifest 的日期和来源一致性。
 
+### 2.8 OKX 当前合约基础筛选器（2026-08-12）
+
+用户将近期优先级调整为先解决“在大量合约里找标的耗时”的问题，因此新增当前行情扫描器，暂不自动开仓：
+
+- `scripts/scan_okx_trend_compression.py`：分阶段扫描全部 live USDT 永续；先日线，再 4H，最后只对同向合约请求 15m，避免无效请求
+- `user_data/strategy_lib/okx_trend_compression_screener.py`：纯函数趋势、密集度、状态和稳定排序
+- `scripts/scan_okx_now.sh`：一条命令重复扫描
+- `reports/okx-screener/LATEST.md`：当前中文清单；`latest.csv` 保留全部合约状态
+
+基础规则：上市至少 30 天；日线和 4H 同时满足价格位于 EMA20 趋势侧、EMA20/EMA60 排列和 EMA60 三根斜率同向；15m 的 MA/EMA 20/60/120 六线跨度 ≤2 ATR。A 级额外要求日线和 4H 六线均完整顺排。
+
+2026-08-12 08:13 左右的实时扫描：427 个 live USDT 永续，402 个满足基础交易资格，日线有趋势 238 个，日线与 4H 同向 156 个，基础候选 31 个，其中 A 级 7 个；行情请求异常 0。行情会变化，交易前必须重跑。
+
+用户关注合约当时状态：XRP 日线/4H 同为空，但 15m 密集度约 2.53 ATR，未到 2.0 阈值；BEAT 日线中性；BLEND 日线空但 4H 中性；KO 上市约 1 天，数据不足且未满 30 天。
+
+全量 Docker `unittest` 更新为 130 项全部通过。
+
 ---
 
 ## 3. 关键路径与命令
@@ -216,6 +234,7 @@ docker compose run --rm --no-deps --entrypoint python freqtrade \
 | `user_data/backtest_results/okx-sixma-execution-recent6m-final/` | 回踩信号方向/止损/退出执行矩阵 |
 | `reports/okx-v2/FINAL_REPORT.md` | 压缩突破版中文结论（**不是**双均线最新结论） |
 | `reports/okx-sixma-path-diagnostic/FINAL_REPORT.md` | 最新六均线方向与执行诊断、前向候选和资金曲线 |
+| `reports/okx-screener/` | 当前 OKX 趋势/密集筛选清单、全量 CSV 和运行参数 |
 
 ### 常用命令
 
@@ -258,6 +277,9 @@ docker compose run --rm --no-deps --entrypoint python freqtrade \
   --paths user_data/backtest_results/okx-sixma-paths-recent6m/pullback_rejection-paths.csv \
   --start 2026-02-10 --end 2026-08-11 \
   --output-dir user_data/backtest_results/okx-sixma-execution-recent6m-final
+
+# 当前 OKX 合约筛选
+./scripts/scan_okx_now.sh
 ```
 
 运行环境注意：

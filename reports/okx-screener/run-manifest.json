@@ -1,0 +1,15 @@
+{
+  "retrievedAt": "2026-08-12T00:13:31.076113+00:00",
+  "parameters": {
+    "compression_15m_atr": 2.0,
+    "min_age_days": 30,
+    "trend": "daily_and_4h_ema20_above_or_below_ema60_with_slope",
+    "compression": "15m_six_average_spread_divided_by_atr14"
+  },
+  "liveUsdtSwaps": 427,
+  "eligibleTradeContracts": 402,
+  "dailyTrending": 238,
+  "dailyAnd4hAligned": 156,
+  "candidateCount": 31,
+  "errors": {}
+}
