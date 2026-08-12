@@ -1,15 +1,22 @@
 {
-  "retrievedAt": "2026-08-12T00:13:31.076113+00:00",
+  "retrievedAt": "2026-08-12T01:17:04.708260+00:00",
   "parameters": {
     "compression_15m_atr": 2.0,
     "min_age_days": 30,
+    "coil_window_15m": 16,
+    "min_compressed_fraction": 0.75,
+    "min_trailing_compressed_bars": 8,
+    "min_line_crossings": 4,
+    "min_line_crossing_bars": 3,
+    "min_center_crossings": 2,
+    "max_center_drift_atr": 1.0,
     "trend": "daily_and_4h_ema20_above_or_below_ema60_with_slope",
-    "compression": "15m_six_average_spread_divided_by_atr14"
+    "coil": "sustained_compression_plus_six_line_crossings_plus_price_center_oscillation_minus_center_drift"
   },
   "liveUsdtSwaps": 427,
   "eligibleTradeContracts": 402,
   "dailyTrending": 238,
   "dailyAnd4hAligned": 156,
-  "candidateCount": 31,
+  "candidateCount": 11,
   "errors": {}
 }
