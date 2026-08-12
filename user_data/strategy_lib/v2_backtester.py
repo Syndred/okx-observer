@@ -23,6 +23,8 @@ class BacktestOptions:
     normal_trade_risk: float = 0.0075
     reduced_trade_risk: float = 0.005
     max_portfolio_risk: float = 0.02
+    collateral_fraction: float | None = None
+    margin_take_profit: float = 0.50
     missing_funding_rate_per_8h: float = 0.0001
     pyramid_enabled: bool = False
     pyramid_trigger_r: float = 1.0
@@ -182,10 +184,16 @@ def simulate_portfolio(
     funding_frames: dict[str, pd.DataFrame] | None = None,
 ) -> BacktestResult:
     active = options or BacktestOptions()
-    if active.exit_mode not in {"hybrid", "fixed3", "fixed5"}:
+    if active.exit_mode not in {"hybrid", "fixed3", "fixed5", "margin"}:
         raise ValueError("unsupported exit_mode")
-    if active.time_mode not in {"default", "none", "24h"}:
+    if active.time_mode not in {"default", "none", "24h", "72h"}:
         raise ValueError("unsupported time_mode")
+    if active.collateral_fraction is not None and not 0 < active.collateral_fraction <= 1:
+        raise ValueError("collateral_fraction must be in (0, 1]")
+    if active.margin_take_profit <= 0:
+        raise ValueError("margin_take_profit must be positive")
+    if active.collateral_fraction is not None and active.pyramid_enabled:
+        raise ValueError("collateral sizing cannot be combined with pyramiding")
     data = _normalize_frames(frames)
     funding_data: dict[str, pd.DataFrame] = {}
     for pair, frame in (funding_frames or {}).items():
@@ -430,13 +438,22 @@ def simulate_portfolio(
                     sizing_equity,
                     active.initial_equity * active.compounding_cap_multiple,
                 )
-            intended_risk = sizing_equity * budget
             planned_loss_ratio = (
                 stop_distance / entry
                 + 2 * active.fee_rate
                 + active.slippage_rate
             )
-            notional = intended_risk / planned_loss_ratio
+            intended_risk = sizing_equity * budget
+            if active.collateral_fraction is None:
+                notional = intended_risk / planned_loss_ratio
+            else:
+                allocated_notional = (
+                    sizing_equity
+                    * active.collateral_fraction
+                    * active.leverage
+                )
+                risk_capped_notional = intended_risk / planned_loss_ratio
+                notional = min(allocated_notional, risk_capped_notional)
             used_collateral = sum(
                 position.amount
                 * (
@@ -521,14 +538,26 @@ def simulate_portfolio(
                 continue
 
             risk_price = abs(position.entry - position.initial_stop)
-            hard_r = 3.0 if active.exit_mode == "fixed3" else 5.0
-            target = position.entry + (
-                risk_price * hard_r * (1 if position.side == "long" else -1)
-            )
+            if active.exit_mode == "margin":
+                target_move = (
+                    position.entry
+                    * active.margin_take_profit
+                    / active.leverage
+                )
+                target = position.entry + (
+                    target_move * (1 if position.side == "long" else -1)
+                )
+                target_reason = f"margin_{active.margin_take_profit:g}"
+            else:
+                hard_r = 3.0 if active.exit_mode == "fixed3" else 5.0
+                target = position.entry + (
+                    risk_price * hard_r * (1 if position.side == "long" else -1)
+                )
+                target_reason = f"fixed_{int(hard_r)}r"
             target_hit = high >= target if position.side == "long" else low <= target
             if target_hit:
                 equity, fill, _ = _close_amount(position, position.amount, target, equity, active)
-                result = _finalize(position, timestamp, fill, f"fixed_{int(hard_r)}r")
+                result = _finalize(position, timestamp, fill, target_reason)
                 trades.append(result)
                 del positions[pair]
                 continue
@@ -569,6 +598,8 @@ def simulate_portfolio(
                 ).full_exit_reason
             elif active.time_mode == "24h" and age_hours >= 24:
                 full_exit_reason = "all_24h"
+            elif active.time_mode == "72h" and age_hours >= 72:
+                full_exit_reason = "all_72h"
             if full_exit_reason:
                 equity, fill, _ = _close_amount(position, position.amount, close, equity, active)
                 result = _finalize(position, timestamp, fill, full_exit_reason)

@@ -68,6 +68,20 @@ class OkxCandleTests(unittest.TestCase):
 
         self.assertTrue(result.empty)
 
+    def test_daily_resampling_requires_all_ninety_six_15m_candles(self) -> None:
+        complete = confirmed_candles(
+            [row(index * 900_000, 100 + index) for index in range(96)]
+        )
+
+        daily = resample_confirmed(complete, "1d")
+        missing_child = resample_confirmed(complete.drop(index=10), "1d")
+
+        self.assertEqual(len(daily), 1)
+        self.assertEqual(daily.iloc[0]["date"], pd.Timestamp("1970-01-01", tz="UTC"))
+        self.assertEqual(daily.iloc[0]["open"], 100.0)
+        self.assertEqual(daily.iloc[0]["close"], 195.5)
+        self.assertTrue(missing_child.empty)
+
     def test_mark_parser_removes_unconfirmed_candle(self) -> None:
         result = mark_candles(
             [

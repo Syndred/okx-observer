@@ -91,16 +91,18 @@ def funding_events(rows: list[dict[str, str]]) -> pd.DataFrame:
 
 def resample_confirmed(frame: pd.DataFrame, rule: str) -> pd.DataFrame:
     normalized = rule.lower()
-    expected = {"1h": 4, "4h": 16}.get(normalized)
+    expected = {"1h": 4, "4h": 16, "1d": 96}.get(normalized)
     if expected is None:
-        raise ValueError("rule must be '1h' or '4h'")
+        raise ValueError("rule must be '1h', '4h', or '1d'")
     if frame.empty:
         return frame.copy()
     source = frame.sort_values("date").drop_duplicates("date", keep="last").copy()
     source["row_count"] = 1
-    groups = source.set_index("date").resample(
-        normalized, label="left", closed="left", origin="epoch"
-    )
+    resample_options = {"label": "left", "closed": "left"}
+    if normalized != "1d":
+        resample_options["origin"] = "epoch"
+    pandas_rule = "1D" if normalized == "1d" else normalized
+    groups = source.set_index("date").resample(pandas_rule, **resample_options)
     output = groups.agg(
         {
             "open": "first",
