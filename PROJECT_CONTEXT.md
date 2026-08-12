@@ -1,6 +1,6 @@
 # PROJECT_CONTEXT（GPT / 下一任 Agent 交接）
 
-更新时间：2026-08-12（日线/4H趋势 + 15m密集 + 分仓滚动复利验证已完成）
+更新时间：2026-08-12（六均线三阶段实时筛选器已完成并实扫）
 分支：`feat/v1-backtest`
 交接原因：Codex 额度用尽 → Cursor 续跑 → 用户要求写成文档交 GPT 继续。
 
@@ -16,6 +16,7 @@ OKX U 本位永续短线系统已完成数据管道与三套信号路径研究�
 4. **六均线方向与执行诊断** → 证实原止损会洗掉部分后来走对的信号；事后筛出的“回踩确认 + 只做空 + 最长 24h”候选为 42 笔、PF 1.501、压力 PF 1.280，但它不是新样本外结果，只能冻结后做前向观察
 5. **当前合约筛选器** → 扫描 OKX 全部 live USDT 永续，以日线+4H EMA20/60 同向趋势和 15m 六线持续缠绕筛选，先解决人工翻找大量合约的问题
 6. **30%/40%保证金滚动复利** → 选择段曾100→192，但冻结候选留出期28笔、PF 0.719、100→79.41，未通过；分仓降低单笔爆仓风险，但没有改善信号期望值
+7. **六均线三阶段实时筛选器** → 已按“4H持续缠绕/突破 → 突破后15m重新缠绕/突破 → 第一次回踩收回”实现；首次严格实扫没有正式候选，11个仅列为接近阶段观察，不降低阈值凑名单
 
 **硬门槛一律不放水。** 未全部通过时不得生成“可实盘配置”。
 
@@ -225,6 +226,35 @@ docker compose run --rm --no-deps --entrypoint python freqtrade \
 
 报告：`reports/okx-trend-compression-rolling/FINAL_REPORT.md`。全量 Docker `unittest` 更新为147项全部通过。
 
+### 2.10 六均线三阶段实时筛选器（最新）
+
+按用户对 BEAT 图形的复核，将“当前单根密集”升级为完整的因果状态机：
+
+1. `watch_both_coiled`：4H与15m当前都经过一段时间的持续密集、六线交织和价格围绕中心震荡，只观察，不定方向。
+2. `ready_4h_breakout_15m_coiled`：4H成熟缠绕已突破；只接受突破后重新形成的15m成熟缠绕。
+3. `wait_first_pullback`：15m已同向突破；突破K不能兼任回踩K，只等待后续第一次触碰。
+4. `entry_confirmed`：第一次触碰后收回；止损放15m密集区远侧，仅下一根15m开盘前有效。
+
+核心约束：旧episode离开密集后冻结，不能被后续滚动窗口重新混入；4H/15m等待期间缺K直接失效；第一次触碰失守后不得等待第二次；日线只作偏向，BTC/ETH只在加密类最终确认时过滤；非加密合约不使用BTC/ETH过滤。
+
+新增：
+
+- `user_data/strategy_lib/six_ma_three_stage_screener.py`
+- `scripts/scan_okx_three_stage.py` 与一键脚本 `scripts/scan_okx_three_stage.sh`
+- `reports/okx-three-stage-screener/`：四阶段清单、全量CSV、manifest和人工验收
+
+2026-08-12 首次严格实扫：431个 live USDT永续，402个交易合约满足上市至少30天，日线/4H/15m请求错误均为0；四类正式状态当前都是0。另有7个4H突破仍有效但15m尚未重新缠绕，4个15m setup已过期，仅列入“接近下一阶段”，不视为开仓候选。当前最接近的是 MORPHO：15m最近16根全部密集、六线穿越12次分布9根，但价格只穿越六线中心1次，未达到至少2次的震荡要求。
+
+运行：
+
+```bash
+./scripts/scan_okx_three_stage.sh
+```
+
+本筛选器解决的是“从大量合约中找形态”，不是盈利验证，也未生成自动实盘配置。旧版 `reports/okx-screener/` 保留且不覆盖。
+
+验证：新状态机、实时报告与全部旧模块共178项 Docker `unittest` 全部通过；Python语法检查和差异空白检查通过。容器未安装 `ruff`，因此未把该项误报为已运行。
+
 ---
 
 ## 3. 关键路径与命令
@@ -256,6 +286,7 @@ docker compose run --rm --no-deps --entrypoint python freqtrade \
 | `reports/okx-v2/FINAL_REPORT.md` | 压缩突破版中文结论（**不是**双均线最新结论） |
 | `reports/okx-sixma-path-diagnostic/FINAL_REPORT.md` | 最新六均线方向与执行诊断、前向候选和资金曲线 |
 | `reports/okx-screener/` | 当前 OKX 趋势/密集筛选清单、全量 CSV 和运行参数 |
+| `reports/okx-three-stage-screener/` | 4H/15m六均线三阶段实时清单、全量CSV、manifest和人工验收 |
 | `reports/okx-trend-compression-rolling/` | 日线/4H趋势、15m密集、30%/40%保证金滚动复利验证 |
 
 ### 常用命令

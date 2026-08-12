@@ -141,7 +141,7 @@ Expected: FAIL，因为扫描脚本不存在。
 
 Run: 同 Step 2。Expected: 全部 PASS。
 
-- [ ] **Step 6: 提交**
+- [x] **Step 6: 提交**
 
 ```bash
 git add scripts/scan_okx_three_stage.py scripts/scan_okx_three_stage.sh \
@@ -163,7 +163,7 @@ git commit -m "feat: add live OKX three-stage screener"
 - Consumes Task 2 CLI和Task 1状态字段。
 - Produces可复现的当前行情快照和中文验收结论。
 
-- [ ] **Step 1: 运行当前OKX全市场扫描**
+- [x] **Step 1: 运行当前OKX全市场扫描**
 
 ```bash
 docker compose run --rm --no-deps --entrypoint python freqtrade \
@@ -174,15 +174,15 @@ docker compose run --rm --no-deps --entrypoint python freqtrade \
 
 Expected: exit 0，manifest保存各阶段数量和请求错误。
 
-- [ ] **Step 2: 人工图形验收**
+- [x] **Step 2: 人工图形验收**
 
 从每个非空阶段取最多3个合约，重新读取其最近150根4H/15m原始K和六线数值，核对：持续密集、冻结区间、突破时间、第一次触碰和报告状态一致。每个高分排除原因也抽查至少3个；当前无某阶段时使用历史回放fixture，不降低阈值。
 
-- [ ] **Step 3: 更新中文交接**
+- [x] **Step 3: 更新中文交接**
 
 在 `PROJECT_CONTEXT.md` 记录新旧筛选器差异、当前各阶段数量、候选名称、运行命令、测试数量和证据边界；不得把当前快照写成盈利证明。
 
-- [ ] **Step 4: 全量验证**
+- [x] **Step 4: 全量验证**
 
 ```bash
 python3 -m py_compile \
@@ -197,7 +197,7 @@ docker compose run --rm --no-deps --entrypoint python freqtrade \
 
 Expected: 所有命令 exit 0，完整测试0失败。
 
-- [ ] **Step 5: 提交结果和交接**
+- [x] **Step 5: 提交结果和交接**
 
 ```bash
 git add reports/okx-three-stage-screener PROJECT_CONTEXT.md
