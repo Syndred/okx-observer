@@ -7,6 +7,7 @@ import pandas as pd
 
 from user_data.strategy_lib.okx_trend_compression_screener import (
     ScreenerParameters,
+    coil_snapshot,
     screen_instruments,
     trend_snapshot,
 )
@@ -19,6 +20,115 @@ SIX = ("ma20", "ma60", "ma120", "ema20", "ema60", "ema120")
 
 
 class OkxTrendCompressionScreenerTests(unittest.TestCase):
+    def test_single_instantaneous_compression_is_not_a_coil(self) -> None:
+        frame = coil_frame(spreads=[5.0] * 15 + [1.0])
+
+        snapshot = coil_snapshot(frame, ScreenerParameters())
+
+        self.assertAlmostEqual(float(snapshot["current_compression_atr"]), 0.5)
+        self.assertAlmostEqual(float(snapshot["compressed_fraction"]), 1 / 16)
+        self.assertFalse(bool(snapshot["coil_ready"]))
+
+        result = screen_one(
+            trend_frame("long"), trend_frame("long"), frame
+        )
+        self.assertFalse(bool(result["candidate"]))
+        self.assertEqual(result["status"], "aligned_coil_forming")
+
+    def test_parallel_tightly_packed_lines_without_crossings_are_not_a_coil(self) -> None:
+        frame = coil_frame(parallel=True)
+
+        snapshot = coil_snapshot(frame, ScreenerParameters())
+
+        self.assertGreaterEqual(float(snapshot["compressed_fraction"]), 0.75)
+        self.assertEqual(int(snapshot["line_crossings"]), 0)
+        self.assertFalse(bool(snapshot["coil_ready"]))
+
+    def test_sustained_coil_requires_density_line_crossings_price_crossings_and_drift(self) -> None:
+        frame = coil_frame(spreads=[5.0] * 4 + [1.0] * 12)
+        params = ScreenerParameters(
+            coil_window_15m=16,
+            min_compressed_fraction=0.75,
+            min_line_crossings=4,
+            min_center_crossings=2,
+            max_center_drift_atr=1.0,
+        )
+
+        snapshot = coil_snapshot(frame, params)
+
+        self.assertAlmostEqual(float(snapshot["current_compression_atr"]), 0.5)
+        self.assertAlmostEqual(
+            float(snapshot["compression_price"]),
+            1 / float(snapshot["close"]),
+        )
+        self.assertGreaterEqual(float(snapshot["compressed_fraction"]), 0.75)
+        self.assertGreaterEqual(int(snapshot["line_crossings"]), 4)
+        self.assertGreaterEqual(int(snapshot["center_crossings"]), 2)
+        self.assertLessEqual(float(snapshot["center_drift_atr"]), 1.0)
+        self.assertTrue(bool(snapshot["coil_ready"]))
+        self.assertIn("coil_score", snapshot)
+        self.assertEqual(snapshot["date"], frame.iloc[-1]["date"])
+        self.assertAlmostEqual(float(snapshot["close"]), float(frame.iloc[-1]["close"]))
+
+        result = screen_one(trend_frame("long"), trend_frame("long"), frame, params=params)
+        self.assertTrue(bool(result["candidate"]))
+        self.assertEqual(result["status"], "candidate_coiled_waiting_for_expansion")
+        for column in (
+            "current_compression_atr",
+            "compression_price",
+            "compressed_fraction",
+            "line_crossings",
+            "center_crossings",
+            "center_drift_atr",
+            "coil_score",
+            "coil_ready",
+        ):
+            self.assertIn(column, result.index)
+
+    def test_center_drift_above_one_atr_invalidates_an_otherwise_crossing_coil(self) -> None:
+        frame = coil_frame(centers=np.linspace(100.0, 104.0, 16), atr=1.0)
+        params = ScreenerParameters(max_center_drift_atr=1.0)
+
+        snapshot = coil_snapshot(frame, params)
+
+        self.assertGreater(float(snapshot["center_drift_atr"]), 1.0)
+        self.assertFalse(bool(snapshot["coil_ready"]))
+        result = screen_one(trend_frame("long"), trend_frame("long"), frame, params=params)
+        self.assertFalse(bool(result["candidate"]))
+        self.assertEqual(result["status"], "aligned_coil_forming")
+
+    def test_coil_thresholds_are_inclusive(self) -> None:
+        frame = coil_frame(spreads=[1.0] * 16, atr=2.0)
+        params = ScreenerParameters(
+            compression_15m_atr=0.5,
+            coil_window_15m=16,
+            min_compressed_fraction=0.75,
+            min_line_crossings=4,
+            min_center_crossings=2,
+            max_center_drift_atr=1.0,
+        )
+
+        snapshot = coil_snapshot(frame, params)
+
+        self.assertAlmostEqual(float(snapshot["current_compression_atr"]), 0.5)
+        self.assertAlmostEqual(float(snapshot["compressed_fraction"]), 1.0)
+        self.assertTrue(bool(snapshot["coil_ready"]))
+
+    def test_coil_parameters_must_be_valid(self) -> None:
+        frame = coil_frame()
+        invalid = (
+            ScreenerParameters(coil_window_15m=0),
+            ScreenerParameters(min_compressed_fraction=-0.01),
+            ScreenerParameters(min_compressed_fraction=1.01),
+            ScreenerParameters(min_line_crossings=-1),
+            ScreenerParameters(min_center_crossings=-1),
+            ScreenerParameters(max_center_drift_atr=0.0),
+        )
+        for params in invalid:
+            with self.subTest(params=params):
+                with self.assertRaises(ValueError):
+                    coil_snapshot(frame, params)
+
     def test_long_trend_requires_close_ema_order_and_positive_slope(self) -> None:
         frame = trend_frame("long")
 
@@ -56,12 +166,12 @@ class OkxTrendCompressionScreenerTests(unittest.TestCase):
     def test_daily_and_four_hour_trends_must_align(self) -> None:
         daily = trend_frame("long")
         four_hour = trend_frame("long")
-        compressed = compression_frame("long", spread=1.0)
+        compressed = coil_frame()
 
         aligned = screen_one(daily, four_hour, compressed)
         self.assertTrue(bool(aligned["candidate"]))
         self.assertEqual(aligned["direction"], "long")
-        self.assertEqual(aligned["status"], "candidate")
+        self.assertEqual(aligned["status"], "candidate_coiled_waiting_for_expansion")
 
         opposed = screen_one(daily, trend_frame("short"), compressed)
         self.assertFalse(bool(opposed["candidate"]))
@@ -71,18 +181,18 @@ class OkxTrendCompressionScreenerTests(unittest.TestCase):
         at_threshold = screen_one(
             trend_frame("long"),
             trend_frame("long"),
-            compression_frame("long", spread=4.0, atr=2.0),
+            coil_frame(spreads=[4.0] * 16, atr=2.0),
         )
         above_threshold = screen_one(
             trend_frame("long"),
             trend_frame("long"),
-            compression_frame("long", spread=4.02, atr=2.0),
+            coil_frame(spreads=[4.0] * 15 + [4.02], atr=2.0),
         )
 
         self.assertAlmostEqual(float(at_threshold["compression_15m_atr"]), 2.0)
         self.assertTrue(bool(at_threshold["candidate"]))
         self.assertFalse(bool(above_threshold["candidate"]))
-        self.assertEqual(above_threshold["status"], "aligned_waiting_for_compression")
+        self.assertEqual(above_threshold["status"], "aligned_coil_forming")
 
     def test_invalid_atr_or_missing_six_line_is_insufficient_15m_data(self) -> None:
         invalid_atr = compression_frame("long", spread=1.0, atr=0.0)
@@ -112,14 +222,14 @@ class OkxTrendCompressionScreenerTests(unittest.TestCase):
         recent = screen_one(
             trend_frame("long"),
             trend_frame("long"),
-            compression_frame("long"),
+            coil_frame(),
             age_days=29,
             eligibility_reason="listed_less_than_30_days",
         )
         exactly_old_enough = screen_one(
             trend_frame("long"),
             trend_frame("long"),
-            compression_frame("long"),
+            coil_frame(),
             age_days=30,
         )
 
@@ -131,7 +241,7 @@ class OkxTrendCompressionScreenerTests(unittest.TestCase):
         result = screen_one(
             trend_frame("long"),
             trend_frame("long"),
-            compression_frame("long"),
+            coil_frame(),
             eligibility_reason="unknown_category",
         )
 
@@ -140,10 +250,10 @@ class OkxTrendCompressionScreenerTests(unittest.TestCase):
 
     def test_short_and_long_candidates_have_symmetric_compression_metrics(self) -> None:
         long_result = screen_one(
-            trend_frame("long"), trend_frame("long"), compression_frame("long", spread=1.0)
+            trend_frame("long"), trend_frame("long"), coil_frame("long")
         )
         short_result = screen_one(
-            trend_frame("short"), trend_frame("short"), compression_frame("short", spread=1.0)
+            trend_frame("short"), trend_frame("short"), coil_frame("short")
         )
 
         self.assertTrue(bool(long_result["candidate"]))
@@ -164,9 +274,9 @@ class OkxTrendCompressionScreenerTests(unittest.TestCase):
         daily = {instrument["instId"]: trend_frame("long", rows=3) for instrument in instruments}
         four_hour = {instrument["instId"]: trend_frame("long", rows=3) for instrument in instruments}
         fifteen = {
-            "BBB-USDT-SWAP": compression_frame("long", spread=2.0, rows=3),
-            "AAA-USDT-SWAP": compression_frame("long", spread=1.0, rows=3),
-            "WAIT-USDT-SWAP": compression_frame("long", spread=5.0, rows=3),
+            "BBB-USDT-SWAP": coil_frame("long", spread=2.0),
+            "AAA-USDT-SWAP": coil_frame("long", spread=1.0),
+            "WAIT-USDT-SWAP": coil_frame("long", spread=5.0),
         }
 
         result = screen_instruments(instruments, daily, four_hour, fifteen)
@@ -174,9 +284,9 @@ class OkxTrendCompressionScreenerTests(unittest.TestCase):
         self.assertEqual(result["instrument"].tolist(), ["AAA-USDT-SWAP", "BBB-USDT-SWAP", "WAIT-USDT-SWAP"])
         self.assertEqual(result["instrument"].nunique(), len(instruments))
         self.assertEqual(int(result["candidate"].sum()), 2)
-        self.assertEqual(result.loc[0, "status"], "candidate")
-        self.assertEqual(result.loc[1, "status"], "candidate")
-        self.assertEqual(result.loc[2, "status"], "aligned_waiting_for_compression")
+        self.assertEqual(result.loc[0, "status"], "candidate_coiled_waiting_for_expansion")
+        self.assertEqual(result.loc[1, "status"], "candidate_coiled_waiting_for_expansion")
+        self.assertEqual(result.loc[2, "status"], "aligned_coil_forming")
 
     def test_future_rows_do_not_change_a_snapshot_cut_at_the_same_as_of(self) -> None:
         daily = trend_frame("long")
@@ -338,6 +448,54 @@ def compression_frame(
             **{column: [float(averages[index])] * rows for index, column in enumerate(SIX)},
         }
     )
+
+
+def coil_frame(
+    direction: str = "long",
+    *,
+    spreads: list[float] | None = None,
+    spread: float = 1.0,
+    atr: float = 2.0,
+    centers: np.ndarray | None = None,
+    parallel: bool = False,
+) -> pd.DataFrame:
+    """Build a 16-bar coil with deterministic line and price crossings."""
+    count = 16
+    dates = pd.date_range(START, periods=count, freq="15min", tz=UTC)
+    spreads = spreads if spreads is not None else [spread] * count
+    if len(spreads) != count:
+        raise ValueError("coil fixture requires exactly 16 spreads")
+    centers = np.asarray(centers if centers is not None else [105.0] * count, dtype=float)
+    if len(centers) != count:
+        raise ValueError("coil fixture requires exactly 16 centers")
+    rows: list[dict[str, object]] = []
+    for index, date in enumerate(dates):
+        width = float(spreads[index])
+        center = float(centers[index])
+        if parallel:
+            values = np.linspace(center - width / 2, center + width / 2, len(SIX))
+        else:
+            phase = 1 if index % 2 == 0 else -1
+            values = center + phase * np.linspace(-width / 2, width / 2, len(SIX))
+        if direction == "short":
+            values = 195.0 - values
+            center = 195.0 - center
+            close = center + (0.25 if index % 2 == 0 else -0.25)
+        else:
+            close = center + (0.25 if index % 2 == 0 else -0.25)
+        rows.append(
+            {
+                "date": date,
+                "open": close,
+                "high": close + 0.2,
+                "low": close - 0.2,
+                "close": close,
+                "volume": 1.0,
+                "atr14": atr,
+                **{column: float(values[line]) for line, column in enumerate(SIX)},
+            }
+        )
+    return pd.DataFrame(rows)
 
 
 if __name__ == "__main__":
