@@ -1,6 +1,6 @@
 # PROJECT_CONTEXT（GPT / 下一任 Agent 交接）
 
-更新时间：2026-08-12（OKX 当前合约基础筛选器已完成）
+更新时间：2026-08-12（日线/4H趋势 + 15m密集 + 分仓滚动复利验证已完成）
 分支：`feat/v1-backtest`
 交接原因：Codex 额度用尽 → Cursor 续跑 → 用户要求写成文档交 GPT 继续。
 
@@ -15,6 +15,7 @@ OKX U 本位永续短线系统已完成数据管道与三套信号路径研究�
 3. **4H/15m 六均线多周期** → 最近半年 32 组参数均未过门；冻结候选留出期 84 笔、PF 0.750、100→92.66 → **当前仍不可实盘**
 4. **六均线方向与执行诊断** → 证实原止损会洗掉部分后来走对的信号；事后筛出的“回踩确认 + 只做空 + 最长 24h”候选为 42 笔、PF 1.501、压力 PF 1.280，但它不是新样本外结果，只能冻结后做前向观察
 5. **当前合约筛选器** → 扫描 OKX 全部 live USDT 永续，以日线+4H EMA20/60 同向趋势和 15m 六线密集筛选，先解决人工翻找大量合约的问题
+6. **30%/40%保证金滚动复利** → 选择段曾100→192，但冻结候选留出期28笔、PF 0.719、100→79.41，未通过；分仓降低单笔爆仓风险，但没有改善信号期望值
 
 **硬门槛一律不放水。** 未全部通过时不得生成“可实盘配置”。
 
@@ -204,6 +205,26 @@ docker compose run --rm --no-deps --entrypoint python freqtrade \
 
 全量 Docker `unittest` 更新为 130 项全部通过。
 
+### 2.9 日线 + 4H 趋势 / 15m 密集 / 分仓滚动复利（最新）
+
+按用户真实资金管理方式新增独立研究：每次以当时账户权益的30%或40%作保证金，使用3x/5x；平仓后按新权益重新计算下一笔，不是持仓内加码。若密集区止损过远，按账户10%单笔计划损失和20%组合开放风险自动缩小仓位；最多3仓、同向最多2仓。
+
+信号：已收盘日线与4H的 EMA20/60 趋势同向，15m MA/EMA 20/60/120 六线从非密集进入 ≤2 ATR 的密集状态，下一根15m开盘执行。比较基础趋势/严格六线、多空、30%/40%、3x/5x、账户20%/30%盈利目标、24h/72h，共96组。
+
+选择段（2026-02-10 至 2026-06-11）冻结第一名：基础趋势、只做多、30%保证金、3x、账户30%目标、72h；86笔、PF 1.470、100→192.42。
+
+伪留出（2026-06-11 至 2026-08-11）：
+
+- 28笔，胜率21.43%，PF 0.719，压力PF 0.676
+- 100→79.41；压力成本后75.61；最大回撤35.31%；最长连续亏损10
+- 22笔初始止损合计 -73.25；仅1笔达到保证金100% ROI 目标
+- 100U盈利封顶 sizing（盈利时不继续放大、亏损时仍减仓）终值82.93，说明滚动复利把逆风期亏损进一步放大
+- 约30%回撤保护在6月23日前后停止新仓；`status=research_failed`
+
+结论：当前“高周期同向 + 15m一密集就开”的入场过早，不能实盘。下一轮固定30%保证金/3x，不再调资金管理，只比较15m顺趋势突破和突破后第一次回踩确认，并把账户目标先降为10%–15%。
+
+报告：`reports/okx-trend-compression-rolling/FINAL_REPORT.md`。全量 Docker `unittest` 更新为147项全部通过。
+
 ---
 
 ## 3. 关键路径与命令
@@ -235,6 +256,7 @@ docker compose run --rm --no-deps --entrypoint python freqtrade \
 | `reports/okx-v2/FINAL_REPORT.md` | 压缩突破版中文结论（**不是**双均线最新结论） |
 | `reports/okx-sixma-path-diagnostic/FINAL_REPORT.md` | 最新六均线方向与执行诊断、前向候选和资金曲线 |
 | `reports/okx-screener/` | 当前 OKX 趋势/密集筛选清单、全量 CSV 和运行参数 |
+| `reports/okx-trend-compression-rolling/` | 日线/4H趋势、15m密集、30%/40%保证金滚动复利验证 |
 
 ### 常用命令
 
@@ -280,6 +302,17 @@ docker compose run --rm --no-deps --entrypoint python freqtrade \
 
 # 当前 OKX 合约筛选
 ./scripts/scan_okx_now.sh
+
+# 日线/4H趋势 + 15m密集 + 分仓滚动复利研究
+docker compose run --rm --no-deps --entrypoint python freqtrade \
+  scripts/run_trend_compression_rolling_research.py \
+  --signal-workers 4 \
+  --output-dir user_data/backtest_results/okx-trend-compression-rolling
+
+/Users/syndred/.cache/codex-runtimes/codex-primary-runtime/dependencies/python/bin/python3 \
+  scripts/report_trend_compression_rolling.py \
+  --research-dir user_data/backtest_results/okx-trend-compression-rolling \
+  --output-dir reports/okx-trend-compression-rolling
 ```
 
 运行环境注意：
@@ -296,6 +329,8 @@ docker compose run --rm --no-deps --entrypoint python freqtrade \
 - Cursor 之前的因果研究队列提交：`2741eac feat: finalize causal OKX research cohort`
 - 六均线多周期代码、测试、报告与本交接文档应作为本轮独立提交保存。
 - 六均线方向/执行诊断代码与测试：`2a45e06 feat: diagnose six-ma signal execution`
+- 当前 OKX 筛选器：`84e01cc` 测试、`7d99569` 生产、`f9cf85e` 快照报告
+- 分仓滚动复利：`560a630` 测试、`4dd8786` 生产与研究脚本
 - `user_data/backtest_results/` 继续被忽略；可复现实验结果，不把大量中间文件塞进 Git。
 - `reports/okx-v2-sixma-recent6m/` 是本轮需保留的轻量最终报告、资金曲线、交易和参数摘要。
 - 根目录 `logs/` 已加入忽略，避免运行日志污染工作树。
