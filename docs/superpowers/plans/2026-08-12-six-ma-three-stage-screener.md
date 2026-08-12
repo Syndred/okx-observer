@@ -33,11 +33,11 @@
 - 返回字段至少包括 `stage`、`direction`、`daily_bias`、`four_hour_state`、`four_hour_coil_score`、`four_hour_zone_high/low`、`four_hour_breakout_at`、`fifteen_minute_state`、`fifteen_minute_coil_score`、`fifteen_minute_zone_high/low`、`fifteen_minute_breakout_at`、`first_pullback_at`、`initial_stop_price`、`next_executable_at`、`reason`。
 - `stage` 只允许 `watch_both_coiled`、`ready_4h_breakout_15m_coiled`、`wait_first_pullback`、`entry_confirmed`、`none`。
 
-- [ ] **Step 1: 写 Stage 1 和4H成熟缠绕失败测试**
+- [x] **Step 1: 写 Stage 1 和4H成熟缠绕失败测试**
 
 构造连续4H和15m成熟缠绕，断言 `stage == "watch_both_coiled"` 且无方向、无止损；再构造单根密集、平行贴合、缺中间4H，断言均为 `none`。
 
-- [ ] **Step 2: 运行测试确认 RED**
+- [x] **Step 2: 运行测试确认 RED**
 
 Run:
 
@@ -48,35 +48,35 @@ docker compose run --rm --no-deps --entrypoint python freqtrade \
 
 Expected: FAIL，因为模块或 `scan_three_stage_pair` 尚不存在。
 
-- [ ] **Step 3: 最小实现通用缠绕测量与 Stage 1**
+- [x] **Step 3: 最小实现通用缠绕测量与 Stage 1**
 
 实现内部 `CoilParameters`、`CoilEpisode` 和 `_measure_coil_window(frame, timeframe, params)`。15m 使用16根/75%/尾部8根/4次交叉且分布3根/价格中心2次/漂移1 ATR；4H 使用12根/8根密集/尾部4根/3次交叉且分布2根/价格中心2次/漂移1.2 ATR。严格拒绝非连续或重复时间戳。
 
-- [ ] **Step 4: 运行 Stage 1 测试确认 GREEN**
+- [x] **Step 4: 运行 Stage 1 测试确认 GREEN**
 
 Run: 同 Step 2。Expected: Stage 1 相关测试 PASS。
 
-- [ ] **Step 5: 写 Stage 2 的 RED 测试**
+- [x] **Step 5: 写 Stage 2 的 RED 测试**
 
 覆盖4H成熟episode后多/空突破、无历史episode的普通趋势、冻结边界等待超过6根4H、突破反向失效、4H突破前旧15m密集不得追认。
 
-- [ ] **Step 6: 实现4H episode和 Stage 2**
+- [x] **Step 6: 实现4H episode和 Stage 2**
 
 episode 首次成熟后以连续密集K的六线包络更新；离开密集状态冻结。冻结后6根已收盘4H内，close 超过近侧边界 `0.10 × ATR4H` 才定方向。4H突破可见后重新确认15m成熟episode，最多等待48根15m。
 
-- [ ] **Step 7: 写 Stage 3A/3B 的 RED 测试**
+- [x] **Step 7: 写 Stage 3A/3B 的 RED 测试**
 
 覆盖15m同向突破、反向突破取消、突破K禁止回踩、首次触碰收回、第一次触碰失守后第二次不可复活、12根回踩超时、止损远侧边界、下一根15m执行时间、多空镜像。
 
-- [ ] **Step 8: 实现 Stage 3A/3B**
+- [x] **Step 8: 实现 Stage 3A/3B**
 
 15m episode 用末端连续密集K的 `min(cluster_low)`/`max(cluster_high)`；close 越过方向边界 `0.10 × ATR15` 冻结。首次触碰容差 `0.20 × ATR15`；多单收盘必须 `>= zone_high`，空单必须 `<= zone_low`；止损为远侧边界外 `0.20 × ATR15`。
 
-- [ ] **Step 9: 写因果、日线和市场过滤 RED 测试并实现**
+- [x] **Step 9: 写因果、日线和市场过滤 RED 测试并实现**
 
 覆盖 `as_of` 裁剪、4H exact available-at、未收盘K、未来追加不改历史、日线同向加分/严格反向降级、BTC/ETH仅在加密类 `entry_confirmed` 过滤、非加密跳过市场过滤。
 
-- [ ] **Step 10: 运行定向测试和旧信号回归**
+- [x] **Step 10: 运行定向测试和旧信号回归**
 
 Run:
 
