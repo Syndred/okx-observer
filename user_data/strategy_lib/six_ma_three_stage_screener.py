@@ -255,7 +255,22 @@ def _scan_four_hour(
     breakout: dict[str, object] | None = None
     latest_coil: dict[str, object] | None = None
     latest_reason = "insufficient_data"
+    episode_floor = 0
+    previous_date: pd.Timestamp | None = None
     for index, row in source.iterrows():
+        row_date = pd.Timestamp(row["date"])
+        if (
+            previous_date is not None
+            and (zone is not None or breakout is not None)
+            and row_date - previous_date != rules.interval
+        ):
+            return {
+                "coil": None,
+                "zone": None,
+                "breakout": None,
+                "reason": "four_hour_non_contiguous_data",
+            }
+        previous_date = row_date
         atr = float(row.get("atr14", np.nan))
         close = float(row.get("close", np.nan))
         if breakout is not None and index > int(breakout["index"]):
@@ -270,11 +285,13 @@ def _scan_four_hour(
                 breakout = None
                 zone = None
                 latest_coil = None
+                episode_floor = index
                 latest_reason = "four_hour_breakout_invalidated"
             elif breakout_age > params.zone_breakout_wait_4h:
                 breakout = None
                 zone = None
                 latest_coil = None
+                episode_floor = index
                 latest_reason = "four_hour_breakout_expired"
             else:
                 continue
@@ -306,8 +323,14 @@ def _scan_four_hour(
                 continue
             if index - int(zone["last_coil_index"]) > params.zone_breakout_wait_4h:
                 zone = None
+                episode_floor = index
 
-        measured = _measure_coil(source, index, rules)
+        window_start = index - rules.window + 1
+        measured = (
+            _measure_coil(source, index, rules)
+            if window_start >= episode_floor
+            else {"ready": False, "reason": "new_four_hour_episode_not_mature"}
+        )
         measured_reason = str(measured.get("reason", "coil_not_mature"))
         if latest_reason not in {
             "four_hour_breakout_expired",
@@ -315,6 +338,9 @@ def _scan_four_hour(
         }:
             latest_reason = measured_reason
         if bool(measured.get("ready")):
+            if zone is not None and bool(zone.get("frozen")):
+                latest_coil = None
+                continue
             latest_reason = "ready"
             latest_coil = measured
             if zone is None:
@@ -323,6 +349,7 @@ def _scan_four_hour(
                     "low": measured["zone_low"],
                     "last_coil_index": index,
                     "score": measured["score"],
+                    "frozen": False,
                 }
             else:
                 zone["high"] = max(float(zone["high"]), float(measured["zone_high"]))
@@ -331,6 +358,9 @@ def _scan_four_hour(
                 zone["score"] = measured["score"]
         else:
             latest_coil = None
+            if zone is not None and not bool(zone.get("frozen")):
+                zone["frozen"] = True
+                episode_floor = index
     return {
         "coil": latest_coil,
         "zone": zone,
@@ -352,6 +382,16 @@ def _scan_fifteen_minute(
     rows_after_higher = 0
     last_coil: dict[str, object] | None = None
 
+    relevant = source.loc[
+        pd.to_datetime(source["date"], utc=True) >= higher_available
+    ]
+    relevant_dates = pd.to_datetime(relevant["date"], utc=True)
+    if not relevant.empty and (
+        pd.Timestamp(relevant_dates.iloc[0]) != higher_available
+        or not bool(relevant_dates.diff().iloc[1:].eq(rules.interval).all())
+    ):
+        return {"state": "none", "reason": "fifteen_minute_non_contiguous_data"}
+
     for index, row in source.iterrows():
         available_at = pd.Timestamp(row["date"]) + pd.Timedelta(minutes=15)
         if available_at <= higher_available:
@@ -372,7 +412,7 @@ def _scan_fifteen_minute(
             zone_low = float(local_breakout["low"])
             zone_atr = float(local_breakout["atr"])
             if direction == "long":
-                invalid = float(row["low"]) < (
+                invalid = float(row["low"]) <= (
                     zone_low - params.stop_buffer_atr * zone_atr
                 )
                 touched = float(row["low"]) <= (
@@ -381,7 +421,7 @@ def _scan_fifteen_minute(
                 held = close >= zone_high
                 stop = zone_low - params.stop_buffer_atr * zone_atr
             else:
-                invalid = float(row["high"]) > (
+                invalid = float(row["high"]) >= (
                     zone_high + params.stop_buffer_atr * zone_atr
                 )
                 touched = float(row["high"]) >= (
@@ -445,19 +485,25 @@ def _scan_fifteen_minute(
             else {"ready": False, "reason": "coil_predates_four_hour_breakout"}
         )
         if bool(measured.get("ready")):
+            if zone is not None and bool(zone.get("frozen")):
+                last_coil = None
+                continue
             last_coil = measured
             if zone is None:
                 zone = {
                     "high": measured["zone_high"],
                     "low": measured["zone_low"],
                     "score": measured["score"],
+                    "frozen": False,
                 }
             else:
                 zone["high"] = max(float(zone["high"]), float(measured["zone_high"]))
                 zone["low"] = min(float(zone["low"]), float(measured["zone_low"]))
                 zone["score"] = measured["score"]
-        elif index == len(source) - 1:
+        else:
             last_coil = None
+            if zone is not None and not bool(zone.get("frozen")):
+                zone["frozen"] = True
 
     if local_breakout is not None:
         return {
@@ -554,7 +600,18 @@ def scan_three_stage_pair(
             )
             return result
         result = _empty(str(lower["reason"]))
-        result["daily_bias"] = daily_bias
+        direction = str(breakout["direction"])
+        result.update(
+            {
+                "direction": direction,
+                "daily_bias": daily_bias,
+                "four_hour_state": f"breakout_{direction}",
+                "four_hour_coil_score": breakout["score"],
+                "four_hour_zone_high": breakout["high"],
+                "four_hour_zone_low": breakout["low"],
+                "four_hour_breakout_at": breakout["at"],
+            }
+        )
         return result
     if bool(coil4h.get("ready")) and bool(coil15m.get("ready")):
         result = _empty("both_timeframes_coiled")

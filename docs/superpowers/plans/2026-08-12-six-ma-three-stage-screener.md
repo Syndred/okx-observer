@@ -89,7 +89,7 @@ docker compose run --rm --no-deps --entrypoint python freqtrade \
 
 Expected: 全部 PASS，无 warning/error。
 
-- [ ] **Step 11: 提交**
+- [x] **Step 11: 提交**
 
 ```bash
 git add user_data/strategy_lib/six_ma_three_stage_screener.py \
@@ -114,11 +114,11 @@ git commit -m "feat: add three-stage six-ma signal state machine"
 - CLI 默认输出 `reports/okx-three-stage-screener/LATEST.md`、`latest.csv`、`run-manifest.json`。
 - 输出CSV每个合约一行；`stage_order` 仅用于排序，不落盘。
 
-- [ ] **Step 1: 写报告和分阶段扫描 RED 测试**
+- [x] **Step 1: 写报告和分阶段扫描 RED 测试**
 
 使用真实 `scan_three_stage_pair` 输出fixture，断言四张表顺序固定为确认开仓、等待回踩、准备突破、双周期缠绕；`none` 只进入诊断CSV。断言 Stage 1/2 即使日线中性仍被调用，BTC/ETH不出现在交易候选。
 
-- [ ] **Step 2: 运行测试确认 RED**
+- [x] **Step 2: 运行测试确认 RED**
 
 Run:
 
@@ -129,15 +129,15 @@ docker compose run --rm --no-deps --entrypoint python freqtrade \
 
 Expected: FAIL，因为扫描脚本不存在。
 
-- [ ] **Step 3: 实现分阶段下载与报告**
+- [x] **Step 3: 实现分阶段下载与报告**
 
 下载所有合资格交易合约的150根日线和150根4H；4H当前成熟或最近有效突破的合约再下载150根15m。BTC/ETH 4H独立下载作确认级市场过滤。报告字段与设计文档第8节一致；任何行情错误保留该合约诊断行并写manifest。
 
-- [ ] **Step 4: 实现一键脚本和README**
+- [x] **Step 4: 实现一键脚本和README**
 
 `scan_okx_three_stage.sh` 进入项目根目录后调用Docker扫描；README明确四阶段含义、运行方式、非自动开仓边界和旧筛选器保留路径。
 
-- [ ] **Step 5: 运行测试确认 GREEN**
+- [x] **Step 5: 运行测试确认 GREEN**
 
 Run: 同 Step 2。Expected: 全部 PASS。
 

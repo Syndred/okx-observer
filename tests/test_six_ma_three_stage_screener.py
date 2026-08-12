@@ -329,6 +329,62 @@ class SixMaThreeStageScreenerTests(unittest.TestCase):
 
         self.assertEqual(result["stage"], "none")
 
+    def test_four_hour_episode_does_not_merge_after_leaving_compression(self) -> None:
+        result = scan_pair(
+            candles4h=pd.concat(
+                [
+                    coil_frame("2025-01-01", periods=12, freq="4h"),
+                    candle_frame("2025-01-03 00:00", close=100.0, spread=3.0),
+                    coil_frame("2025-01-03 04:00", periods=5, freq="4h", center=100.2),
+                ],
+                ignore_index=True,
+            ),
+            candles15m=coil_frame(
+                "2025-01-03 20:00", periods=16, freq="15min"
+            ),
+            as_of=pd.Timestamp("2025-01-04 00:00", tz=UTC),
+        )
+
+        self.assertEqual(result["stage"], "none")
+
+    def test_missing_15m_after_four_hour_breakout_invalidates_setup(self) -> None:
+        candles15m = coil_frame(
+            "2025-01-03 04:00", periods=17, freq="15min"
+        ).drop(index=8)
+
+        result = scan_pair(
+            candles4h=higher_breakout_frame("long"),
+            candles15m=candles15m,
+            as_of=pd.Timestamp("2025-01-03 08:15", tz=UTC),
+        )
+
+        self.assertEqual(result["stage"], "none")
+        self.assertIn("contiguous", str(result["reason"]))
+
+    def test_stop_boundary_touch_invalidates_the_first_pullback(self) -> None:
+        candles15m = pd.concat(
+            [
+                coil_frame("2025-01-03 04:00", periods=16, freq="15min"),
+                candle_frame("2025-01-03 08:00", close=101.0),
+                candle_frame(
+                    "2025-01-03 08:15",
+                    close=100.6,
+                    high=100.8,
+                    low=99.1,
+                ),
+            ],
+            ignore_index=True,
+        )
+
+        result = scan_pair(
+            candles4h=higher_breakout_frame("long"),
+            candles15m=candles15m,
+            as_of=pd.Timestamp("2025-01-03 08:30", tz=UTC),
+        )
+
+        self.assertEqual(result["stage"], "none")
+        self.assertEqual(result["reason"], "first_pullback_failed")
+
     def test_pre_breakout_15m_coil_is_not_reused_as_a_fresh_setup(self) -> None:
         candles15m = pd.concat(
             [
@@ -346,6 +402,11 @@ class SixMaThreeStageScreenerTests(unittest.TestCase):
 
         self.assertEqual(result["stage"], "none")
         self.assertEqual(result["reason"], "fifteen_minute_coil_not_ready")
+        self.assertEqual(result["direction"], "long")
+        self.assertEqual(
+            result["four_hour_breakout_at"],
+            pd.Timestamp("2025-01-03 04:00", tz=UTC),
+        )
 
     def test_first_pullback_wait_expires_after_twelve_15m_bars(self) -> None:
         candles15m = pd.concat(
