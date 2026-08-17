@@ -8,7 +8,32 @@ services:
       - "./scripts:/freqtrade/scripts:ro"
       - "./config:/freqtrade/config:ro"
       - "./reports:/freqtrade/reports"
+      - "./dashboard:/freqtrade/dashboard:ro"
+      - "./docker-compose.yml:/freqtrade/docker-compose.yml:ro"
+      - "./启动观察台.command:/freqtrade/启动观察台.command:ro"
+      - "./启动观察台.bat:/freqtrade/启动观察台.bat:ro"
+      - "./start-observer.bat:/freqtrade/start-observer.bat:ro"
+      - "./README.md:/freqtrade/README.md:ro"
+      - "./LICENSE:/freqtrade/LICENSE:ro"
     working_dir: /freqtrade
     environment:
       PYTHONPATH: /freqtrade
     command: --version
+
+  dashboard:
+    image: freqtradeorg/freqtrade:2026.5.1
+    container_name: okx-dashboard
+    volumes:
+      - "./dashboard:/freqtrade/dashboard:ro"
+      - "./user_data:/freqtrade/user_data"
+      - "./scripts:/freqtrade/scripts:ro"
+      - "./config:/freqtrade/config:ro"
+      - "./reports:/freqtrade/reports"
+    working_dir: /freqtrade
+    environment:
+      PYTHONPATH: /freqtrade
+      TZ: Asia/Shanghai
+    ports:
+      - "127.0.0.1:8787:8787"
+    entrypoint: ["python", "-m", "uvicorn"]
+    command: ["dashboard.app:app", "--host", "0.0.0.0", "--port", "8787"]

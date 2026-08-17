@@ -5,6 +5,10 @@ __pycache__/
 .venv/
 .worktrees/
 work/
+.env
+.env.*
+*.pem
+.idea/
 
 user_data/data/
 user_data/backtest_results/
@@ -16,3 +20,5 @@ user_data/hyperopt_results/
 reports/equity-curves/*.png
 reports/logs/
 logs/
+PROJECT_CONTEXT.md
+

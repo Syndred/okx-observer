@@ -20,8 +20,10 @@ REFERENCE_BASES = {"BTC", "ETH"}
 
 
 def normalize_instruments(
-    payload: dict[str, Any], now_ms: int, min_age_days: int = 30
+    payload: dict[str, Any], now_ms: int, min_age_days: int = 0
 ) -> list[dict[str, Any]]:
+    if min_age_days < 0:
+        raise ValueError("min_age_days must be non-negative")
     if payload.get("code") != "0":
         raise ValueError(f"OKX returned error code {payload.get('code')}: {payload.get('msg', '')}")
     minimum_age_ms = min_age_days * DAY_MS
@@ -106,7 +108,7 @@ def main() -> None:
     parser.add_argument(
         "--output", type=Path, default=Path("config/okx_v2_universe.json")
     )
-    parser.add_argument("--min-age-days", type=int, default=30)
+    parser.add_argument("--min-age-days", type=int, default=0)
     args = parser.parse_args()
     retrieved = datetime.now(timezone.utc)
     payload = fetch_instruments()

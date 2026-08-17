@@ -1,0 +1,34 @@
+{
+  "retrievedAt": "2026-08-15T02:51:58.903334+00:00",
+  "parameters": {
+    "min_age_days": 30,
+    "min_daily_streak": 2,
+    "min_4h_streak": 3,
+    "volume_lookback": 20,
+    "volume_expand_mult": 2.0,
+    "atr_expand_mult": 1.5,
+    "ticker_change_alert": 0.05,
+    "min_history_bars": 35
+  },
+  "liveUsdtSwaps": 431,
+  "eligibleTradeContracts": 405,
+  "fourHourContracts": 397,
+  "candidateCount": 46,
+  "statusCounts": {
+    "none": 194,
+    "watch_down": 84,
+    "watch_up": 70,
+    "momentum_up": 26,
+    "listed_less_than_30_days": 24,
+    "volume_spike_down": 11,
+    "momentum_down": 4,
+    "intraday_up": 4,
+    "intraday_down": 4,
+    "volume_spike_up": 3,
+    "insufficient": 3,
+    "four_hour_up": 1,
+    "four_hour_down": 1
+  },
+  "errors": {},
+  "claimBoundary": "current causal screening snapshot; not a profitability result"
+}

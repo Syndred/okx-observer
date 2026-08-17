@@ -28,5 +28,5 @@ docker compose run --rm --no-deps --entrypoint python freqtrade \
 docker compose run --rm --no-deps --entrypoint python freqtrade \
   scripts/run_okx_v2_research.py
 
-/Users/syndred/.cache/codex-runtimes/codex-primary-runtime/dependencies/python/bin/python3 \
+python3 \
   scripts/report_okx_v2.py

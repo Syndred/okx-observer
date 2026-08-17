@@ -20,6 +20,12 @@
 ./scripts/scan_okx_now.sh
 ```
 
+本地网页只保留一套，入口是四层筛选台：
+
+```bash
+./scripts/open_three_stage_dashboard.sh
+```
+
 结果：
 
 - `LATEST.md`：中文候选清单

@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#071018">
+    <title>OKX</title>
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <link rel="stylesheet" href="/static/dashboard.css?v=20260817-4">
+    <script src="/static/dashboard.js?v=20260817-4" defer></script>
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <a class="brand" href="/" aria-label="首页">
+          <span class="brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none">
+              <path d="M4 5.2h16M4.7 8.3h14.6M5.6 11.4h12.8M5.6 14.5h12.8M4.7 17.6h14.6M4 20.7h16" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+            </svg>
+          </span>
+        </a>
+        <div class="toolbar-stats" aria-label="扫描摘要">
+          <span class="stat"><strong id="summary-candidates">—</strong>机会</span>
+          <span class="stat"><strong id="summary-live">—</strong>live</span>
+          <span class="stat"><strong id="summary-eligible">—</strong>合格</span>
+          <span id="summary-status" class="stat">读取中</span>
+          <span id="summary-errors" class="stat">异常 0</span>
+          <span id="summary-retrieved" class="stat">—</span>
+        </div>
+        <button id="scan-now" class="scan-button" type="button" disabled>
+          <span class="scan-button-icon" aria-hidden="true">↻</span>
+          <span>扫描</span>
+        </button>
+        <p id="scan-state" class="scan-state" aria-live="polite">等待报告</p>
+        <div id="scan-times" class="scan-times" aria-live="polite">
+          <span><time id="scan-started-at">—</time></span>
+          <span><time id="scan-finished-at">—</time></span>
+        </div>
+        <p class="disclaimer" role="note">仅作筛选 · 不提供投资建议 · 不自动下单</p>
+        <div class="clock-block" aria-label="北京时间">
+          <span class="clock-label">北京时间 UTC+8</span>
+          <time id="beijing-clock" datetime="">--</time>
+        </div>
+      </header>
+
+      <main>
+        <section id="scan-progress" class="scan-progress" hidden aria-live="polite">
+          <div class="progress-heading">
+            <div>
+              <p class="eyebrow">LIVE RUN</p>
+              <h2>扫描进行中</h2>
+            </div>
+            <span id="progress-stage-label" class="progress-stage-label">准备中</span>
+          </div>
+          <div class="progress-track" role="list" aria-label="扫描阶段进度">
+            <div id="progress-daily" class="progress-step" role="listitem">
+              <span class="progress-dot">01</span>
+              <span>日线资格</span>
+            </div>
+            <div id="progress-four-hour" class="progress-step" role="listitem">
+              <span class="progress-dot">02</span>
+              <span>4H 趋势</span>
+            </div>
+            <div id="progress-fifteen-minute" class="progress-step" role="listitem">
+              <span class="progress-dot">03</span>
+              <span>15m 机会</span>
+            </div>
+          </div>
+        </section>
+
+        <section id="error-state" class="state-panel state-panel--error" hidden role="alert">
+          <span class="state-icon" aria-hidden="true">!</span>
+          <div>
+            <h2>需要留意</h2>
+            <p id="error-message">暂时无法读取最新状态。</p>
+          </div>
+        </section>
+
+        <section id="movers-section" class="movers-section" hidden>
+          <header class="section-heading">
+            <h2>涨跌幅榜</h2>
+            <span class="movers-caption">近24小时 · 已收盘15m</span>
+          </header>
+          <div class="movers-grid">
+            <article class="movers-panel movers-panel--up" aria-label="涨幅榜">
+              <header class="movers-panel-heading">
+                <h3>涨幅</h3>
+                <span id="gainers-count" class="stage-count">0</span>
+              </header>
+              <div id="gainers-cards" class="mover-list"></div>
+            </article>
+            <article class="movers-panel movers-panel--down" aria-label="跌幅榜">
+              <header class="movers-panel-heading">
+                <h3>跌幅</h3>
+                <span id="losers-count" class="stage-count">0</span>
+              </header>
+              <div id="losers-cards" class="mover-list"></div>
+            </article>
+          </div>
+        </section>
+
+        <section id="momentum-section" class="movers-section" hidden>
+          <header class="section-heading">
+            <h2>连续涨跌 / 放量</h2>
+            <span class="movers-caption">已收盘日线连续同向 · 量能或波动打开才算启动</span>
+          </header>
+          <div class="movers-grid">
+            <article class="movers-panel movers-panel--up" aria-label="已启动动量">
+              <header class="movers-panel-heading">
+                <h3>已启动</h3>
+                <span id="momentum-launched-count" class="stage-count">0</span>
+              </header>
+              <div id="momentum-launched-cards" class="mover-list mover-list--wide"></div>
+            </article>
+            <article class="movers-panel" aria-label="连续涨跌观察">
+              <header class="movers-panel-heading">
+                <h3>连涨连跌观察</h3>
+                <span id="momentum-watch-count" class="stage-count">0</span>
+              </header>
+              <div id="momentum-watch-cards" class="mover-list mover-list--wide"></div>
+            </article>
+          </div>
+        </section>
+
+        <section id="featured-section" class="featured-section" hidden>
+          <header class="section-heading">
+            <h2>重点看</h2>
+            <span class="movers-caption">高赔率靠前，其余按准备度补齐，最多 9 个</span>
+            <span id="featured-count" class="stage-count">0</span>
+          </header>
+          <div id="featured-cards" class="card-list featured-panel"></div>
+        </section>
+
+        <section class="section-heading">
+          <h2>阶段</h2>
+        </section>
+
+        <section id="stage-grid" class="stage-grid" aria-label="阶段">
+          <article id="stage-entry-confirmed" class="stage-panel" data-stage="entry_confirmed">
+            <header class="stage-header">
+              <h3>回踩确认</h3>
+              <span class="stage-count" data-stage-count>0</span>
+            </header>
+            <div class="card-list" data-stage-cards></div>
+          </article>
+
+          <article id="stage-wait-first-pullback" class="stage-panel" data-stage="wait_first_pullback">
+            <header class="stage-header">
+              <h3>等待第一次回踩</h3>
+              <span class="stage-count" data-stage-count>0</span>
+            </header>
+            <div class="card-list" data-stage-cards></div>
+          </article>
+
+          <article id="stage-mature-15m-coil" class="stage-panel" data-stage="mature_15m_coil">
+            <header class="stage-header">
+              <h3>成熟密集（观察）</h3>
+              <span class="stage-count" data-stage-count>0</span>
+            </header>
+            <div class="card-list" data-stage-cards></div>
+          </article>
+
+          <article id="stage-forming-15m-coil" class="stage-panel" data-stage="forming_15m_coil">
+            <header class="stage-header">
+              <h3>正在形成密集（观察）</h3>
+              <span class="stage-count" data-stage-count>0</span>
+            </header>
+            <div class="card-list" data-stage-cards></div>
+          </article>
+        </section>
+
+        <section id="empty-state" class="state-panel state-panel--empty" hidden>
+          <span class="state-icon" aria-hidden="true">◌</span>
+          <div>
+            <h2>等待第一份扫描报告</h2>
+            <p>点击“扫描”拉取最新状态。失败时会保留当前卡片。</p>
+          </div>
+        </section>
+      </main>
+
+      <footer class="footer-note">
+        <span>仅使用已收盘K线；仅 instCategory=1 加密类与 Bitget 官方 USDT 永续交集；不限制上市天数；稳定币基准排除；优先区要求 4H 同向发散、非逆势、前方密集 ≥ 2R · 观察筛选，不提供投资建议，不是开仓信号</span>
+        <span>Bitget 跳转仅用于查看对应合约</span>
+      </footer>
+    </div>
+  </body>
+</html>

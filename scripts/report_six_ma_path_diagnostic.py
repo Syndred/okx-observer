@@ -217,7 +217,7 @@ docker compose run --rm --no-deps --entrypoint python freqtrade \
   --start 2026-02-10 --end 2026-08-11 \
   --output-dir user_data/backtest_results/okx-sixma-execution-recent6m-final
 
-/Users/syndred/.cache/codex-runtimes/codex-primary-runtime/dependencies/python/bin/python3 \
+python3 \
   scripts/report_six_ma_path_diagnostic.py \
   --path-dir user_data/backtest_results/okx-sixma-paths-recent6m \
   --execution-dir user_data/backtest_results/okx-sixma-execution-recent6m-final \
