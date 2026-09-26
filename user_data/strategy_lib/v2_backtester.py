@@ -30,6 +30,9 @@ class BacktestOptions:
     pyramid_trigger_r: float = 1.0
     pyramid_risk_fraction: float = 0.50
     max_pyramids: int = 1
+    take_profit_r: float | None = None
+    max_hold_minutes: int | None = None
+    candle_minutes: int = 15
 
 
 @dataclass(frozen=True)
@@ -188,6 +191,26 @@ def simulate_portfolio(
         raise ValueError("unsupported exit_mode")
     if active.time_mode not in {"default", "none", "24h", "72h"}:
         raise ValueError("unsupported time_mode")
+    if type(active.candle_minutes) is not int or active.candle_minutes <= 0:
+        raise ValueError("candle_minutes must be a positive integer")
+    if active.take_profit_r is not None:
+        if (
+            isinstance(active.take_profit_r, bool)
+            or not isinstance(active.take_profit_r, (int, float))
+            or not math.isfinite(active.take_profit_r)
+            or active.take_profit_r <= 0
+        ):
+            raise ValueError("take_profit_r must be finite and positive")
+        if active.exit_mode not in {"fixed3", "fixed5"}:
+            raise ValueError("take_profit_r requires fixed3 or fixed5 exit_mode")
+    if active.max_hold_minutes is not None and (
+        type(active.max_hold_minutes) is not int
+        or active.max_hold_minutes <= 0
+        or active.max_hold_minutes % active.candle_minutes != 0
+    ):
+        raise ValueError("max_hold_minutes must be a positive integer multiple of candle_minutes")
+    if active.max_hold_minutes is not None and active.exit_mode not in {"fixed3", "fixed5"}:
+        raise ValueError("max_hold_minutes requires fixed3 or fixed5 exit_mode")
     if active.collateral_fraction is not None and not 0 < active.collateral_fraction <= 1:
         raise ValueError("collateral_fraction must be in (0, 1]")
     if active.margin_take_profit <= 0:
@@ -550,15 +573,37 @@ def simulate_portfolio(
                 target_reason = f"margin_{active.margin_take_profit:g}"
             else:
                 hard_r = 3.0 if active.exit_mode == "fixed3" else 5.0
+                if active.take_profit_r is not None:
+                    hard_r = active.take_profit_r
                 target = position.entry + (
                     risk_price * hard_r * (1 if position.side == "long" else -1)
                 )
-                target_reason = f"fixed_{int(hard_r)}r"
+                target_reason = f"fixed_{hard_r:g}r"
             target_hit = high >= target if position.side == "long" else low <= target
             if target_hit:
                 equity, fill, _ = _close_amount(position, position.amount, target, equity, active)
                 result = _finalize(position, timestamp, fill, target_reason)
                 trades.append(result)
+                # A small scalp target can lose money after execution costs.
+                if active.take_profit_r is not None and result.r_multiple < 0:
+                    daily_loss_r += abs(result.r_multiple)
+                del positions[pair]
+                continue
+
+            if active.max_hold_minutes is not None and (
+                timestamp + pd.Timedelta(minutes=active.candle_minutes)
+                >= position.open_date + pd.Timedelta(minutes=active.max_hold_minutes)
+            ):
+                equity, fill, _ = _close_amount(position, position.amount, close, equity, active)
+                result = _finalize(
+                    position,
+                    timestamp + pd.Timedelta(minutes=active.candle_minutes),
+                    fill,
+                    f"max_hold_{active.max_hold_minutes}m",
+                )
+                trades.append(result)
+                if result.r_multiple < 0:
+                    daily_loss_r += abs(result.r_multiple)
                 del positions[pair]
                 continue
 

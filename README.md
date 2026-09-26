@@ -152,6 +152,8 @@ docker compose logs -f --tail 80 dashboard
 
 独立的 **Jev 均线策略历史评估** 已提供命令行入口，比较原始候选与 AI 概率筛选后的胜率、收益、回撤和概率校准。该研究需要 TypeSafe API Key，观察台本身仍不需要。用法与规则见 [Jev 研究说明](docs/research/JEV_MA_RESEARCH.md)。
 
+真实 5 分钟行情、15/30/60 分钟持仓和训练/验证/留出评估见 [超短线研究说明](docs/research/JEV_SCALP_RESEARCH.md)。目标为扣除成本后的胜率超过 50%，是否达标以冻结留出报告为准。
+
 ```text
 dashboard/                 观察台网页与 API
 scripts/launch_dashboard.* 跨平台启动
