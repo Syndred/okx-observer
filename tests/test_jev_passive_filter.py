@@ -122,9 +122,11 @@ def test_threshold_selection_has_no_fallback_and_uses_only_passed_records():
     assert research.choose_threshold([failed, first, second]) is second
 
 
-def test_failed_training_scores_all_orders_before_fill_filter_and_stops(monkeypatch, tmp_path):
+@pytest.mark.parametrize("extended", [False, True])
+def test_failed_training_scores_all_orders_before_fill_filter_and_stops(monkeypatch, tmp_path, extended):
+    train_start=pd.Timestamp("2026-07-01",tz="UTC") if extended else research.START
     pair = 'SYNTHETIC'
-    orders = [PassiveOrder(research.START+pd.Timedelta(hours=i+1), pair, 'long', 99, 98) for i in range(3)]
+    orders = [PassiveOrder(train_start+pd.Timedelta(hours=i+1), pair, 'long', 99, 98) for i in range(3)]
     orders += [replace(orders[0], date=research.SPLIT_A+pd.Timedelta(hours=1)),
                replace(orders[0], date=research.SPLIT_B+pd.Timedelta(hours=1))]
     dataset = Mock(return_value=({pair: pd.DataFrame()}, {}, {'synthetic': 'hash'}))
@@ -147,12 +149,13 @@ def test_failed_training_scores_all_orders_before_fill_filter_and_stops(monkeypa
         result.update(n=int(orders[0] in subset), pf=.8, mean_net_return=-.001)
         return result, pd.DataFrame()
     monkeypatch.setattr(research, 'measure', mock_measure)
-    args = SimpleNamespace(output_dir=tmp_path/'out', data_dir=tmp_path/'development', env_file=None)
+    args = SimpleNamespace(output_dir=tmp_path/'out', data_dir=tmp_path/'development', env_file=None, extended_training=extended)
     research.run(args)
     assert scored == [('training', orders[:3])]
-    dataset.assert_called_once_with(args.data_dir, research.DEV_SYMBOLS, research.START)
+    dataset.assert_called_once_with(args.data_dir, research.DEV_SYMBOLS, train_start)
     manifest = json.loads((args.output_dir/'manifest.json').read_text())
     assert manifest['status'] == 'no_qualified_training_threshold'
+    assert manifest['training_start']==train_start.isoformat()
     assert manifest['heldout_prices_opened'] is False
     assert manifest['portfolio_verified'] is False
     assert manifest['live_claim_allowed'] is False

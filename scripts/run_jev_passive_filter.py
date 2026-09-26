@@ -80,22 +80,28 @@ def choose_threshold(records):
 
 
 def run(args):
+    extended=getattr(args,"extended_training",False)
+    train_start=pd.Timestamp("2026-07-01",tz="UTC") if extended else START
+    protocol="JEV_EXTENDED_TRAINING_PROTOCOL.md" if extended else "JEV_PASSIVE_FILTER_PROTOCOL.md"
     out=args.output_dir
     if out.exists() and any(out.iterdir()):raise ValueError('output directory must be empty')
     out.mkdir(parents=True,exist_ok=True)
     sources=['scripts/run_jev_passive_filter.py','scripts/run_passive_research.py','scripts/run_jev_profit_research.py',
-        'user_data/strategy_lib/passive_scalp_paths.py','user_data/strategy_lib/cost_aware_signal_engine.py','user_data/strategy_lib/jev_provider.py']
+        'user_data/strategy_lib/passive_scalp_paths.py','user_data/strategy_lib/cost_aware_signal_engine.py','user_data/strategy_lib/jev_provider.py',
+        'scripts/run_jev_ma_research.py','user_data/strategy_lib/scalp_signal_engine.py','user_data/strategy_lib/profit_signal_engine.py']
     manifest={'status':'training','heldout_prices_opened':False,'portfolio_verified':False,'live_claim_allowed':False,
-        'model':'jev-1.13.0','candidate':59,'protocol_sha256':fingerprint(ROOT/'docs/research/JEV_PASSIVE_FILTER_PROTOCOL.md'),
+        'model':'jev-1.13.0','candidate':59,'training_start':train_start.isoformat(),
+        'protocol_sha256':fingerprint(ROOT/'docs/research'/protocol),
+        'filter_protocol_sha256':fingerprint(ROOT/'docs/research/JEV_PASSIVE_FILTER_PROTOCOL.md'),
         'code_sha256':{p:fingerprint(ROOT/p) for p in sources},'created_at':pd.Timestamp.now(tz='UTC').isoformat()}
     write_json(out/'manifest.json',manifest)
-    frames,funding,hashes=load_dataset(args.data_dir,DEV_SYMBOLS,START)
+    frames,funding,hashes=load_dataset(args.data_dir,DEV_SYMBOLS,train_start)
     manifest['development_data_sha256']=hashes;write_json(out/'manifest.json',manifest)
     signals={pair:scan_cost_aware(frame,PARAMS) for pair,frame in frames.items()}
     orders=make_orders(signals,OFFSET,TARGET)
     load_key_file(args.env_file);client=JevClient(model='jev-1.13.0',timeout=30)
     cache=ROOT/'user_data/backtest_results/jev-passive-cache'
-    train=window(orders,START,SPLIT_A,HOLD)
+    train=window(orders,train_start,SPLIT_A,HOLD)
     predictions,usage=score(client,signals,funding,train,cache,out,'training')
     manifest['training_prediction_usage']=usage
     write_json(out/'training-baseline.json',all_metrics(frames,funding,train,out,'training-baseline'))
@@ -129,6 +135,7 @@ def run(args):
 
 def main():
     parser=argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--extended-training',action='store_true',help='Use the frozen July 1 training start with the expanded dataset')
     parser.add_argument('--data-dir',type=Path,default=ROOT/'user_data/data/okx_scalp')
     parser.add_argument('--output-dir',type=Path,default=ROOT/'user_data/backtest_results/jev-passive-filter-20260927')
     parser.add_argument('--env-file',type=Path)
