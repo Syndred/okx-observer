@@ -1,0 +1,41 @@
+{
+  "status": "completed",
+  "splits": {
+    "start": "2026-07-31 00:00:00+00:00",
+    "validation": "2026-08-27 00:00:00+00:00",
+    "holdout": "2026-09-11 00:00:00+00:00",
+    "end": "2026-09-26 00:00:00+00:00"
+  },
+  "data_hashes": {
+    "SOL-USDT-SWAP-5m.feather": "5ba0c111c1c4c8ad2d91d3c21102dabeba99514dee52a278f4a66d84b22153eb",
+    "LINK-USDT-SWAP-5m.feather": "73913938c6258925764348109bfb1daf15174a32402c0aad52c3b16b24a7a126",
+    "AVAX-USDT-SWAP-5m.feather": "01d5e9c0fc8c73df3482db1a049d1c46ebee49a86f5b2ec9f0c378bde35220af",
+    "XRP-USDT-SWAP-5m.feather": "2333832f6fb596357f6a7a3c5a78e4dda7efacb5b1dab510796a9779b6c4e90a",
+    "ETH-USDT-SWAP-5m.feather": "6e948ef29ca70218a3fe35a28de58c3a60db87dfb52fcf1861545052a0383c99",
+    "DOGE-USDT-SWAP-5m.feather": "23b0e5a5940f9ee13412b052cc8e07fdf205d7f7c570397d0250a47e82bd5bb7",
+    "ADA-USDT-SWAP-5m.feather": "f3b877e3c94335542a7f75fed9e9d4802cd656d6b8ff88cf53e7b580aa101f78",
+    "BTC-USDT-SWAP-5m.feather": "7f04d3afe6b4424bade2f392f7b02500b1bbf7c6c2a3ea6caf45158893746927"
+  },
+  "code_hashes": {
+    "scripts/run_jev_scalp_research.py": "301fd0f997722d4fb074f7423756012e13d904311005023c5d135ec63a3d7d12",
+    "user_data/strategy_lib/scalp_signal_engine.py": "d89a215627832c5c4cf7a135581c7a1ffc115e8c2cc3b8327c0a526f491c203b",
+    "user_data/strategy_lib/scalp_paths.py": "8025cee68857788df17cb6bb3af4bc32c530a0913e91fe5743e20ac9e4b5d53b",
+    "user_data/strategy_lib/v2_backtester.py": "99a802b3cc140111b04263c931518a82ac77c78c7fc5e0f964115d020f23c852"
+  },
+  "costs": {
+    "fee": 0.0005,
+    "slippage": 0.0005,
+    "adverse_funding_each_8h": 0.0001
+  },
+  "live_claim_allowed": false,
+  "grid_trials": 144,
+  "train_minimum": 100,
+  "validation_minimum": 50,
+  "holdout_minimum": 100,
+  "win_rate_target": ">0.50 net of costs",
+  "profit_factor_target": 1.1,
+  "jev_limit": 0,
+  "baseline_passed": false,
+  "jev_passed": false,
+  "finished_at": "2026-09-26T13:03:35.914622+00:00"
+}

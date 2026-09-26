@@ -1,0 +1,115 @@
+{
+  "candidate": 20,
+  "parameters": {
+    "fast": 9,
+    "slow": 21,
+    "entry_mode": "breakout",
+    "compression_atr": 1.0,
+    "stop_atr": 1.5,
+    "cooldown_bars": 12
+  },
+  "target_r": 0.75,
+  "hold_minutes": 60,
+  "training": {
+    "candidate": 20,
+    "fast": 9,
+    "slow": 21,
+    "entry_mode": "breakout",
+    "compression_atr": 1.0,
+    "stop_atr": 1.5,
+    "cooldown_bars": 12,
+    "target_r": 0.75,
+    "hold_minutes": 60,
+    "n": 573,
+    "win_rate": 0.5095986038394416,
+    "pf": 0.5046307485392375,
+    "mean_net_return": -0.0019043532952852554
+  },
+  "validation": {
+    "candidate": 20,
+    "n": 387,
+    "win_rate": 0.4702842377260982,
+    "pf": 0.409206663481398,
+    "mean_net_return": -0.002009715492130214
+  },
+  "selection_passed": false,
+  "selection": "144 training candidates -> top12 validation -> one frozen; no holdout optimization",
+  "frozen_at": "2026-09-26T12:58:09.459117+00:00",
+  "jev": {
+    "threshold": 0.35,
+    "validation": {
+      "threshold": 0.35,
+      "n": 75,
+      "win_rate": 0.48,
+      "pf": 0.42211473407002037,
+      "mean_net_return": -0.0019793263180133067
+    },
+    "validation_gate_passed": false,
+    "threshold_candidates": [
+      {
+        "threshold": 0.15,
+        "n": 288,
+        "win_rate": 0.4652777777777778,
+        "pf": 0.4051113788872159,
+        "mean_net_return": -0.002029746855695644
+      },
+      {
+        "threshold": 0.2,
+        "n": 153,
+        "win_rate": 0.41830065359477125,
+        "pf": 0.32704093136851925,
+        "mean_net_return": -0.002524791598910326
+      },
+      {
+        "threshold": 0.25,
+        "n": 120,
+        "win_rate": 0.45,
+        "pf": 0.3745986158137032,
+        "mean_net_return": -0.0022381678139677765
+      },
+      {
+        "threshold": 0.3,
+        "n": 98,
+        "win_rate": 0.46938775510204084,
+        "pf": 0.4078674386873221,
+        "mean_net_return": -0.0020305721234150065
+      },
+      {
+        "threshold": 0.35,
+        "n": 75,
+        "win_rate": 0.48,
+        "pf": 0.42211473407002037,
+        "mean_net_return": -0.0019793263180133067
+      },
+      {
+        "threshold": 0.4,
+        "n": 53,
+        "win_rate": 0.49056603773584906,
+        "pf": 0.4063702833474527,
+        "mean_net_return": -0.0020694372553632947
+      },
+      {
+        "threshold": 0.45,
+        "n": 25,
+        "win_rate": 0.68,
+        "pf": 0.9171768426923965,
+        "mean_net_return": -0.0001921689367459804
+      },
+      {
+        "threshold": 0.5,
+        "n": 7,
+        "win_rate": 0.7142857142857143,
+        "pf": 1.283161696408835,
+        "mean_net_return": 0.0005130950375906891
+      },
+      {
+        "threshold": 0.55,
+        "n": 2,
+        "win_rate": 0.5,
+        "pf": 0.4704460208305686,
+        "mean_net_return": -0.0014686657042162518
+      }
+    ],
+    "frozen_at": "2026-09-26T13:00:21.990424+00:00"
+  }
+}

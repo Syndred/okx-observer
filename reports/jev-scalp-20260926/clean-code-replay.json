@@ -1,0 +1,15 @@
+{
+  "validation_full_baseline": true,
+  "validation_jev": true,
+  "validation_full_stress": true,
+  "validation_jev_stress": true,
+  "holdout_full_baseline": true,
+  "holdout_jev": true,
+  "holdout_full_stress": true,
+  "holdout_jev_stress": true,
+  "original_frozen_sha256": "b1679ec467fd0eaa794e7412dfc49a9091ced4f91335796bb8d25f8352a90612",
+  "staged_backtester_sha256": "759348e1f7eb56f3970a77052e878139d55e73a14086eafce4dcc754e2f6796d",
+  "final_scalp_paths_sha256": "3371dd17419d0c6783c7b64b653eb475e6705b4ec981a56cb2f098c6bb5ffd3b",
+  "verified_at": "2026-09-26T13:04:41.808817+00:00",
+  "explanation": "Clean staged backtester excludes unrelated preexisting streak-flip work. Compatibility getter changes no event labels or portfolio metrics. Frozen parameters and saved model predictions were replayed without re-selection or new API calls."
+}
