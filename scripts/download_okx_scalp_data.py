@@ -7,6 +7,7 @@ from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
 import hashlib
 import json
+import re
 from pathlib import Path
 import sys
 import threading
@@ -17,11 +18,19 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from scripts.download_okx_v2_data import request_json, utc_ms
 from user_data.strategy_lib.okx_candles import confirmed_candles
 import pandas as pd
+import numpy as np
 
 BAR_MS = 300_000
 SYMBOLS = tuple(f"{coin}-USDT-SWAP" for coin in ("BTC", "ETH", "SOL", "XRP", "DOGE", "ADA", "LINK", "AVAX"))
 _lock = threading.Lock()
 _last_request = 0.0
+
+
+def swap_symbol(value):
+    """Accept only a plain OKX USDT swap identifier, never a path."""
+    if not isinstance(value, str) or re.fullmatch(r'[A-Z0-9]{1,20}-USDT-SWAP', value) is None:
+        raise argparse.ArgumentTypeError('symbol must match [A-Z0-9]{1,20}-USDT-SWAP')
+    return value
 
 
 def limited_request(endpoint, params):
@@ -44,6 +53,7 @@ def atomic_json(path, payload):
 
 def download_symbol(symbol, start_ms, end_ms, output_dir, server_ms, requester=limited_request):
     """Resume backward paging; cache key includes the exact requested UTC range."""
+    symbol = swap_symbol(symbol)
     output_dir = Path(output_dir)
     cache_dir = output_dir / '.cache'
     cache_dir.mkdir(parents=True, exist_ok=True)
@@ -76,12 +86,23 @@ def download_symbol(symbol, start_ms, end_ms, output_dir, server_ms, requester=l
     expected = pd.date_range(pd.to_datetime(start_ms, unit='ms', utc=True), pd.to_datetime(end_ms, unit='ms', utc=True), freq='5min', inclusive='left')
     available_expected = expected[expected <= pd.to_datetime(server_ms - BAR_MS, unit='ms', utc=True)]
     missing = available_expected.difference(pd.DatetimeIndex(frame.date))
+    numeric = frame[['open', 'high', 'low', 'close', 'volume', 'quote_volume']].astype(float)
+    invalid_ohlc = ((frame.high < frame[['open', 'close', 'low']].max(axis=1)) |
+                    (frame.low > frame[['open', 'close', 'high']].min(axis=1)) |
+                    (numeric[['open', 'high', 'low', 'close']] <= 0).any(axis=1))
+    quality = {'nan_cells': int(frame.isna().sum().sum()),
+               'nonfinite_numeric_cells': int((~np.isfinite(numeric)).sum().sum()),
+               'invalid_ohlc_rows': int(invalid_ohlc.sum()),
+               'negative_volume_rows': int((numeric[['volume', 'quote_volume']] < 0).any(axis=1).sum()),
+               'duplicate_dates': int(frame.date.duplicated().sum()),
+               'off_grid_dates': int((frame.date.astype('int64') // 1_000_000 % BAR_MS != 0).sum())}
     return {'instrument': symbol, 'file': path.name, 'rows': len(frame), 'expected_requested_rows': len(expected),
             'expected_closed_rows_at_server_time': len(available_expected), 'missing_closed_bars': len(missing),
             'missing_closed_timestamps': [value.isoformat() for value in missing],
             'first_candle': frame.date.min().isoformat() if len(frame) else None,
             'last_candle': frame.date.max().isoformat() if len(frame) else None,
             'sha256': hashlib.sha256(path.read_bytes()).hexdigest(),
+            'quality': quality, 'quality_passed': all(value == 0 for value in quality.values()),
             'complete_requested_range': len(frame) == len(expected) and len(missing) == 0}
 
 
@@ -89,7 +110,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--start', default='2026-07-28T00:00:00Z')
     parser.add_argument('--end', default='2026-09-26T00:00:00Z')
-    parser.add_argument('--symbols', nargs='+', choices=SYMBOLS, default=list(SYMBOLS))
+    parser.add_argument('--symbols', nargs='+', type=swap_symbol, default=list(SYMBOLS))
     parser.add_argument('--output-dir', type=Path, default=Path('user_data/data/okx_scalp'))
     parser.add_argument('--workers', type=int, choices=(1, 2, 3), default=3)
     args = parser.parse_args()
@@ -114,7 +135,7 @@ def main():
             manifest['symbols'].append(summary)
             atomic_json(manifest_path, manifest)
     manifest['server_time_at_completion'] = iso(int(limited_request('/api/v5/public/time', {})['data'][0]['ts']))
-    manifest['complete'] = all(row['complete_requested_range'] for row in manifest['symbols'])
+    manifest['complete'] = all(row['complete_requested_range'] and row['quality_passed'] for row in manifest['symbols'])
     atomic_json(manifest_path, manifest)
     print(f'Manifest: {manifest_path}; complete={manifest["complete"]}', flush=True)
 

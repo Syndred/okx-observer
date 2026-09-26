@@ -99,3 +99,51 @@ def test_costs_can_turn_target_hit_into_net_loss():
     assert output.exit_reason == "fixed_0.1r"
     assert not output.won
     assert output.net_return < 0
+
+
+@pytest.mark.parametrize("side", ["long", "short"])
+@pytest.mark.parametrize("rate", [.0003, -.0003, 0])
+@pytest.mark.parametrize("start", ["2026-09-01 07:55", "2026-09-01 03:55"])
+def test_actual_signed_funding_matches_portfolio(side, rate, start):
+    data = frame([(100, 100.1, 99.9, 100), (100.1, 100.2, 100, 100.1)], start)
+    entry = event(data, side)
+    funding = {entry.pair: pd.DataFrame({
+        "date": data.date, "rate": [.9, rate],
+    })}
+    label = evaluate_events({entry.pair: data}, [entry], 3, 10,
+                            funding_frames=funding).iloc[0]
+    result = simulate_portfolio({entry.pair: data}, [entry], BacktestOptions(
+        exit_mode="fixed3", time_mode="none", take_profit_r=3,
+        max_hold_minutes=10, candle_minutes=5,
+    ), funding_frames=funding)
+    trade = result.trades[0]
+    entry_notional = trade.initial_risk / label.initial_risk_return
+    assert label.funding_return == pytest.approx(100.1 * rate * (1 if side == "long" else -1) / label.entry_price)
+    assert label.funding_return == pytest.approx(trade.funding / entry_notional)
+    assert label.net_return == pytest.approx(trade.net_pnl / entry_notional)
+    assert label.r_multiple == pytest.approx(trade.r_multiple)
+    assert label.funding_actual_return == pytest.approx(label.funding_return)
+    assert label.funding_imputed_return == pytest.approx(0)
+
+
+def test_missing_actual_boundary_keeps_conservative_estimate_for_short():
+    data = frame([(100, 100.1, 99.9, 100)] * 3)
+    entry = event(data, "short")
+    funding = {entry.pair: pd.DataFrame({"date": [data.date.iloc[2]], "rate": [.0003]})}
+    label = evaluate_events({entry.pair: data}, [entry], 3, 15,
+                            funding_frames=funding).iloc[0]
+    assert label.funding_return == pytest.approx((.0001 - .0003) * 100 / label.entry_price)
+    assert label.funding_actual_return == pytest.approx(-.0003 * 100 / label.entry_price)
+    assert label.funding_imputed_return == pytest.approx(.0001 * 100 / label.entry_price)
+
+
+def test_actual_funding_sorts_deduplicates_and_accepts_naive_dates():
+    data = frame([(100, 100.1, 99.9, 100)] * 2)
+    entry = event(data)
+    funding = {entry.pair: pd.DataFrame({
+        "date": ["2026-09-01 08:00", "2026-09-01 07:55", "2026-09-01 08:00"],
+        "rate": [.7, .9, -.0003],
+    })}
+    label = evaluate_events({entry.pair: data}, [entry], 3, 10,
+                            funding_frames=funding).iloc[0]
+    assert label.funding_return == pytest.approx(-.0003 * 100 / label.entry_price)

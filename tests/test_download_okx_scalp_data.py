@@ -1,10 +1,11 @@
 import tempfile
+import argparse
 import unittest
 from pathlib import Path
 
 import pandas as pd
 
-from scripts.download_okx_scalp_data import BAR_MS, download_symbol
+from scripts.download_okx_scalp_data import BAR_MS, SYMBOLS, download_symbol, swap_symbol
 
 
 def candle(ts, confirmed='1'):
@@ -12,6 +13,15 @@ def candle(ts, confirmed='1'):
 
 
 class ScalpDownloadTests(unittest.TestCase):
+    def test_custom_symbols_are_path_safe_and_defaults_preserved(self):
+        assert len(SYMBOLS) == 8
+        assert 'BTC-USDT-SWAP' in SYMBOLS
+        assert swap_symbol('SUI-USDT-SWAP') == 'SUI-USDT-SWAP'
+        for value in ('../SUI-USDT-SWAP', 'SUI/USDT-SWAP', 'sui-USDT-SWAP',
+                      'SUI-USDT-SWAP\n', 'A' * 21 + '-USDT-SWAP'):
+            with self.subTest(value=value), self.assertRaises(argparse.ArgumentTypeError):
+                swap_symbol(value)
+
     def setUp(self):
         self.temporary = tempfile.TemporaryDirectory()
         self.addCleanup(self.temporary.cleanup)
@@ -29,6 +39,7 @@ class ScalpDownloadTests(unittest.TestCase):
         assert result['rows'] == 3
         assert result['missing_closed_bars'] == 1
         assert result['complete_requested_range'] is False
+        assert result['quality_passed']
         def no_request(*args):
             raise AssertionError('completed historical cache should be reused')
         resumed = download_symbol('BTC-USDT-SWAP', 0, 4 * BAR_MS, tmp_path, 5 * BAR_MS, no_request)
@@ -42,6 +53,14 @@ class ScalpDownloadTests(unittest.TestCase):
         with self.assertRaisesRegex(RuntimeError, 'stopped advancing'):
             download_symbol('BTC-USDT-SWAP', 0, BAR_MS, tmp_path, 2 * BAR_MS,
                             lambda *args: {'data': [candle(BAR_MS)]})
+
+    def test_invalid_ohlc_is_reported(self):
+        row = candle(0)
+        row[2] = '98'
+        result = download_symbol('SUI-USDT-SWAP', 0, BAR_MS, self.directory, 2 * BAR_MS,
+                                 lambda *args: {'data': [row]})
+        assert result['quality']['invalid_ohlc_rows'] == 1
+        assert not result['quality_passed']
 
 
     def test_page_checkpoint_survives_interruption(self):

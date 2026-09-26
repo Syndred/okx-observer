@@ -14,7 +14,8 @@ _COLUMNS = [
     "pair", "side", "date", "close_date", "entry_price", "exit_price",
     "stop_price", "target_price", "net_return", "r_multiple", "won",
     "exit_reason", "hold_minutes", "max_hold_minutes", "fees_return",
-    "funding_return", "initial_risk_return", "rank", "category",
+    "funding_return", "funding_actual_return", "funding_imputed_return",
+    "initial_risk_return", "rank", "category",
 ]
 _STEP_NS = pd.Timedelta(minutes=5).value
 
@@ -27,13 +28,16 @@ def evaluate_events(
     fee_rate: float = .0005,
     slippage_rate: float = .0005,
     funding_rate_per_8h: float = .0001,
+    funding_frames: dict[str, pd.DataFrame] | None = None,
 ) -> pd.DataFrame:
     """Label independent entries using conservative fixed-stop/fixed-target fills.
 
     Every event needs a complete continuous 5m window ``[date, date + hold)``.
     Stops take precedence over targets, including the entry candle. Missing
     funding is charged on held bars at UTC 00/08/16, on both sides, matching
-    ``simulate_portfolio``. There is no charge on the entry candle. Returns
+    ``simulate_portfolio``. There is no charge on the entry candle. Funding will
+    use actual signed funding at provided settlement timestamps when present.
+    Actual payments use that candle's open, also matching the simulator. Returns
     use entry notional, not margin. R uses the simulator's cost-inclusive
     initial sizing risk (including an optional event sizing stop).
 
@@ -51,6 +55,12 @@ def evaluate_events(
         raise ValueError("cost rates must be finite and nonnegative; slippage must be < 1")
     count = hold_minutes // 5
     prepared = {}
+    actual_funding = {}
+    for pair, funding in (funding_frames or {}).items():
+        source = funding.copy()
+        source["date"] = pd.to_datetime(source["date"], utc=True)
+        source = source.sort_values("date").drop_duplicates("date", keep="last")
+        actual_funding[pair] = source.set_index("date")["rate"]
     for pair, frame in frames.items():
         source = frame.copy()
         source["date"] = pd.to_datetime(source["date"], utc=True)
@@ -60,7 +70,10 @@ def evaluate_events(
         times = np.array([stamp.value for stamp in dates], dtype=np.int64)
         values = source[["open", "high", "low", "close"]].to_numpy(dtype=float)
         funding_mask = (dates.minute == 0) & (dates.hour % 8 == 0)
-        prepared[pair] = (times, values, np.asarray(funding_mask))
+        rates = np.full(len(dates), np.nan)
+        if pair in actual_funding:
+            rates = actual_funding[pair].reindex(dates).to_numpy(dtype=float)
+        prepared[pair] = (times, values, np.asarray(funding_mask), rates)
 
     rows, skipped = [], []
     for event in events:
@@ -77,7 +90,7 @@ def evaluate_events(
         if event.pair not in prepared:
             reject("missing_pair")
             continue
-        times, values, funding_mask = prepared[event.pair]
+        times, values, funding_mask, rates = prepared[event.pair]
         start = int(np.searchsorted(times, date.value))
         if start == len(times) or times[start] != date.value:
             reject("missing_entry_bar")
@@ -123,8 +136,15 @@ def evaluate_events(
             close_date += pd.Timedelta(minutes=5)
         exit_price = _exit_fill(raw_exit, event.side, slippage_rate)
         fees = fee_rate * (entry + exit_price) / entry
-        funding = float(np.sum(path[1:index + 1, 0]
-                       * funding_mask[start + 1:start + index + 1])) * funding_rate_per_8h / entry
+        held_rates = rates[start + 1:start + index + 1]
+        payments = np.where(
+            np.isnan(held_rates),
+            funding_mask[start + 1:start + index + 1] * funding_rate_per_8h,
+            held_rates * sign,
+        )
+        funding = float(np.sum(path[1:index + 1, 0] * payments)) / entry
+        actual = float(np.sum(path[1:index + 1, 0]
+                       * np.where(np.isnan(held_rates), 0, held_rates * sign))) / entry
         net_return = _signed_move(event.side, entry, exit_price) / entry - fees - funding
         initial_risk = abs(entry - sizing_stop) / entry + 2 * fee_rate + slippage_rate
         rows.append({
@@ -134,6 +154,7 @@ def evaluate_events(
             "r_multiple": net_return / initial_risk, "won": net_return > 0,
             "exit_reason": reason, "hold_minutes": (close_date - date).total_seconds() / 60,
             "max_hold_minutes": hold_minutes, "fees_return": fees, "funding_return": funding,
+            "funding_actual_return": actual, "funding_imputed_return": funding - actual,
             "initial_risk_return": initial_risk, "rank": event.rank, "category": event.category,
         })
     result = pd.DataFrame(rows, columns=_COLUMNS)
