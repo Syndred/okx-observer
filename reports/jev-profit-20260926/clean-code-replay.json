@@ -1,0 +1,14 @@
+{
+  "a_baseline_False": true,
+  "a_baseline_True": true,
+  "a_jev_False": true,
+  "a_jev_True": true,
+  "b_baseline_False": true,
+  "b_baseline_True": true,
+  "b_jev_False": true,
+  "b_jev_True": true,
+  "clean_head_backtester_sha256": "759348e1f7eb56f3970a77052e878139d55e73a14086eafce4dcc754e2f6796d",
+  "frozen_candidate_sha256": "d1bebc5bb60b3205926362d8c79b5fdbf55387b0e4e2758e2828ae06d030c7ee",
+  "cached_repeat_identical": true,
+  "reserved_strategy_evaluation": false
+}

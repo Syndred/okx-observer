@@ -1,0 +1,83 @@
+{
+  "source": "OKX public funding-rate-history",
+  "group": "holdout",
+  "requested_start_inclusive": "2026-08-08T00:00:00+00:00",
+  "requested_end_exclusive": "2026-09-26T00:00:00+00:00",
+  "created_at": "2026-09-26T13:16:31.865162+00:00",
+  "symbols": [
+    {
+      "instrument": "SUI-USDT-SWAP",
+      "rows": 147,
+      "errors": [],
+      "first_settlement": "2026-08-08T00:00:00+00:00",
+      "last_settlement": "2026-09-25T16:00:00+00:00",
+      "sha256": "fcfee67a77e3f9a1a72987a360d132bf041142ed6abfa4848424ebd6c84710dd",
+      "file": "user_data/data/okx_profit_holdout/SUI-USDT-SWAP-funding.feather"
+    },
+    {
+      "instrument": "NEAR-USDT-SWAP",
+      "rows": 147,
+      "errors": [],
+      "first_settlement": "2026-08-08T00:00:00+00:00",
+      "last_settlement": "2026-09-25T16:00:00+00:00",
+      "sha256": "f55551f189faf1c04d3af47d4119450bee466732120d97a07391a28f7546f478",
+      "file": "user_data/data/okx_profit_holdout/NEAR-USDT-SWAP-funding.feather"
+    },
+    {
+      "instrument": "UNI-USDT-SWAP",
+      "rows": 147,
+      "errors": [],
+      "first_settlement": "2026-08-08T00:00:00+00:00",
+      "last_settlement": "2026-09-25T16:00:00+00:00",
+      "sha256": "afcb48f77ec6dc9313a0b4545a5da66dd9df9e4df2397e0a256c3af2dcdfb158",
+      "file": "user_data/data/okx_profit_holdout/UNI-USDT-SWAP-funding.feather"
+    },
+    {
+      "instrument": "AAVE-USDT-SWAP",
+      "rows": 147,
+      "errors": [],
+      "first_settlement": "2026-08-08T00:00:00+00:00",
+      "last_settlement": "2026-09-25T16:00:00+00:00",
+      "sha256": "ed993619086bfb55ea38bf184e74b06275dd9c89a38f4e47f7cfc0175f994a02",
+      "file": "user_data/data/okx_profit_holdout/AAVE-USDT-SWAP-funding.feather"
+    },
+    {
+      "instrument": "LTC-USDT-SWAP",
+      "rows": 147,
+      "errors": [],
+      "first_settlement": "2026-08-08T00:00:00+00:00",
+      "last_settlement": "2026-09-25T16:00:00+00:00",
+      "sha256": "f3077e569e8685481eef4cd4fa8cf107e416cd54868d60a5e26cb47b11dd01c7",
+      "file": "user_data/data/okx_profit_holdout/LTC-USDT-SWAP-funding.feather"
+    },
+    {
+      "instrument": "BNB-USDT-SWAP",
+      "rows": 147,
+      "errors": [],
+      "first_settlement": "2026-08-08T00:00:00+00:00",
+      "last_settlement": "2026-09-25T16:00:00+00:00",
+      "sha256": "eb14993b1a498f2eefcdef2213f71e58f43e09eefe53c4b1e0518696d49222ab",
+      "file": "user_data/data/okx_profit_holdout/BNB-USDT-SWAP-funding.feather"
+    },
+    {
+      "instrument": "DOT-USDT-SWAP",
+      "rows": 147,
+      "errors": [],
+      "first_settlement": "2026-08-08T00:00:00+00:00",
+      "last_settlement": "2026-09-25T16:00:00+00:00",
+      "sha256": "6bb30162c87b0721efeab4672506c0de5b1855f17a9f5ce29ef45219f18be0dd",
+      "file": "user_data/data/okx_profit_holdout/DOT-USDT-SWAP-funding.feather"
+    },
+    {
+      "instrument": "ATOM-USDT-SWAP",
+      "rows": 147,
+      "errors": [],
+      "first_settlement": "2026-08-08T00:00:00+00:00",
+      "last_settlement": "2026-09-25T16:00:00+00:00",
+      "sha256": "452c839721e312c00cf91043c7a972ddd32d4d931ce319430b97774f385d83ec",
+      "file": "user_data/data/okx_profit_holdout/ATOM-USDT-SWAP-funding.feather"
+    }
+  ],
+  "errors": [],
+  "accounting": "Actual signed settlements; missing UTC 00/08/16 settlements are conservatively imputed by simulation."
+}

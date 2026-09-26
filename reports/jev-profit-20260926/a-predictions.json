@@ -1,0 +1,428 @@
+{
+  "SOL-USDT-SWAP|2026-08-27T07:45:00+00:00|long": {
+    "model": "jev-1.13.0",
+    "probability": 0.24,
+    "confidence": 0.53,
+    "request_hash": "e273abb3645af4625df43508e10747e3ec7984dfac9aadeb47fd78ca5eb822eb"
+  },
+  "AVAX-USDT-SWAP|2026-08-27T14:15:00+00:00|long": {
+    "model": "jev-1.13.0",
+    "probability": 0.38,
+    "confidence": 0.25,
+    "request_hash": "0b92637ef98dcc9d7d43f42ecc7ce1b25705d129e66908f04ee97e48a8c653d2"
+  },
+  "LINK-USDT-SWAP|2026-08-27T14:35:00+00:00|long": {
+    "model": "jev-1.13.0",
+    "probability": 0.46,
+    "confidence": 0.08,
+    "request_hash": "55e3d9539f89b277c3425923813dcf12cb7b49647e41722d0235e45c899c7c79"
+  },
+  "DOGE-USDT-SWAP|2026-08-27T14:55:00+00:00|long": {
+    "model": "jev-1.13.0",
+    "probability": 0.32,
+    "confidence": 0.36,
+    "request_hash": "3fb24e98701c71b1f3a18116dafdf44df89b86b4f70d80ed78d8ae090ec458fc"
+  },
+  "DOGE-USDT-SWAP|2026-08-27T23:30:00+00:00|long": {
+    "model": "jev-1.13.0",
+    "probability": 0.3,
+    "confidence": 0.41,
+    "request_hash": "660ef291b752ed13180f88e31135b1ad1e2fa4f31c3965df302dc614a2ed6a5c"
+  },
+  "ETH-USDT-SWAP|2026-08-28T00:40:00+00:00|long": {
+    "model": "jev-1.13.0",
+    "probability": 0.26,
+    "confidence": 0.48,
+    "request_hash": "5783d8ebdd6caf21beb50bad8059faa91a0ec61ec8ff79d228460c396632c3a0"
+  },
+  "DOGE-USDT-SWAP|2026-08-28T01:10:00+00:00|long": {
+    "model": "jev-1.13.0",
+    "probability": 0.3,
+    "confidence": 0.4,
+    "request_hash": "937f3a91c9050ced34af062731320f2d53e14c45c5cf50a3ef05237f06fc0e8b"
+  },
+  "LINK-USDT-SWAP|2026-08-28T01:10:00+00:00|long": {
+    "model": "jev-1.13.0",
+    "probability": 0.33,
+    "confidence": 0.33,
+    "request_hash": "fdd5d8206d50030579a0be1e1ac31434f9bd5ea9e381590f0df3bd4cf0515aa5"
+  },
+  "ADA-USDT-SWAP|2026-08-28T12:20:00+00:00|short": {
+    "model": "jev-1.13.0",
+    "probability": 0.19,
+    "confidence": 0.62,
+    "request_hash": "bc50bed749f612503fb8716210794adc567de89f04b8522afcd0438f6d8e01d9"
+  },
+  "AVAX-USDT-SWAP|2026-08-28T13:30:00+00:00|short": {
+    "model": "jev-1.13.0",
+    "probability": 0.09,
+    "confidence": 0.82,
+    "request_hash": "b992b4e63017034c56609591914cc3656fbf2e24a93d048c4deec48dc7ec8a32"
+  },
+  "LINK-USDT-SWAP|2026-08-28T14:10:00+00:00|short": {
+    "model": "jev-1.13.0",
+    "probability": 0.2,
+    "confidence": 0.6,
+    "request_hash": "8b8aec73e023a6a4c52b17ad97243849d84cdc24cd53e451443eebec2ebba25d"
+  },
+  "DOGE-USDT-SWAP|2026-08-28T14:25:00+00:00|short": {
+    "model": "jev-1.13.0",
+    "probability": 0.13,
+    "confidence": 0.73,
+    "request_hash": "4121f8d845e28087cea021c4507a4062aa88ec895cf5bbe287fe468756c5f63f"
+  },
+  "AVAX-USDT-SWAP|2026-08-28T16:05:00+00:00|short": {
+    "model": "jev-1.13.0",
+    "probability": 0.36,
+    "confidence": 0.27,
+    "request_hash": "ec6d99d197ccc2c2132f38d8d2a6cc41a1711c8baab15a42a71068170bd4cd45"
+  },
+  "DOGE-USDT-SWAP|2026-08-28T16:05:00+00:00|short": {
+    "model": "jev-1.13.0",
+    "probability": 0.19,
+    "confidence": 0.62,
+    "request_hash": "e4d431c8fc66399805e235e350097d3133263798608cffa555243f883b8f6099"
+  },
+  "XRP-USDT-SWAP|2026-08-28T16:05:00+00:00|short": {
+    "model": "jev-1.13.0",
+    "probability": 0.19,
+    "confidence": 0.63,
+    "request_hash": "76006f202c5f735cb4771a382d5dacf07ad75423ceb062abc754ae0f867b1561"
+  },
+  "ADA-USDT-SWAP|2026-08-29T06:20:00+00:00|short": {
+    "model": "jev-1.13.0",
+    "probability": 0.19,
+    "confidence": 0.61,
+    "request_hash": "05fa28e9bd18cbd03b23361dc0a3b0ddc8a2b07eaaea4d870c245077cc4433f3"
+  },
+  "ADA-USDT-SWAP|2026-08-29T17:35:00+00:00|short": {
+    "model": "jev-1.13.0",
+    "probability": 0.13,
+    "confidence": 0.73,
+    "request_hash": "dfb20a472bb94627a97d21d5d2104594b4a534bbfad9a917d476761fdb469ecf"
+  },
+  "LINK-USDT-SWAP|2026-08-30T04:45:00+00:00|short": {
+    "model": "jev-1.13.0",
+    "probability": 0.17,
+    "confidence": 0.66,
+    "request_hash": "a07e65d07f2bfdb726be1aead820bab09a1b46fbe8872eca8bccdcf4d26aaf80"
+  },
+  "SOL-USDT-SWAP|2026-08-30T12:30:00+00:00|long": {
+    "model": "jev-1.13.0",
+    "probability": 0.23,
+    "confidence": 0.55,
+    "request_hash": "6eb838a813bf06fdb2b3a117aa81e34c53041a8b429fb8c764a7529b28ecbe26"
+  },
+  "AVAX-USDT-SWAP|2026-08-31T13:05:00+00:00|short": {
+    "model": "jev-1.13.0",
+    "probability": 0.3,
+    "confidence": 0.41,
+    "request_hash": "3284f127defae40b57ac2703a1e7ae9dd1bbde6300a40dd3557c3d73bd7faf7f"
+  },
+  "LINK-USDT-SWAP|2026-08-31T13:55:00+00:00|short": {
+    "model": "jev-1.13.0",
+    "probability": 0.16,
+    "confidence": 0.68,
+    "request_hash": "be563bc75ec45c207f21749d85e818bafaa3a3abb2102ed931b4117ec900aad1"
+  },
+  "ADA-USDT-SWAP|2026-08-31T15:25:00+00:00|short": {
+    "model": "jev-1.13.0",
+    "probability": 0.19,
+    "confidence": 0.61,
+    "request_hash": "2786074b493650cc9e673c6e7a890b9a268a75bd05610b5e5a00ada51fdc0834"
+  },
+  "DOGE-USDT-SWAP|2026-09-01T13:10:00+00:00|short": {
+    "model": "jev-1.13.0",
+    "probability": 0.26,
+    "confidence": 0.48,
+    "request_hash": "ad8fb69d5750601c5a30ccd99318a153e2057d67c593024bee58a1ca658ba761"
+  },
+  "DOGE-USDT-SWAP|2026-09-01T16:30:00+00:00|short": {
+    "model": "jev-1.13.0",
+    "probability": 0.13,
+    "confidence": 0.74,
+    "request_hash": "018e4706013a635e43f12f40ebc14e91f66458e3161ab823837d009239df1bf0"
+  },
+  "DOGE-USDT-SWAP|2026-09-01T18:05:00+00:00|short": {
+    "model": "jev-1.13.0",
+    "probability": 0.12,
+    "confidence": 0.77,
+    "request_hash": "df7e4e5f818a6dccf40b4221ed4b51053a0a236c69d6ebe7dddf1f875970c7d9"
+  },
+  "LINK-USDT-SWAP|2026-09-01T18:05:00+00:00|short": {
+    "model": "jev-1.13.0",
+    "probability": 0.14,
+    "confidence": 0.72,
+    "request_hash": "54216224a656a56bb3074f12f6ba219196045f7326c49bda01eec12ebd1aa371"
+  },
+  "XRP-USDT-SWAP|2026-09-01T18:05:00+00:00|short": {
+    "model": "jev-1.13.0",
+    "probability": 0.27,
+    "confidence": 0.46,
+    "request_hash": "bbc342e6095c8cd6f6a480aca480b38b0d8b7a7cd5153ed5cbf6956fa27d63d3"
+  },
+  "LINK-USDT-SWAP|2026-09-02T00:25:00+00:00|short": {
+    "model": "jev-1.13.0",
+    "probability": 0.32,
+    "confidence": 0.36,
+    "request_hash": "367b3bc4a8bd252506b78bcf16d3729282e8b985eeca115fd4a3fb9a96e30c51"
+  },
+  "DOGE-USDT-SWAP|2026-09-02T00:35:00+00:00|short": {
+    "model": "jev-1.13.0",
+    "probability": 0.2,
+    "confidence": 0.61,
+    "request_hash": "ba2cbdaba1529013b38cc15a1d76f394adcda64dcd59da2eed16bb6b23256477"
+  },
+  "SOL-USDT-SWAP|2026-09-02T00:35:00+00:00|short": {
+    "model": "jev-1.13.0",
+    "probability": 0.15,
+    "confidence": 0.7,
+    "request_hash": "ab213eef4ffcfdd1ef6f2fef45284ba9ce6a6bdfee6d9dbfd260c18be77ab3d6"
+  },
+  "AVAX-USDT-SWAP|2026-09-02T02:10:00+00:00|short": {
+    "model": "jev-1.13.0",
+    "probability": 0.17,
+    "confidence": 0.65,
+    "request_hash": "30df8bcdaec73968995caa98ee9c93923873f4f4df2b9cedf0334f47a872adf3"
+  },
+  "SOL-USDT-SWAP|2026-09-03T05:20:00+00:00|long": {
+    "model": "jev-1.13.0",
+    "probability": 0.12,
+    "confidence": 0.76,
+    "request_hash": "c4dc4400bcec0eb63d9ff96e85dadd6f463a940925a9609355215b8773d43425"
+  },
+  "DOGE-USDT-SWAP|2026-09-03T05:55:00+00:00|long": {
+    "model": "jev-1.13.0",
+    "probability": 0.3,
+    "confidence": 0.41,
+    "request_hash": "76b68849cfd26fa34871af025107b03e1dac39ad99de9117706741e614390173"
+  },
+  "ADA-USDT-SWAP|2026-09-03T11:25:00+00:00|long": {
+    "model": "jev-1.13.0",
+    "probability": 0.2,
+    "confidence": 0.59,
+    "request_hash": "68bb2f578251c9a4a2516f81234fb70b44a544cbf7007c01b4cc46c27c45d6f2"
+  },
+  "LINK-USDT-SWAP|2026-09-03T11:35:00+00:00|long": {
+    "model": "jev-1.13.0",
+    "probability": 0.47,
+    "confidence": 0.06,
+    "request_hash": "c96bc22bc9d2a0ccba5223008d3a9ca59c8662e7873c275d717bcb27ceb12bdc"
+  },
+  "SOL-USDT-SWAP|2026-09-03T12:40:00+00:00|long": {
+    "model": "jev-1.13.0",
+    "probability": 0.4,
+    "confidence": 0.19,
+    "request_hash": "81f64f0d3d8d24ee154433f8f122f2a3b57149df5db8c3de4fc72b50c6a80c2b"
+  },
+  "XRP-USDT-SWAP|2026-09-03T12:40:00+00:00|long": {
+    "model": "jev-1.13.0",
+    "probability": 0.34,
+    "confidence": 0.31,
+    "request_hash": "86389f24c21c71441919b1fa01636a10dd4c2f01a585a756d8aa52600f331921"
+  },
+  "ADA-USDT-SWAP|2026-09-03T12:45:00+00:00|long": {
+    "model": "jev-1.13.0",
+    "probability": 0.41,
+    "confidence": 0.19,
+    "request_hash": "6e009d493ba082a91409ecffd40340ee2edadefd74e8a0003cc34cefded09eac"
+  },
+  "XRP-USDT-SWAP|2026-09-04T04:35:00+00:00|long": {
+    "model": "jev-1.13.0",
+    "probability": 0.31,
+    "confidence": 0.39,
+    "request_hash": "a5bf44d8734590d1510cefd133fc0d7ee58abe16bc1ac645db83bc8f189632f2"
+  },
+  "LINK-USDT-SWAP|2026-09-04T08:35:00+00:00|long": {
+    "model": "jev-1.13.0",
+    "probability": 0.34,
+    "confidence": 0.32,
+    "request_hash": "fdc69c134ee1605f5788fac04e5f01f356c275ce3120097fa241d4df30e1b81a"
+  },
+  "XRP-USDT-SWAP|2026-09-04T11:35:00+00:00|long": {
+    "model": "jev-1.13.0",
+    "probability": 0.22,
+    "confidence": 0.56,
+    "request_hash": "84baf012bd637caa336fa43e5a8efc86113d45093c9e0fb3ecfdf3c7b4fc8ebd"
+  },
+  "ADA-USDT-SWAP|2026-09-04T21:35:00+00:00|short": {
+    "model": "jev-1.13.0",
+    "probability": 0.1,
+    "confidence": 0.8,
+    "request_hash": "b3671f0e4c1f459bcd446e8e5c19f984db5366a39f75dd964ddba59fe46e4141"
+  },
+  "AVAX-USDT-SWAP|2026-09-06T01:25:00+00:00|long": {
+    "model": "jev-1.13.0",
+    "probability": 0.37,
+    "confidence": 0.25,
+    "request_hash": "891f91e1bc5eb59723029c42fea4169f7400d3ac75f7d1b7d4336b15ee5b107f"
+  },
+  "ADA-USDT-SWAP|2026-09-06T01:35:00+00:00|long": {
+    "model": "jev-1.13.0",
+    "probability": 0.4,
+    "confidence": 0.21,
+    "request_hash": "ae5b68d7196212ebda028d01d7f7b93b74ef05efb3d9a8850d6bca473115ee9f"
+  },
+  "SOL-USDT-SWAP|2026-09-06T09:25:00+00:00|long": {
+    "model": "jev-1.13.0",
+    "probability": 0.39,
+    "confidence": 0.23,
+    "request_hash": "b4d4b6a4750aa897ca8609ccf1c7d6ed4ec4d86d4dd037148ad28eb01181708c"
+  },
+  "LINK-USDT-SWAP|2026-09-06T12:30:00+00:00|long": {
+    "model": "jev-1.13.0",
+    "probability": 0.27,
+    "confidence": 0.45,
+    "request_hash": "c7d0a6cf68960a62c66d6928341e95f25042437e24ea772d3be24a5aad601b6e"
+  },
+  "XRP-USDT-SWAP|2026-09-06T12:40:00+00:00|long": {
+    "model": "jev-1.13.0",
+    "probability": 0.3,
+    "confidence": 0.4,
+    "request_hash": "77f6f81367a33a8408e5ba13e537ecf28b9bcc2cc468b7882142f6a5afebe053"
+  },
+  "SOL-USDT-SWAP|2026-09-06T14:05:00+00:00|long": {
+    "model": "jev-1.13.0",
+    "probability": 0.44,
+    "confidence": 0.11,
+    "request_hash": "e4cdecbfb7dbff93ba490bdc5de6609b71eb5c9bd2349c883e9ba5a12c141526"
+  },
+  "LINK-USDT-SWAP|2026-09-06T14:15:00+00:00|long": {
+    "model": "jev-1.13.0",
+    "probability": 0.34,
+    "confidence": 0.32,
+    "request_hash": "0222de0742700a816bc1819443397e70d2500685edc58091ef94a88b89960c3d"
+  },
+  "XRP-USDT-SWAP|2026-09-06T23:20:00+00:00|long": {
+    "model": "jev-1.13.0",
+    "probability": 0.19,
+    "confidence": 0.62,
+    "request_hash": "b0e6f28555d85bcb1e00dc711f8c92057c184858ff6447c603e96b0e35fbd501"
+  },
+  "AVAX-USDT-SWAP|2026-09-07T03:05:00+00:00|long": {
+    "model": "jev-1.13.0",
+    "probability": 0.44,
+    "confidence": 0.13,
+    "request_hash": "f2947c7ffb836b7bd66a373449d686f6c668cdcf4d09dca0166d682d02290c71"
+  },
+  "LINK-USDT-SWAP|2026-09-07T05:15:00+00:00|long": {
+    "model": "jev-1.13.0",
+    "probability": 0.29,
+    "confidence": 0.42,
+    "request_hash": "f8d25f6e9ca82dce31d3df52d4e579d3220ee2c9a05eb17f7b1156e9ffc488e4"
+  },
+  "XRP-USDT-SWAP|2026-09-07T06:45:00+00:00|short": {
+    "model": "jev-1.13.0",
+    "probability": 0.13,
+    "confidence": 0.73,
+    "request_hash": "91a359c474528a04fad5d7dc2c8b9c016b9fed17208352248e830703dc9106b1"
+  },
+  "SOL-USDT-SWAP|2026-09-07T07:35:00+00:00|short": {
+    "model": "jev-1.13.0",
+    "probability": 0.22,
+    "confidence": 0.56,
+    "request_hash": "0c766968d3e9aebea6c81701e12edd2d3c141197256099a15778fecab669b470"
+  },
+  "ETH-USDT-SWAP|2026-09-07T15:40:00+00:00|short": {
+    "model": "jev-1.13.0",
+    "probability": 0.09,
+    "confidence": 0.81,
+    "request_hash": "5f340b69f965209589b495b310caf72927e5fcad52cccc39f6ac4cd0db696d3d"
+  },
+  "DOGE-USDT-SWAP|2026-09-07T20:50:00+00:00|long": {
+    "model": "jev-1.13.0",
+    "probability": 0.36,
+    "confidence": 0.29,
+    "request_hash": "dab7c79a956fcab2300328f6f4a48d4d313934891eb803718edad5691c92e179"
+  },
+  "DOGE-USDT-SWAP|2026-09-08T00:15:00+00:00|long": {
+    "model": "jev-1.13.0",
+    "probability": 0.39,
+    "confidence": 0.22,
+    "request_hash": "6df190e4ad6228cb53a89cce334f4e8dc8a64511f03a7681dae54334befcfa09"
+  },
+  "LINK-USDT-SWAP|2026-09-08T06:50:00+00:00|short": {
+    "model": "jev-1.13.0",
+    "probability": 0.28,
+    "confidence": 0.44,
+    "request_hash": "08dd9ae13ed291da4110dcf797d94bb8479cf29b168f074552905f0dfa0db122"
+  },
+  "SOL-USDT-SWAP|2026-09-08T11:55:00+00:00|short": {
+    "model": "jev-1.13.0",
+    "probability": 0.26,
+    "confidence": 0.48,
+    "request_hash": "2f58c3549405dd8869e205ee5f0610a70ed761c08df67b1cb7024a07c14a65a9"
+  },
+  "BTC-USDT-SWAP|2026-09-08T12:15:00+00:00|short": {
+    "model": "jev-1.13.0",
+    "probability": 0.14,
+    "confidence": 0.73,
+    "request_hash": "00c2aec8cd785bb0b5b34789569b5651d0856dfd6d427ab909a4c33846eff68f"
+  },
+  "SOL-USDT-SWAP|2026-09-08T13:35:00+00:00|short": {
+    "model": "jev-1.13.0",
+    "probability": 0.22,
+    "confidence": 0.56,
+    "request_hash": "18227cc577d691ec3708c7a81d7163898490d93f9aaee81b135a769f1064e91c"
+  },
+  "DOGE-USDT-SWAP|2026-09-08T14:00:00+00:00|short": {
+    "model": "jev-1.13.0",
+    "probability": 0.19,
+    "confidence": 0.61,
+    "request_hash": "507797fb686fc402b9c42d455f1cd05674494a1a712bd33ab247b156eb5e51f4"
+  },
+  "XRP-USDT-SWAP|2026-09-08T14:05:00+00:00|long": {
+    "model": "jev-1.13.0",
+    "probability": 0.35,
+    "confidence": 0.31,
+    "request_hash": "b709c3bb887f7530c105856cc7d2839d6251660c77fbdabd90bf692d1ff5e45b"
+  },
+  "XRP-USDT-SWAP|2026-09-09T04:50:00+00:00|long": {
+    "model": "jev-1.13.0",
+    "probability": 0.37,
+    "confidence": 0.26,
+    "request_hash": "fa3caa6a1377ec644e1de60d223dda8562b3f333a65f1400ded0dfbc3c06405d"
+  },
+  "DOGE-USDT-SWAP|2026-09-09T12:50:00+00:00|long": {
+    "model": "jev-1.13.0",
+    "probability": 0.28,
+    "confidence": 0.44,
+    "request_hash": "90d675708e5acfed3f893e069ab4c4c80f48575091d951d44f929a397b337695"
+  },
+  "ADA-USDT-SWAP|2026-09-09T15:10:00+00:00|short": {
+    "model": "jev-1.13.0",
+    "probability": 0.14,
+    "confidence": 0.71,
+    "request_hash": "f3295189bc005f3c6f67cfa811e616c2e6ec614ac75784fa505f80dfa35b129a"
+  },
+  "ADA-USDT-SWAP|2026-09-09T19:00:00+00:00|short": {
+    "model": "jev-1.13.0",
+    "probability": 0.17,
+    "confidence": 0.67,
+    "request_hash": "1fd004ba5abaf71765096a5fbc0838c7faae1daeb3eef7802501b51c304f689f"
+  },
+  "ETH-USDT-SWAP|2026-09-10T01:45:00+00:00|short": {
+    "model": "jev-1.13.0",
+    "probability": 0.16,
+    "confidence": 0.69,
+    "request_hash": "837b2a4548037bdd59c6ebba40258f387ec80be1976b00a5c55b31b7fe1c368a"
+  },
+  "ETH-USDT-SWAP|2026-09-10T12:05:00+00:00|short": {
+    "model": "jev-1.13.0",
+    "probability": 0.19,
+    "confidence": 0.63,
+    "request_hash": "bd60bdd35ad605406b866e939ed8ecbb5d3ec665c4d66d3638d0e5aaa2e32bff"
+  },
+  "SOL-USDT-SWAP|2026-09-10T12:05:00+00:00|short": {
+    "model": "jev-1.13.0",
+    "probability": 0.32,
+    "confidence": 0.35,
+    "request_hash": "4a8f47a186782d933a0a3a285a91e31a544cf69b7731efc39e6fec6b32fc2fe8"
+  },
+  "ADA-USDT-SWAP|2026-09-10T15:40:00+00:00|short": {
+    "model": "jev-1.13.0",
+    "probability": 0.13,
+    "confidence": 0.74,
+    "request_hash": "34530350b5b384e19e8885a56430c3cf095be5e1cf682b25c8eaeb09d99f73b4"
+  }
+}

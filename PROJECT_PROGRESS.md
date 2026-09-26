@@ -5,6 +5,14 @@
 > **OKX V2 / 双均线最新交接请先读 `PROJECT_CONTEXT.md`。**
 > 下文保留 Binance V1 历史结论；OKX 工作以 PROJECT_CONTEXT 为准。
 
+## Jev 盈利优先迭代（2026-09-26）
+
+- 192组四类入场策略；补齐真实资金费，保留原组合风控。Jev实际137次预测，冻结阈值0.25。
+- **没有找到可信盈利版本**：Jev开发A35笔、PF0.598、100→94.29U；B48笔、PF0.394、100→87.11U；压力测试也失败。
+- 新8币112896根5m历史预留数据已校验，研究流程未进行其绩效评估；原有区间全部作为开发数据，不再称独立留出。
+- 172项相关测试通过；缓存重复运行结果一致；用HEAD回测器排除原有未提交streak-flip修改后，8组组合指标与标签一致。
+- 入口 `scripts/run_jev_profit_research.py`；协议 `docs/research/JEV_PROFIT_PROTOCOL.md`；复现 `docs/research/JEV_PROFIT_RESEARCH.md`；结果 `reports/jev-profit-20260926/FINAL_REPORT.md`。不下单，未证明前向盈利。
+
 ## Jev 超短线优化（2026-09-26）
 
 - 真实5m数据已补齐：8币、60天、138240根已收盘K，缺K为0。

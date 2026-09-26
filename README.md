@@ -179,3 +179,5 @@ Local OKX USDT-perpetual observation dashboard. It runs in Docker on your machin
 - Open [http://127.0.0.1:8787](http://127.0.0.1:8787) and click **扫描** (Scan)
 
 Not investment advice. Historical research in this repository did not pass live-trading gates; do not treat it as a working strategy.
+
+盈利优先的四类入场、真实资金费和预留门禁见 [盈利迭代说明](docs/research/JEV_PROFIT_RESEARCH.md)。[本轮报告](reports/jev-profit-20260926/FINAL_REPORT.md)结论：192组未找到可信盈利版本，预留集未进入策略评估。
