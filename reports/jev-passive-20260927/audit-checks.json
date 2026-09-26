@@ -1,0 +1,8 @@
+{
+  "repeat_regular_and_strict_metrics_identical": true,
+  "heldout_prices_opened": false,
+  "portfolio_verified": false,
+  "_exit_fill_matches_committed_code": true,
+  "_signed_move_matches_committed_code": true,
+  "source_hashes_match": true
+}

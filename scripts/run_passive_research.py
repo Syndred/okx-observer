@@ -31,10 +31,10 @@ def window(orders,begin,end,hold):
     return [e for e in orders if begin<=e.date and e.date+pd.Timedelta(minutes=hold)<=end]
 
 
-def measure(frames,funding,orders,target,hold,stress=False):
+def measure(frames,funding,orders,target,hold,stress=False,strict_fill=True):
     factor=2 if stress else 1
     rows=evaluate_passive(frames,orders,target,hold,entry_fee=.0002*factor,exit_fee=.0005*factor,
-          exit_slippage=.0005*factor,penetration=.0001*factor,funding_frames=funding,missing_funding=.0001*factor)
+          exit_slippage=.0005*factor,penetration=.0001*(factor if strict_fill else 1),funding_frames=funding,missing_funding=.0001*factor)
     result={**stats(rows),'orders':len(orders),'fill_rate':len(rows)/len(orders) if orders else None,
             'skipped_counts':rows.attrs.get('skipped_counts',{})}
     return result,rows
@@ -69,9 +69,13 @@ def run(args):
             orders=make_orders(signals,offset,target);all_orders[cid]=orders
             subset=window(orders,START,SPLIT_A,hold)
             normal,_=measure(frames,funding,subset,target,hold);stress,_=measure(frames,funding,subset,target,hold,True)
+            cost_only,_=measure(frames,funding,subset,target,hold,True,False)
             training.append({'candidate':cid,**asdict(params),'offset_atr':offset,'target_r':target,
                              'hold_minutes':hold,**normal,'stress_pf':stress['pf'],'stress_n':stress['n'],
-                             'training_passed':passes(normal,stress,80)})
+                             'stress_mean_net_return':stress['mean_net_return'],
+                             'cost_only_stress_pf':cost_only['pf'],'cost_only_stress_n':cost_only['n'],
+                             'cost_only_stress_mean_net_return':cost_only['mean_net_return'],
+                             'training_passed':passes(normal,stress,80) and passes(normal,cost_only,80)})
         pd.DataFrame(training).to_csv(out/'training-grid.csv',index=False)
         print(f'training {len(training)}/64',flush=True)
     records=[]
@@ -79,10 +83,12 @@ def run(args):
         cid=row['candidate'];params,offset,target,hold=configs[cid]
         subset=window(all_orders[cid],SPLIT_A,SPLIT_B,hold)
         normal,rows=measure(frames,funding,subset,target,hold);stress,srows=measure(frames,funding,subset,target,hold,True)
+        cost_only,crows=measure(frames,funding,subset,target,hold,True,False)
         rows.to_csv(out/f'candidate-{cid}-a-labels.csv',index=False)
         srows.to_csv(out/f'candidate-{cid}-a-stress-labels.csv',index=False)
-        record={'candidate':cid,'training':row,'regular':normal,'stress':stress,
-                'passed':bool(row['training_passed'] and passes(normal,stress,30))}
+        crows.to_csv(out/f'candidate-{cid}-a-cost-only-stress-labels.csv',index=False)
+        record={'candidate':cid,'training':row,'regular':normal,'stress':stress,'cost_only_stress':cost_only,
+                'passed':bool(row['training_passed'] and passes(normal,stress,30) and passes(normal,cost_only,30))}
         records.append(record);write_json(out/'development-a.json',{'candidates':records})
         print('A',cid,record['passed'],normal['n'],normal['pf'],flush=True)
     qualifying=[r for r in records if r['passed']]
@@ -96,9 +102,11 @@ def run(args):
         write_json(out/'frozen-candidate.json',frozen)
         subset=window(all_orders[cid],SPLIT_B,END,hold)
         normal,rows=measure(frames,funding,subset,target,hold);stress,srows=measure(frames,funding,subset,target,hold,True)
+        cost_only,crows=measure(frames,funding,subset,target,hold,True,False)
         rows.to_csv(out/'selected-b-labels.csv',index=False);srows.to_csv(out/'selected-b-stress-labels.csv',index=False)
-        passed=passes(normal,stress,30) and normal['n']+chosen['regular']['n']>=100
-        frozen['b']={'regular':normal,'stress':stress,'passed':bool(passed)};write_json(out/'frozen-candidate.json',frozen)
+        crows.to_csv(out/'selected-b-cost-only-stress-labels.csv',index=False)
+        passed=passes(normal,stress,30) and passes(normal,cost_only,30) and normal['n']+chosen['regular']['n']>=100
+        frozen['b']={'regular':normal,'stress':stress,'cost_only_stress':cost_only,'passed':bool(passed)};write_json(out/'frozen-candidate.json',frozen)
         manifest['status']='labels_passed_requires_portfolio_and_execution_validation' if passed else 'development_b_failed'
     write_json(out/'manifest.json',manifest);print(manifest['status'],flush=True)
 

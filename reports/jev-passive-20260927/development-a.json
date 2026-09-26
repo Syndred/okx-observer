@@ -1,0 +1,386 @@
+{
+  "candidates": [
+    {
+      "candidate": 59,
+      "training": {
+        "candidate": 59,
+        "family": "breakout",
+        "stop_atr": 3.0,
+        "min_atr_pct": 0.004,
+        "min_body_atr": 0.0,
+        "offset_atr": 0.25,
+        "target_r": 2.0,
+        "hold_minutes": 60,
+        "n": 166,
+        "win_rate": 0.4879518072289157,
+        "pf": 1.423396940559213,
+        "mean_net_return": 0.0016048162476454502,
+        "orders": 208,
+        "fill_rate": 0.7980769230769231,
+        "skipped_counts": {
+          "not_filled": 42
+        },
+        "stress_pf": 1.087888212733218,
+        "stress_n": 165,
+        "stress_mean_net_return": 0.00039099511293648714,
+        "cost_only_stress_pf": 1.0913084566339077,
+        "cost_only_stress_n": 166,
+        "cost_only_stress_mean_net_return": 0.00040376396309870427,
+        "training_passed": true
+      },
+      "regular": {
+        "n": 50,
+        "win_rate": 0.44,
+        "pf": 0.9103783097727305,
+        "mean_net_return": -0.0003802060686005117,
+        "orders": 67,
+        "fill_rate": 0.746268656716418,
+        "skipped_counts": {
+          "not_filled": 17
+        }
+      },
+      "stress": {
+        "n": 48,
+        "win_rate": 0.2916666666666667,
+        "pf": 0.62923039556547,
+        "mean_net_return": -0.0019221745672874265,
+        "orders": 67,
+        "fill_rate": 0.7164179104477612,
+        "skipped_counts": {
+          "not_filled": 19
+        }
+      },
+      "cost_only_stress": {
+        "n": 50,
+        "win_rate": 0.3,
+        "pf": 0.6823902915786395,
+        "mean_net_return": -0.0015810394502144317,
+        "orders": 67,
+        "fill_rate": 0.746268656716418,
+        "skipped_counts": {
+          "not_filled": 17
+        }
+      },
+      "passed": false
+    },
+    {
+      "candidate": 57,
+      "training": {
+        "candidate": 57,
+        "family": "breakout",
+        "stop_atr": 3.0,
+        "min_atr_pct": 0.004,
+        "min_body_atr": 0.0,
+        "offset_atr": 0.25,
+        "target_r": 1.0,
+        "hold_minutes": 60,
+        "n": 166,
+        "win_rate": 0.5240963855421686,
+        "pf": 1.3797119141263174,
+        "mean_net_return": 0.0013995620253796654,
+        "orders": 208,
+        "fill_rate": 0.7980769230769231,
+        "skipped_counts": {
+          "not_filled": 42
+        },
+        "stress_pf": 1.0315929996031599,
+        "stress_n": 165,
+        "stress_mean_net_return": 0.00013577463499359722,
+        "cost_only_stress_pf": 1.0467652408400128,
+        "cost_only_stress_n": 166,
+        "cost_only_stress_mean_net_return": 0.00019976841018189308,
+        "training_passed": true
+      },
+      "regular": {
+        "n": 50,
+        "win_rate": 0.44,
+        "pf": 0.8198083348418316,
+        "mean_net_return": -0.0007644350874284344,
+        "orders": 67,
+        "fill_rate": 0.746268656716418,
+        "skipped_counts": {
+          "not_filled": 17
+        }
+      },
+      "stress": {
+        "n": 48,
+        "win_rate": 0.3333333333333333,
+        "pf": 0.5581983271396715,
+        "mean_net_return": -0.0022823033615680826,
+        "orders": 67,
+        "fill_rate": 0.7164179104477612,
+        "skipped_counts": {
+          "not_filled": 19
+        }
+      },
+      "cost_only_stress": {
+        "n": 50,
+        "win_rate": 0.34,
+        "pf": 0.6040057221368211,
+        "mean_net_return": -0.0019642441819602043,
+        "orders": 67,
+        "fill_rate": 0.746268656716418,
+        "skipped_counts": {
+          "not_filled": 17
+        }
+      },
+      "passed": false
+    },
+    {
+      "candidate": 58,
+      "training": {
+        "candidate": 58,
+        "family": "breakout",
+        "stop_atr": 3.0,
+        "min_atr_pct": 0.004,
+        "min_body_atr": 0.0,
+        "offset_atr": 0.25,
+        "target_r": 2.0,
+        "hold_minutes": 30,
+        "n": 166,
+        "win_rate": 0.4397590361445783,
+        "pf": 0.9593095257588184,
+        "mean_net_return": -0.00014418376205858096,
+        "orders": 208,
+        "fill_rate": 0.7980769230769231,
+        "skipped_counts": {
+          "not_filled": 42
+        },
+        "stress_pf": 0.6797157492019744,
+        "stress_n": 165,
+        "stress_mean_net_return": -0.0013663516650556785,
+        "cost_only_stress_pf": 0.6832824843935932,
+        "cost_only_stress_n": 166,
+        "cost_only_stress_mean_net_return": -0.0013429963885200145,
+        "training_passed": false
+      },
+      "regular": {
+        "n": 50,
+        "win_rate": 0.38,
+        "pf": 0.8601402051589874,
+        "mean_net_return": -0.000496458903702018,
+        "orders": 67,
+        "fill_rate": 0.746268656716418,
+        "skipped_counts": {
+          "not_filled": 17
+        }
+      },
+      "stress": {
+        "n": 48,
+        "win_rate": 0.3541666666666667,
+        "pf": 0.6165793450422715,
+        "mean_net_return": -0.0017045072170109917,
+        "orders": 67,
+        "fill_rate": 0.7164179104477612,
+        "skipped_counts": {
+          "not_filled": 19
+        }
+      },
+      "cost_only_stress": {
+        "n": 50,
+        "win_rate": 0.34,
+        "pf": 0.6079315379613689,
+        "mean_net_return": -0.001697034923552325,
+        "orders": 67,
+        "fill_rate": 0.746268656716418,
+        "skipped_counts": {
+          "not_filled": 17
+        }
+      },
+      "passed": false
+    },
+    {
+      "candidate": 56,
+      "training": {
+        "candidate": 56,
+        "family": "breakout",
+        "stop_atr": 3.0,
+        "min_atr_pct": 0.004,
+        "min_body_atr": 0.0,
+        "offset_atr": 0.25,
+        "target_r": 1.0,
+        "hold_minutes": 30,
+        "n": 166,
+        "win_rate": 0.4457831325301205,
+        "pf": 0.9102296929013942,
+        "mean_net_return": -0.000315505827123745,
+        "orders": 208,
+        "fill_rate": 0.7980769230769231,
+        "skipped_counts": {
+          "not_filled": 42
+        },
+        "stress_pf": 0.6362332579720111,
+        "stress_n": 165,
+        "stress_mean_net_return": -0.0015386415881791073,
+        "cost_only_stress_pf": 0.6398306129659797,
+        "cost_only_stress_n": 166,
+        "cost_only_stress_mean_net_return": -0.0015142484205402898,
+        "training_passed": false
+      },
+      "regular": {
+        "n": 50,
+        "win_rate": 0.38,
+        "pf": 0.8088129193596905,
+        "mean_net_return": -0.0006786548526299135,
+        "orders": 67,
+        "fill_rate": 0.746268656716418,
+        "skipped_counts": {
+          "not_filled": 17
+        }
+      },
+      "stress": {
+        "n": 48,
+        "win_rate": 0.3541666666666667,
+        "pf": 0.5740748866003677,
+        "mean_net_return": -0.0018934619726627348,
+        "orders": 67,
+        "fill_rate": 0.7164179104477612,
+        "skipped_counts": {
+          "not_filled": 19
+        }
+      },
+      "cost_only_stress": {
+        "n": 50,
+        "win_rate": 0.34,
+        "pf": 0.5660232239729557,
+        "mean_net_return": -0.0018784314889779981,
+        "orders": 67,
+        "fill_rate": 0.746268656716418,
+        "skipped_counts": {
+          "not_filled": 17
+        }
+      },
+      "passed": false
+    },
+    {
+      "candidate": 43,
+      "training": {
+        "candidate": 43,
+        "family": "breakout",
+        "stop_atr": 1.5,
+        "min_atr_pct": 0.004,
+        "min_body_atr": 0.0,
+        "offset_atr": 0.25,
+        "target_r": 2.0,
+        "hold_minutes": 60,
+        "n": 166,
+        "win_rate": 0.3855421686746988,
+        "pf": 0.8550658240192769,
+        "mean_net_return": -0.0006710528123858538,
+        "orders": 208,
+        "fill_rate": 0.7980769230769231,
+        "skipped_counts": {
+          "not_filled": 42
+        },
+        "stress_pf": 0.6576420783409739,
+        "stress_n": 165,
+        "stress_mean_net_return": -0.0018310511494119188,
+        "cost_only_stress_pf": 0.6514538889529048,
+        "cost_only_stress_n": 166,
+        "cost_only_stress_mean_net_return": -0.0018705189171762788,
+        "training_passed": false
+      },
+      "regular": {
+        "n": 50,
+        "win_rate": 0.4,
+        "pf": 0.9737680292569514,
+        "mean_net_return": -8.899876976616019e-05,
+        "orders": 67,
+        "fill_rate": 0.746268656716418,
+        "skipped_counts": {
+          "not_filled": 17
+        }
+      },
+      "stress": {
+        "n": 48,
+        "win_rate": 0.3333333333333333,
+        "pf": 0.6392241196225359,
+        "mean_net_return": -0.0015517668046516476,
+        "orders": 67,
+        "fill_rate": 0.7164179104477612,
+        "skipped_counts": {
+          "not_filled": 19
+        }
+      },
+      "cost_only_stress": {
+        "n": 50,
+        "win_rate": 0.34,
+        "pf": 0.6881829894565177,
+        "mean_net_return": -0.0012878558970075538,
+        "orders": 67,
+        "fill_rate": 0.746268656716418,
+        "skipped_counts": {
+          "not_filled": 17
+        }
+      },
+      "passed": false
+    },
+    {
+      "candidate": 49,
+      "training": {
+        "candidate": 49,
+        "family": "breakout",
+        "stop_atr": 3.0,
+        "min_atr_pct": 0.0,
+        "min_body_atr": 0.0,
+        "offset_atr": 0.25,
+        "target_r": 1.0,
+        "hold_minutes": 60,
+        "n": 709,
+        "win_rate": 0.38928067700987307,
+        "pf": 0.7744315667992627,
+        "mean_net_return": -0.0007126398022518919,
+        "orders": 1033,
+        "fill_rate": 0.686350435624395,
+        "skipped_counts": {
+          "not_filled": 312,
+          "marketable_at_open": 12
+        },
+        "stress_pf": 0.5015210060605669,
+        "stress_n": 668,
+        "stress_mean_net_return": -0.002000894570617485,
+        "cost_only_stress_pf": 0.5108035658701898,
+        "cost_only_stress_n": 709,
+        "cost_only_stress_mean_net_return": -0.0019127316735606573,
+        "training_passed": false
+      },
+      "regular": {
+        "n": 546,
+        "win_rate": 0.38644688644688646,
+        "pf": 0.5713394571495045,
+        "mean_net_return": -0.0014159417976535207,
+        "orders": 795,
+        "fill_rate": 0.6867924528301886,
+        "skipped_counts": {
+          "not_filled": 243,
+          "marketable_at_open": 6
+        }
+      },
+      "stress": {
+        "n": 514,
+        "win_rate": 0.33657587548638135,
+        "pf": 0.3461272320772236,
+        "mean_net_return": -0.002699705627649753,
+        "orders": 795,
+        "fill_rate": 0.6465408805031446,
+        "skipped_counts": {
+          "not_filled": 275,
+          "marketable_at_open": 6
+        }
+      },
+      "cost_only_stress": {
+        "n": 546,
+        "win_rate": 0.33882783882783885,
+        "pf": 0.3571706244026084,
+        "mean_net_return": -0.0026156157740956005,
+        "orders": 795,
+        "fill_rate": 0.6867924528301886,
+        "skipped_counts": {
+          "not_filled": 243,
+          "marketable_at_open": 6
+        }
+      },
+      "passed": false
+    }
+  ]
+}

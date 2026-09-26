@@ -44,3 +44,15 @@ def test_failed_a_does_not_evaluate_b_or_open_reserved(tmp_path,monkeypatch):
     assert manifest['status']=='no_profitable_development_candidate'
     assert manifest['heldout_prices_opened'] is False and manifest['portfolio_verified'] is False
     assert len(pd.read_csv(tmp_path/'results/training-grid.csv'))==64
+
+
+def test_cost_only_pressure_keeps_fill_while_strict_pressure_can_reject():
+    date=pd.Timestamp('2026-08-01T01:00:00Z')
+    frame=pd.DataFrame({'date':pd.date_range(date,periods=2,freq='5min'),
+        'open':[101.,100.1],'high':[101.1,100.3],'low':[99.985,100.0],'close':[100.1,100.2]})
+    order=study.PassiveOrder(date,'X','long',100.,95.)
+    regular,_=study.measure({'X':frame},{},[order],1.,10)
+    strict,_=study.measure({'X':frame},{},[order],1.,10,True)
+    cost_only,_=study.measure({'X':frame},{},[order],1.,10,True,False)
+    assert regular['n']==cost_only['n']==1 and strict['n']==0
+    assert regular['mean_net_return']>0>cost_only['mean_net_return']
