@@ -1,0 +1,16 @@
+{
+  "candidate-87-stress-False": true,
+  "candidate-87-stress-True": true,
+  "candidate-85-stress-False": true,
+  "candidate-85-stress-True": true,
+  "candidate-83-stress-False": true,
+  "candidate-83-stress-True": true,
+  "candidate-81-stress-False": true,
+  "candidate-81-stress-True": true,
+  "candidate-63-stress-False": true,
+  "candidate-63-stress-True": true,
+  "candidate-59-stress-False": true,
+  "candidate-59-stress-True": true,
+  "clean_head_backtester_sha256": "759348e1f7eb56f3970a77052e878139d55e73a14086eafce4dcc754e2f6796d",
+  "reserved_strategy_evaluation": false
+}
