@@ -1,0 +1,5 @@
+# Standalone historical Jev research; the existing Docker image already includes these.
+pandas>=2.2,<3
+numpy>=1.26,<3
+pyarrow>=15,<25
+requests>=2.31,<3

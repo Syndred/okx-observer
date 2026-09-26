@@ -1,9 +1,18 @@
 # 项目进度交接
 
-更新时间：2026-08-11
+更新时间：2026-09-26
 
 > **OKX V2 / 双均线最新交接请先读 `PROJECT_CONTEXT.md`。**
 > 下文保留 Binance V1 历史结论；OKX 工作以 PROJECT_CONTEXT 为准。
+
+## Jev 均线研究（2026-09-26）
+
+- 已复用 JevPlay 的 System One 接口，密钥仅由环境变量或显式本地 env 文件读取。
+- 新入口：`scripts/run_jev_ma_research.py`；默认日线/4H双EMA趋势 + 15m六线密集，`dual_ma` 可选旧双EMA回踩路径。
+- 退出协议固定为3R、原止损、24h时间K收盘（最长24h15m）；Jev概率阈值固定0.60。不是旧滚仓最优参数重跑。
+- 模型输入仅已收盘历史；概率预测与真实净盈利标签分开；缓存按请求/模型/代码哈希，失败不降级为假结果。
+- 已通过74项相关测试；真实API已连通。600信号时间切分研究运行中，结果以本轮报告和manifest为准。
+- 说明：`docs/research/JEV_MA_RESEARCH.md`。研究不改观察台、不下单。
 
 ## Binance V1（历史）
 
