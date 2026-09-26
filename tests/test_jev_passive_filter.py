@@ -122,13 +122,15 @@ def test_threshold_selection_has_no_fallback_and_uses_only_passed_records():
     assert research.choose_threshold([failed, first, second]) is second
 
 
-@pytest.mark.parametrize("extended", [False, True])
-def test_failed_training_scores_all_orders_before_fill_filter_and_stops(monkeypatch, tmp_path, extended):
-    train_start=pd.Timestamp("2026-07-01",tz="UTC") if extended else research.START
+@pytest.mark.parametrize("mode", ["base", "extended", "long"])
+def test_failed_training_scores_all_orders_before_fill_filter_and_stops(monkeypatch, tmp_path, mode):
+    train_start={"base":research.START,"extended":pd.Timestamp("2026-07-01",tz="UTC"),"long":pd.Timestamp("2026-03-01",tz="UTC")}[mode]
+    split_a=pd.Timestamp("2026-06-01",tz="UTC") if mode=="long" else research.SPLIT_A
+    split_b=pd.Timestamp("2026-07-15",tz="UTC") if mode=="long" else research.SPLIT_B
     pair = 'SYNTHETIC'
     orders = [PassiveOrder(train_start+pd.Timedelta(hours=i+1), pair, 'long', 99, 98) for i in range(3)]
-    orders += [replace(orders[0], date=research.SPLIT_A+pd.Timedelta(hours=1)),
-               replace(orders[0], date=research.SPLIT_B+pd.Timedelta(hours=1))]
+    orders += [replace(orders[0], date=split_a+pd.Timedelta(hours=1)),
+               replace(orders[0], date=split_b+pd.Timedelta(hours=1))]
     dataset = Mock(return_value=({pair: pd.DataFrame()}, {}, {'synthetic': 'hash'}))
     monkeypatch.setattr(research, 'load_dataset', dataset)
     monkeypatch.setattr(research, 'fingerprint', lambda _: 'synthetic-hash')
@@ -149,13 +151,15 @@ def test_failed_training_scores_all_orders_before_fill_filter_and_stops(monkeypa
         result.update(n=int(orders[0] in subset), pf=.8, mean_net_return=-.001)
         return result, pd.DataFrame()
     monkeypatch.setattr(research, 'measure', mock_measure)
-    args = SimpleNamespace(output_dir=tmp_path/'out', data_dir=tmp_path/'development', env_file=None, extended_training=extended)
+    args = SimpleNamespace(output_dir=tmp_path/'out', data_dir=tmp_path/'development', env_file=None, extended_training=mode=="extended", long_history=mode=="long")
     research.run(args)
     assert scored == [('training', orders[:3])]
     dataset.assert_called_once_with(args.data_dir, research.DEV_SYMBOLS, train_start)
     manifest = json.loads((args.output_dir/'manifest.json').read_text())
     assert manifest['status'] == 'no_qualified_training_threshold'
     assert manifest['training_start']==train_start.isoformat()
+    assert manifest['development_a_start']==split_a.isoformat()
+    assert manifest['development_b_start']==split_b.isoformat()
     assert manifest['heldout_prices_opened'] is False
     assert manifest['portfolio_verified'] is False
     assert manifest['live_claim_allowed'] is False
@@ -187,3 +191,8 @@ def test_all_metrics_runs_both_distinct_stress_scenarios(monkeypatch):
     result = research.all_metrics({}, {}, [])
     assert set(result) == {'regular', 'cost_only_stress', 'strict_stress'}
     assert [call.args[-2:] for call in measure.call_args_list] == [(False, True), (True, False), (True, True)]
+
+
+def test_history_modes_cannot_be_combined():
+    with pytest.raises(ValueError,match="one history mode"):
+        research.study_windows(SimpleNamespace(extended_training=True,long_history=True))

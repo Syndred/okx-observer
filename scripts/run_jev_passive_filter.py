@@ -79,10 +79,17 @@ def choose_threshold(records):
     return max(passed,key=lambda r:(min(r['metrics'][k]['pf'] for k in ['cost_only_stress','strict_stress']),r['metrics']['regular']['pf']))
 
 
+def study_windows(args):
+    if getattr(args,'long_history',False):
+        if getattr(args,'extended_training',False):raise ValueError('choose one history mode')
+        return (pd.Timestamp('2026-03-01',tz='UTC'),pd.Timestamp('2026-06-01',tz='UTC'),
+                pd.Timestamp('2026-07-15',tz='UTC'),'JEV_LONG_HISTORY_PROTOCOL.md')
+    if getattr(args,'extended_training',False):return pd.Timestamp('2026-07-01',tz='UTC'),SPLIT_A,SPLIT_B,'JEV_EXTENDED_TRAINING_PROTOCOL.md'
+    return START,SPLIT_A,SPLIT_B,'JEV_PASSIVE_FILTER_PROTOCOL.md'
+
+
 def run(args):
-    extended=getattr(args,"extended_training",False)
-    train_start=pd.Timestamp("2026-07-01",tz="UTC") if extended else START
-    protocol="JEV_EXTENDED_TRAINING_PROTOCOL.md" if extended else "JEV_PASSIVE_FILTER_PROTOCOL.md"
+    train_start,split_a,split_b,protocol=study_windows(args)
     out=args.output_dir
     if out.exists() and any(out.iterdir()):raise ValueError('output directory must be empty')
     out.mkdir(parents=True,exist_ok=True)
@@ -91,6 +98,7 @@ def run(args):
         'scripts/run_jev_ma_research.py','user_data/strategy_lib/scalp_signal_engine.py','user_data/strategy_lib/profit_signal_engine.py']
     manifest={'status':'training','heldout_prices_opened':False,'portfolio_verified':False,'live_claim_allowed':False,
         'model':'jev-1.13.0','candidate':59,'training_start':train_start.isoformat(),
+        'development_a_start':split_a.isoformat(),'development_b_start':split_b.isoformat(),
         'protocol_sha256':fingerprint(ROOT/'docs/research'/protocol),
         'filter_protocol_sha256':fingerprint(ROOT/'docs/research/JEV_PASSIVE_FILTER_PROTOCOL.md'),
         'code_sha256':{p:fingerprint(ROOT/p) for p in sources},'created_at':pd.Timestamp.now(tz='UTC').isoformat()}
@@ -101,7 +109,7 @@ def run(args):
     orders=make_orders(signals,OFFSET,TARGET)
     load_key_file(args.env_file);client=JevClient(model='jev-1.13.0',timeout=30)
     cache=ROOT/'user_data/backtest_results/jev-passive-cache'
-    train=window(orders,train_start,SPLIT_A,HOLD)
+    train=window(orders,train_start,split_a,HOLD)
     predictions,usage=score(client,signals,funding,train,cache,out,'training')
     manifest['training_prediction_usage']=usage
     write_json(out/'training-baseline.json',all_metrics(frames,funding,train,out,'training-baseline'))
@@ -119,7 +127,7 @@ def run(args):
             'threshold':chosen['threshold'],'training':chosen,'frozen_at':pd.Timestamp.now(tz='UTC').isoformat()}
     write_json(out/'frozen-candidate.json',frozen)
     total=0
-    for name,begin,end in [('a',SPLIT_A,SPLIT_B),('b',SPLIT_B,END)]:
+    for name,begin,end in [('a',split_a,split_b),('b',split_b,END)]:
         subset=window(orders,begin,end,HOLD)
         answers,usage=score(client,signals,funding,subset,cache,out,name);manifest[f'{name}_prediction_usage']=usage
         accepted=[o for o in subset if answers[event_key(o)]['probability']>=chosen['threshold']]
@@ -135,6 +143,7 @@ def run(args):
 
 def main():
     parser=argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--long-history',action='store_true',help='Use frozen March/June/July long-history development windows')
     parser.add_argument('--extended-training',action='store_true',help='Use the frozen July 1 training start with the expanded dataset')
     parser.add_argument('--data-dir',type=Path,default=ROOT/'user_data/data/okx_scalp')
     parser.add_argument('--output-dir',type=Path,default=ROOT/'user_data/backtest_results/jev-passive-filter-20260927')
