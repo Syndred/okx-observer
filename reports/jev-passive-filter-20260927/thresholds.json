@@ -1,0 +1,232 @@
+{
+  "trials": [
+    {
+      "threshold": 0.15,
+      "accepted_orders": 136,
+      "metrics": {
+        "regular": {
+          "n": 103,
+          "win_rate": 0.49514563106796117,
+          "pf": 1.5296853845335918,
+          "mean_net_return": 0.002133002190105934,
+          "orders": 136,
+          "fill_rate": 0.7573529411764706,
+          "skipped_counts": {
+            "not_filled": 33
+          }
+        },
+        "cost_only_stress": {
+          "n": 103,
+          "win_rate": 0.46601941747572817,
+          "pf": 1.200414064321491,
+          "mean_net_return": 0.0009305855695477384,
+          "orders": 136,
+          "fill_rate": 0.7573529411764706,
+          "skipped_counts": {
+            "not_filled": 33
+          }
+        },
+        "strict_stress": {
+          "n": 103,
+          "win_rate": 0.46601941747572817,
+          "pf": 1.200414064321491,
+          "mean_net_return": 0.0009305855695477384,
+          "orders": 136,
+          "fill_rate": 0.7573529411764706,
+          "skipped_counts": {
+            "not_filled": 33
+          }
+        }
+      },
+      "passed": false
+    },
+    {
+      "threshold": 0.25,
+      "accepted_orders": 109,
+      "metrics": {
+        "regular": {
+          "n": 87,
+          "win_rate": 0.4942528735632184,
+          "pf": 1.6000397937297304,
+          "mean_net_return": 0.002367168102358127,
+          "orders": 109,
+          "fill_rate": 0.7981651376146789,
+          "skipped_counts": {
+            "not_filled": 22
+          }
+        },
+        "cost_only_stress": {
+          "n": 87,
+          "win_rate": 0.45977011494252873,
+          "pf": 1.2550463739746311,
+          "mean_net_return": 0.0011643390064115374,
+          "orders": 109,
+          "fill_rate": 0.7981651376146789,
+          "skipped_counts": {
+            "not_filled": 22
+          }
+        },
+        "strict_stress": {
+          "n": 87,
+          "win_rate": 0.45977011494252873,
+          "pf": 1.2550463739746311,
+          "mean_net_return": 0.0011643390064115374,
+          "orders": 109,
+          "fill_rate": 0.7981651376146789,
+          "skipped_counts": {
+            "not_filled": 22
+          }
+        }
+      },
+      "passed": false
+    },
+    {
+      "threshold": 0.35,
+      "accepted_orders": 42,
+      "metrics": {
+        "regular": {
+          "n": 37,
+          "win_rate": 0.7027027027027027,
+          "pf": 6.7993793879027535,
+          "mean_net_return": 0.009186535395702864,
+          "orders": 42,
+          "fill_rate": 0.8809523809523809,
+          "skipped_counts": {
+            "not_filled": 5
+          }
+        },
+        "cost_only_stress": {
+          "n": 37,
+          "win_rate": 0.6486486486486487,
+          "pf": 5.033301663194939,
+          "mean_net_return": 0.00797689023586578,
+          "orders": 42,
+          "fill_rate": 0.8809523809523809,
+          "skipped_counts": {
+            "not_filled": 5
+          }
+        },
+        "strict_stress": {
+          "n": 37,
+          "win_rate": 0.6486486486486487,
+          "pf": 5.033301663194939,
+          "mean_net_return": 0.00797689023586578,
+          "orders": 42,
+          "fill_rate": 0.8809523809523809,
+          "skipped_counts": {
+            "not_filled": 5
+          }
+        }
+      },
+      "passed": false
+    },
+    {
+      "threshold": 0.45,
+      "accepted_orders": 10,
+      "metrics": {
+        "regular": {
+          "n": 9,
+          "win_rate": 0.8888888888888888,
+          "pf": 254.8204088284777,
+          "mean_net_return": 0.01495808921451817,
+          "orders": 10,
+          "fill_rate": 0.9,
+          "skipped_counts": {
+            "not_filled": 1
+          }
+        },
+        "cost_only_stress": {
+          "n": 9,
+          "win_rate": 0.8888888888888888,
+          "pf": 72.48107113232987,
+          "mean_net_return": 0.013742677335844788,
+          "orders": 10,
+          "fill_rate": 0.9,
+          "skipped_counts": {
+            "not_filled": 1
+          }
+        },
+        "strict_stress": {
+          "n": 9,
+          "win_rate": 0.8888888888888888,
+          "pf": 72.48107113232987,
+          "mean_net_return": 0.013742677335844788,
+          "orders": 10,
+          "fill_rate": 0.9,
+          "skipped_counts": {
+            "not_filled": 1
+          }
+        }
+      },
+      "passed": false
+    },
+    {
+      "threshold": 0.55,
+      "accepted_orders": 1,
+      "metrics": {
+        "regular": {
+          "n": 1,
+          "win_rate": 1.0,
+          "pf": null,
+          "mean_net_return": 0.027873948949945323,
+          "orders": 1,
+          "fill_rate": 1.0,
+          "skipped_counts": {}
+        },
+        "cost_only_stress": {
+          "n": 1,
+          "win_rate": 1.0,
+          "pf": null,
+          "mean_net_return": 0.02664561798257239,
+          "orders": 1,
+          "fill_rate": 1.0,
+          "skipped_counts": {}
+        },
+        "strict_stress": {
+          "n": 1,
+          "win_rate": 1.0,
+          "pf": null,
+          "mean_net_return": 0.02664561798257239,
+          "orders": 1,
+          "fill_rate": 1.0,
+          "skipped_counts": {}
+        }
+      },
+      "passed": false
+    },
+    {
+      "threshold": 0.65,
+      "accepted_orders": 0,
+      "metrics": {
+        "regular": {
+          "n": 0,
+          "win_rate": null,
+          "pf": null,
+          "mean_net_return": null,
+          "orders": 0,
+          "fill_rate": null,
+          "skipped_counts": {}
+        },
+        "cost_only_stress": {
+          "n": 0,
+          "win_rate": null,
+          "pf": null,
+          "mean_net_return": null,
+          "orders": 0,
+          "fill_rate": null,
+          "skipped_counts": {}
+        },
+        "strict_stress": {
+          "n": 0,
+          "win_rate": null,
+          "pf": null,
+          "mean_net_return": null,
+          "orders": 0,
+          "fill_rate": null,
+          "skipped_counts": {}
+        }
+      },
+      "passed": false
+    }
+  ]
+}

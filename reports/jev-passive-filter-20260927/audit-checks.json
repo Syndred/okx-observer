@@ -1,0 +1,12 @@
+{
+  "git_commit": "0d5ff1f7e3bb4b7652882096ed85cba7642fc7f8",
+  "source_hashes_match": true,
+  "prediction_count": 208,
+  "unique_request_hashes": 208,
+  "observed_models": [
+    "jev-1.13.0"
+  ],
+  "a_predictions_absent": true,
+  "heldout_prices_opened": false,
+  "baseline_reproduced": true
+}

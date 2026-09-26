@@ -1,0 +1,58 @@
+{
+  "status": "no_qualified_training_threshold",
+  "heldout_prices_opened": false,
+  "portfolio_verified": false,
+  "live_claim_allowed": false,
+  "model": "jev-1.13.0",
+  "candidate": 59,
+  "protocol_sha256": "e141f9ceccb2f286d6494a2454c0e9150fb682854caebf17d7951795b1421ba6",
+  "code_sha256": {
+    "scripts/run_jev_passive_filter.py": "a5e436f4809bface2e4bf4c182e59ddbc2452608ab09c887391e0e21f5a8c6f7",
+    "scripts/run_passive_research.py": "8de9289595f5b6ed1f1fa2c661bc14ab535cb825741114c869b4aac2029349e3",
+    "scripts/run_jev_profit_research.py": "d46d7961b8dede741b44623f870e2ee8428dce6e8fea7b3a380dac55a1920674",
+    "user_data/strategy_lib/passive_scalp_paths.py": "a9fbc848f3a9f4339cacddc50926d73f6dd45f5deb50bd78c36148a9f0c50816",
+    "user_data/strategy_lib/cost_aware_signal_engine.py": "ca80fa0161757fd0676d730d452ee8ced0cdcec30bc4d1dda680de07ff4fcb14",
+    "user_data/strategy_lib/jev_provider.py": "f2b62c0c0392c8d3e7bbd99d3e84f00b2779095229a8c912371b0cc5fb2351ed"
+  },
+  "created_at": "2026-09-26T23:26:30.902524+00:00",
+  "development_data_sha256": {
+    "BTC-USDT-SWAP": {
+      "candles": "7f04d3afe6b4424bade2f392f7b02500b1bbf7c6c2a3ea6caf45158893746927",
+      "funding": "67c0d9c8fec1f7e7c9a1b603cce5c9f914292b6e24ffb2554bdba2ac9c2b4d95"
+    },
+    "ETH-USDT-SWAP": {
+      "candles": "6e948ef29ca70218a3fe35a28de58c3a60db87dfb52fcf1861545052a0383c99",
+      "funding": "4c7b78fd899b5fb6148d27f7ac85ab68636b118093941c0da949a28391b6f63d"
+    },
+    "SOL-USDT-SWAP": {
+      "candles": "5ba0c111c1c4c8ad2d91d3c21102dabeba99514dee52a278f4a66d84b22153eb",
+      "funding": "81d7c3040bee4cf97177b0c1cd08bcd245fd37e21f1b587079609fb2642a1cf4"
+    },
+    "XRP-USDT-SWAP": {
+      "candles": "2333832f6fb596357f6a7a3c5a78e4dda7efacb5b1dab510796a9779b6c4e90a",
+      "funding": "e261e944f8af3ef5a8ed23a78a063a7bbb486227511efa9f2a9ea996282d2a8c"
+    },
+    "DOGE-USDT-SWAP": {
+      "candles": "23b0e5a5940f9ee13412b052cc8e07fdf205d7f7c570397d0250a47e82bd5bb7",
+      "funding": "5001dc2f68df55223eab550c2f05d7f3ac7c9c1d9f0c47fbd190a233c4c989b5"
+    },
+    "ADA-USDT-SWAP": {
+      "candles": "f3b877e3c94335542a7f75fed9e9d4802cd656d6b8ff88cf53e7b580aa101f78",
+      "funding": "189965263219815b2c21ec7c43bc9ed40415c998fddac50d6859dc626ace8cfa"
+    },
+    "LINK-USDT-SWAP": {
+      "candles": "73913938c6258925764348109bfb1daf15174a32402c0aad52c3b16b24a7a126",
+      "funding": "1ce8d37b86199dcb28388019d77d51ef1a24f3fe37a82c93da0e0c805e8bfaac"
+    },
+    "AVAX-USDT-SWAP": {
+      "candles": "01d5e9c0fc8c73df3482db1a049d1c46ebee49a86f5b2ec9f0c378bde35220af",
+      "funding": "aa4fe9de4f46740fbb5fb25aca211bb2fc39e3f6e92c55813cec4b3609269024"
+    }
+  },
+  "training_prediction_usage": {
+    "orders": 208,
+    "cached": 0,
+    "api_calls": 208
+  },
+  "reason": "No train-only Jev cutoff met sample, net win-rate, profitability and both stress gates"
+}

@@ -1,0 +1,35 @@
+{
+  "regular": {
+    "n": 166,
+    "win_rate": 0.4879518072289157,
+    "pf": 1.423396940559213,
+    "mean_net_return": 0.0016048162476454502,
+    "orders": 208,
+    "fill_rate": 0.7980769230769231,
+    "skipped_counts": {
+      "not_filled": 42
+    }
+  },
+  "cost_only_stress": {
+    "n": 166,
+    "win_rate": 0.4578313253012048,
+    "pf": 1.0913084566339077,
+    "mean_net_return": 0.00040376396309870427,
+    "orders": 208,
+    "fill_rate": 0.7980769230769231,
+    "skipped_counts": {
+      "not_filled": 42
+    }
+  },
+  "strict_stress": {
+    "n": 165,
+    "win_rate": 0.45454545454545453,
+    "pf": 1.087888212733218,
+    "mean_net_return": 0.00039099511293648714,
+    "orders": 208,
+    "fill_rate": 0.7932692307692307,
+    "skipped_counts": {
+      "not_filled": 43
+    }
+  }
+}
