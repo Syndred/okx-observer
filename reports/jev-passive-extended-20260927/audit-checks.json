@@ -1,0 +1,12 @@
+{
+  "git_commit": "1ed24316dcd91be2efbdefc2a61a9aa639e82cbf",
+  "source_hashes_match": true,
+  "dataset_complete": true,
+  "all_standard_settlements_present": true,
+  "original_data_preserved": true,
+  "prediction_count": 253,
+  "observed_models": [
+    "jev-1.13.0"
+  ],
+  "a_predictions_absent": true
+}

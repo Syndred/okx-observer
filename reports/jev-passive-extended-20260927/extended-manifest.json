@@ -1,0 +1,107 @@
+{
+  "status": "complete",
+  "complete": true,
+  "reserved_prices_read": false,
+  "start": "2026-06-28T00:00:00+00:00",
+  "end": "2026-09-26T00:00:00+00:00",
+  "source_candle_hashes": {
+    "BTC-USDT-SWAP": {
+      "prefix": "2c56b2632439b3caf7a89bef6a2c47ad2948a9983272348e281d91b55b3aa6e7",
+      "original": "7f04d3afe6b4424bade2f392f7b02500b1bbf7c6c2a3ea6caf45158893746927"
+    },
+    "ETH-USDT-SWAP": {
+      "prefix": "3e6ada19447fbb91c66d492e5c3aa5bd9a85db07264cfda85b749d5218e6011c",
+      "original": "6e948ef29ca70218a3fe35a28de58c3a60db87dfb52fcf1861545052a0383c99"
+    },
+    "SOL-USDT-SWAP": {
+      "prefix": "4f2365fcd467d50b5f41c215550fd9f0cc58e3d8a6bdf2d926ffca874e04cb73",
+      "original": "5ba0c111c1c4c8ad2d91d3c21102dabeba99514dee52a278f4a66d84b22153eb"
+    },
+    "XRP-USDT-SWAP": {
+      "prefix": "8be7577e57595db91d9c0b47a291cd631320053fbf3a72308a60fdc47c7ce22c",
+      "original": "2333832f6fb596357f6a7a3c5a78e4dda7efacb5b1dab510796a9779b6c4e90a"
+    },
+    "DOGE-USDT-SWAP": {
+      "prefix": "ef23ae97456319f9fd449b6b83fa383ff79a51473040d50ec7e994ab7dd78ae3",
+      "original": "23b0e5a5940f9ee13412b052cc8e07fdf205d7f7c570397d0250a47e82bd5bb7"
+    },
+    "ADA-USDT-SWAP": {
+      "prefix": "4799e9cd52dd0a91d09c81e2e3204f564a5d9636d36944fa4bea9a9af3ff678c",
+      "original": "f3b877e3c94335542a7f75fed9e9d4802cd656d6b8ff88cf53e7b580aa101f78"
+    },
+    "LINK-USDT-SWAP": {
+      "prefix": "a835f0d757f4f52bcc8fe0cdfa624c52f044c753a50002892734c94e61691c83",
+      "original": "73913938c6258925764348109bfb1daf15174a32402c0aad52c3b16b24a7a126"
+    },
+    "AVAX-USDT-SWAP": {
+      "prefix": "af3f8614ae5b22a9a19cb2bb782570f498079589d08bf73b7a9525d0c561c234",
+      "original": "01d5e9c0fc8c73df3482db1a049d1c46ebee49a86f5b2ec9f0c378bde35220af"
+    }
+  },
+  "symbols": [
+    {
+      "instrument": "BTC-USDT-SWAP",
+      "rows": 25920,
+      "sha256": "9e77f6865979d63463ccba2e885f959c6f567fe0a353b66e18ba5a45ffd9bcc3",
+      "funding_rows": 270,
+      "funding_sha256": "2775f500c2c41def8c7df7172c8178f050517d70867038371d095ee20b6c26a8",
+      "missing_standard_8h_settlements": 0
+    },
+    {
+      "instrument": "ETH-USDT-SWAP",
+      "rows": 25920,
+      "sha256": "70dc3ee510f46e3890ed395de3c4da52d782df91b9389385a1e1a8ec1d4fefbb",
+      "funding_rows": 270,
+      "funding_sha256": "e72242bf158a6e4659194a807effdcb0c0552bca05c0a8f19bcf3c7ef3a8735b",
+      "missing_standard_8h_settlements": 0
+    },
+    {
+      "instrument": "SOL-USDT-SWAP",
+      "rows": 25920,
+      "sha256": "baad04e5e695ca7fff4534e47c1fbc59b27aec5758e623759c368485d50c4cfe",
+      "funding_rows": 270,
+      "funding_sha256": "c5be8b5f115181cdb517ae84b35e340e2df323ba8c845265bd5b74c4de46ff7c",
+      "missing_standard_8h_settlements": 0
+    },
+    {
+      "instrument": "XRP-USDT-SWAP",
+      "rows": 25920,
+      "sha256": "b0ec05d23ef727604d060ea73973f2d7c90379bee4c60b738b00be21c78ba11b",
+      "funding_rows": 270,
+      "funding_sha256": "29ddecca0f6dc01136d26646e5e64a3272943437669bac5378d9d752077e4474",
+      "missing_standard_8h_settlements": 0
+    },
+    {
+      "instrument": "DOGE-USDT-SWAP",
+      "rows": 25920,
+      "sha256": "a2d23d6847e44a33f373032b6404ebde25dd09d29b814e5a8cf26bda2c0e39af",
+      "funding_rows": 270,
+      "funding_sha256": "048b773603bc15770c1877ee5bb7066fee894ce3328ecdd022eb5756fff871eb",
+      "missing_standard_8h_settlements": 0
+    },
+    {
+      "instrument": "ADA-USDT-SWAP",
+      "rows": 25920,
+      "sha256": "e6646c06a92a994c1b8c32f37ac256a36c09eeca8210d88c0f0b1df90a35f11b",
+      "funding_rows": 270,
+      "funding_sha256": "ed17b9679c6b4da0b9f6ed1db4a15e6848991df03c20650b4fb24733ccccf225",
+      "missing_standard_8h_settlements": 0
+    },
+    {
+      "instrument": "LINK-USDT-SWAP",
+      "rows": 25920,
+      "sha256": "6ac2676f1699800d04974eb2bbc3e885b3829a9c1251528dc90e4444f8778b21",
+      "funding_rows": 270,
+      "funding_sha256": "2d870c988e5df3504d0593a0b10dfd2d10210f44221eb298190b31c88301cbe1",
+      "missing_standard_8h_settlements": 0
+    },
+    {
+      "instrument": "AVAX-USDT-SWAP",
+      "rows": 25920,
+      "sha256": "86dbccdfcf22a0e812a263166c453343d7f9a99bb30f2a97e62d37a045e275ae",
+      "funding_rows": 270,
+      "funding_sha256": "0f065e705e1683231a87f618a44982df5f374e81600c84be7bbf0b389a5556f0",
+      "missing_standard_8h_settlements": 0
+    }
+  ]
+}

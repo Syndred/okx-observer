@@ -1,0 +1,83 @@
+{
+  "source": "OKX public funding-rate-history",
+  "group": "extended-development",
+  "requested_start_inclusive": "2026-06-28T00:00:00+00:00",
+  "requested_end_exclusive": "2026-09-26T00:00:00+00:00",
+  "created_at": "2026-09-26T23:33:28.595753+00:00",
+  "symbols": [
+    {
+      "instrument": "BTC-USDT-SWAP",
+      "rows": 270,
+      "errors": [],
+      "first_settlement": "2026-06-28T00:00:00+00:00",
+      "last_settlement": "2026-09-25T16:00:00+00:00",
+      "sha256": "2775f500c2c41def8c7df7172c8178f050517d70867038371d095ee20b6c26a8",
+      "file": "/Users/syndred/Desktop/projects/crypto/user_data/data/okx_scalp_extended/BTC-USDT-SWAP-funding.feather"
+    },
+    {
+      "instrument": "ETH-USDT-SWAP",
+      "rows": 270,
+      "errors": [],
+      "first_settlement": "2026-06-28T00:00:00+00:00",
+      "last_settlement": "2026-09-25T16:00:00+00:00",
+      "sha256": "e72242bf158a6e4659194a807effdcb0c0552bca05c0a8f19bcf3c7ef3a8735b",
+      "file": "/Users/syndred/Desktop/projects/crypto/user_data/data/okx_scalp_extended/ETH-USDT-SWAP-funding.feather"
+    },
+    {
+      "instrument": "SOL-USDT-SWAP",
+      "rows": 270,
+      "errors": [],
+      "first_settlement": "2026-06-28T00:00:00+00:00",
+      "last_settlement": "2026-09-25T16:00:00+00:00",
+      "sha256": "c5be8b5f115181cdb517ae84b35e340e2df323ba8c845265bd5b74c4de46ff7c",
+      "file": "/Users/syndred/Desktop/projects/crypto/user_data/data/okx_scalp_extended/SOL-USDT-SWAP-funding.feather"
+    },
+    {
+      "instrument": "XRP-USDT-SWAP",
+      "rows": 270,
+      "errors": [],
+      "first_settlement": "2026-06-28T00:00:00+00:00",
+      "last_settlement": "2026-09-25T16:00:00+00:00",
+      "sha256": "29ddecca0f6dc01136d26646e5e64a3272943437669bac5378d9d752077e4474",
+      "file": "/Users/syndred/Desktop/projects/crypto/user_data/data/okx_scalp_extended/XRP-USDT-SWAP-funding.feather"
+    },
+    {
+      "instrument": "DOGE-USDT-SWAP",
+      "rows": 270,
+      "errors": [],
+      "first_settlement": "2026-06-28T00:00:00+00:00",
+      "last_settlement": "2026-09-25T16:00:00+00:00",
+      "sha256": "048b773603bc15770c1877ee5bb7066fee894ce3328ecdd022eb5756fff871eb",
+      "file": "/Users/syndred/Desktop/projects/crypto/user_data/data/okx_scalp_extended/DOGE-USDT-SWAP-funding.feather"
+    },
+    {
+      "instrument": "ADA-USDT-SWAP",
+      "rows": 270,
+      "errors": [],
+      "first_settlement": "2026-06-28T00:00:00+00:00",
+      "last_settlement": "2026-09-25T16:00:00+00:00",
+      "sha256": "ed17b9679c6b4da0b9f6ed1db4a15e6848991df03c20650b4fb24733ccccf225",
+      "file": "/Users/syndred/Desktop/projects/crypto/user_data/data/okx_scalp_extended/ADA-USDT-SWAP-funding.feather"
+    },
+    {
+      "instrument": "LINK-USDT-SWAP",
+      "rows": 270,
+      "errors": [],
+      "first_settlement": "2026-06-28T00:00:00+00:00",
+      "last_settlement": "2026-09-25T16:00:00+00:00",
+      "sha256": "2d870c988e5df3504d0593a0b10dfd2d10210f44221eb298190b31c88301cbe1",
+      "file": "/Users/syndred/Desktop/projects/crypto/user_data/data/okx_scalp_extended/LINK-USDT-SWAP-funding.feather"
+    },
+    {
+      "instrument": "AVAX-USDT-SWAP",
+      "rows": 270,
+      "errors": [],
+      "first_settlement": "2026-06-28T00:00:00+00:00",
+      "last_settlement": "2026-09-25T16:00:00+00:00",
+      "sha256": "0f065e705e1683231a87f618a44982df5f374e81600c84be7bbf0b389a5556f0",
+      "file": "/Users/syndred/Desktop/projects/crypto/user_data/data/okx_scalp_extended/AVAX-USDT-SWAP-funding.feather"
+    }
+  ],
+  "errors": [],
+  "accounting": "Actual signed settlements; missing UTC 00/08/16 settlements are conservatively imputed by simulation."
+}

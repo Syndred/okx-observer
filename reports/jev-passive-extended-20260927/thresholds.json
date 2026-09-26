@@ -1,0 +1,232 @@
+{
+  "trials": [
+    {
+      "threshold": 0.15,
+      "accepted_orders": 165,
+      "metrics": {
+        "regular": {
+          "n": 126,
+          "win_rate": 0.47619047619047616,
+          "pf": 1.2852557214443945,
+          "mean_net_return": 0.0012223737878147428,
+          "orders": 165,
+          "fill_rate": 0.7636363636363637,
+          "skipped_counts": {
+            "not_filled": 39
+          }
+        },
+        "cost_only_stress": {
+          "n": 126,
+          "win_rate": 0.4444444444444444,
+          "pf": 1.004217288484769,
+          "mean_net_return": 2.0761116096867546e-05,
+          "orders": 165,
+          "fill_rate": 0.7636363636363637,
+          "skipped_counts": {
+            "not_filled": 39
+          }
+        },
+        "strict_stress": {
+          "n": 126,
+          "win_rate": 0.4444444444444444,
+          "pf": 1.004217288484769,
+          "mean_net_return": 2.0761116096867546e-05,
+          "orders": 165,
+          "fill_rate": 0.7636363636363637,
+          "skipped_counts": {
+            "not_filled": 39
+          }
+        }
+      },
+      "passed": false
+    },
+    {
+      "threshold": 0.25,
+      "accepted_orders": 134,
+      "metrics": {
+        "regular": {
+          "n": 107,
+          "win_rate": 0.48598130841121495,
+          "pf": 1.3567554005916245,
+          "mean_net_return": 0.0014957053518947563,
+          "orders": 134,
+          "fill_rate": 0.7985074626865671,
+          "skipped_counts": {
+            "not_filled": 27
+          }
+        },
+        "cost_only_stress": {
+          "n": 107,
+          "win_rate": 0.4485981308411215,
+          "pf": 1.0609338153262913,
+          "mean_net_return": 0.000293748614276123,
+          "orders": 134,
+          "fill_rate": 0.7985074626865671,
+          "skipped_counts": {
+            "not_filled": 27
+          }
+        },
+        "strict_stress": {
+          "n": 107,
+          "win_rate": 0.4485981308411215,
+          "pf": 1.0609338153262913,
+          "mean_net_return": 0.000293748614276123,
+          "orders": 134,
+          "fill_rate": 0.7985074626865671,
+          "skipped_counts": {
+            "not_filled": 27
+          }
+        }
+      },
+      "passed": false
+    },
+    {
+      "threshold": 0.35,
+      "accepted_orders": 64,
+      "metrics": {
+        "regular": {
+          "n": 54,
+          "win_rate": 0.6296296296296297,
+          "pf": 3.3595854520304442,
+          "mean_net_return": 0.0058627738044316575,
+          "orders": 64,
+          "fill_rate": 0.84375,
+          "skipped_counts": {
+            "not_filled": 10
+          }
+        },
+        "cost_only_stress": {
+          "n": 54,
+          "win_rate": 0.5740740740740741,
+          "pf": 2.5751451666679372,
+          "mean_net_return": 0.004656452376323671,
+          "orders": 64,
+          "fill_rate": 0.84375,
+          "skipped_counts": {
+            "not_filled": 10
+          }
+        },
+        "strict_stress": {
+          "n": 54,
+          "win_rate": 0.5740740740740741,
+          "pf": 2.5751451666679372,
+          "mean_net_return": 0.004656452376323671,
+          "orders": 64,
+          "fill_rate": 0.84375,
+          "skipped_counts": {
+            "not_filled": 10
+          }
+        }
+      },
+      "passed": false
+    },
+    {
+      "threshold": 0.45,
+      "accepted_orders": 12,
+      "metrics": {
+        "regular": {
+          "n": 11,
+          "win_rate": 0.7272727272727273,
+          "pf": 7.979407722330382,
+          "mean_net_return": 0.010746858364149039,
+          "orders": 12,
+          "fill_rate": 0.9166666666666666,
+          "skipped_counts": {
+            "not_filled": 1
+          }
+        },
+        "cost_only_stress": {
+          "n": 11,
+          "win_rate": 0.7272727272727273,
+          "pf": 6.111171109947747,
+          "mean_net_return": 0.009535658769133476,
+          "orders": 12,
+          "fill_rate": 0.9166666666666666,
+          "skipped_counts": {
+            "not_filled": 1
+          }
+        },
+        "strict_stress": {
+          "n": 11,
+          "win_rate": 0.7272727272727273,
+          "pf": 6.111171109947747,
+          "mean_net_return": 0.009535658769133476,
+          "orders": 12,
+          "fill_rate": 0.9166666666666666,
+          "skipped_counts": {
+            "not_filled": 1
+          }
+        }
+      },
+      "passed": false
+    },
+    {
+      "threshold": 0.55,
+      "accepted_orders": 0,
+      "metrics": {
+        "regular": {
+          "n": 0,
+          "win_rate": null,
+          "pf": null,
+          "mean_net_return": null,
+          "orders": 0,
+          "fill_rate": null,
+          "skipped_counts": {}
+        },
+        "cost_only_stress": {
+          "n": 0,
+          "win_rate": null,
+          "pf": null,
+          "mean_net_return": null,
+          "orders": 0,
+          "fill_rate": null,
+          "skipped_counts": {}
+        },
+        "strict_stress": {
+          "n": 0,
+          "win_rate": null,
+          "pf": null,
+          "mean_net_return": null,
+          "orders": 0,
+          "fill_rate": null,
+          "skipped_counts": {}
+        }
+      },
+      "passed": false
+    },
+    {
+      "threshold": 0.65,
+      "accepted_orders": 0,
+      "metrics": {
+        "regular": {
+          "n": 0,
+          "win_rate": null,
+          "pf": null,
+          "mean_net_return": null,
+          "orders": 0,
+          "fill_rate": null,
+          "skipped_counts": {}
+        },
+        "cost_only_stress": {
+          "n": 0,
+          "win_rate": null,
+          "pf": null,
+          "mean_net_return": null,
+          "orders": 0,
+          "fill_rate": null,
+          "skipped_counts": {}
+        },
+        "strict_stress": {
+          "n": 0,
+          "win_rate": null,
+          "pf": null,
+          "mean_net_return": null,
+          "orders": 0,
+          "fill_rate": null,
+          "skipped_counts": {}
+        }
+      },
+      "passed": false
+    }
+  ]
+}

@@ -1,0 +1,189 @@
+{
+  "source": "OKX public history-candles",
+  "bar": "5m",
+  "confirmed_only": true,
+  "requested_start_inclusive": "2026-06-28T00:00:00+00:00",
+  "requested_end_exclusive": "2026-07-28T00:00:00+00:00",
+  "server_time_at_start": "2026-09-26T23:29:39.721000+00:00",
+  "local_time_at_start": "2026-09-26T23:29:39.893446+00:00",
+  "symbols": [
+    {
+      "instrument": "BTC-USDT-SWAP",
+      "file": "BTC-USDT-SWAP-5m.feather",
+      "rows": 8640,
+      "expected_requested_rows": 8640,
+      "expected_closed_rows_at_server_time": 8640,
+      "missing_closed_bars": 0,
+      "missing_closed_timestamps": [],
+      "first_candle": "2026-06-28T00:00:00+00:00",
+      "last_candle": "2026-07-27T23:55:00+00:00",
+      "sha256": "2c56b2632439b3caf7a89bef6a2c47ad2948a9983272348e281d91b55b3aa6e7",
+      "quality": {
+        "nan_cells": 0,
+        "nonfinite_numeric_cells": 0,
+        "invalid_ohlc_rows": 0,
+        "negative_volume_rows": 0,
+        "duplicate_dates": 0,
+        "off_grid_dates": 0
+      },
+      "quality_passed": true,
+      "complete_requested_range": true
+    },
+    {
+      "instrument": "ETH-USDT-SWAP",
+      "file": "ETH-USDT-SWAP-5m.feather",
+      "rows": 8640,
+      "expected_requested_rows": 8640,
+      "expected_closed_rows_at_server_time": 8640,
+      "missing_closed_bars": 0,
+      "missing_closed_timestamps": [],
+      "first_candle": "2026-06-28T00:00:00+00:00",
+      "last_candle": "2026-07-27T23:55:00+00:00",
+      "sha256": "3e6ada19447fbb91c66d492e5c3aa5bd9a85db07264cfda85b749d5218e6011c",
+      "quality": {
+        "nan_cells": 0,
+        "nonfinite_numeric_cells": 0,
+        "invalid_ohlc_rows": 0,
+        "negative_volume_rows": 0,
+        "duplicate_dates": 0,
+        "off_grid_dates": 0
+      },
+      "quality_passed": true,
+      "complete_requested_range": true
+    },
+    {
+      "instrument": "SOL-USDT-SWAP",
+      "file": "SOL-USDT-SWAP-5m.feather",
+      "rows": 8640,
+      "expected_requested_rows": 8640,
+      "expected_closed_rows_at_server_time": 8640,
+      "missing_closed_bars": 0,
+      "missing_closed_timestamps": [],
+      "first_candle": "2026-06-28T00:00:00+00:00",
+      "last_candle": "2026-07-27T23:55:00+00:00",
+      "sha256": "4f2365fcd467d50b5f41c215550fd9f0cc58e3d8a6bdf2d926ffca874e04cb73",
+      "quality": {
+        "nan_cells": 0,
+        "nonfinite_numeric_cells": 0,
+        "invalid_ohlc_rows": 0,
+        "negative_volume_rows": 0,
+        "duplicate_dates": 0,
+        "off_grid_dates": 0
+      },
+      "quality_passed": true,
+      "complete_requested_range": true
+    },
+    {
+      "instrument": "XRP-USDT-SWAP",
+      "file": "XRP-USDT-SWAP-5m.feather",
+      "rows": 8640,
+      "expected_requested_rows": 8640,
+      "expected_closed_rows_at_server_time": 8640,
+      "missing_closed_bars": 0,
+      "missing_closed_timestamps": [],
+      "first_candle": "2026-06-28T00:00:00+00:00",
+      "last_candle": "2026-07-27T23:55:00+00:00",
+      "sha256": "8be7577e57595db91d9c0b47a291cd631320053fbf3a72308a60fdc47c7ce22c",
+      "quality": {
+        "nan_cells": 0,
+        "nonfinite_numeric_cells": 0,
+        "invalid_ohlc_rows": 0,
+        "negative_volume_rows": 0,
+        "duplicate_dates": 0,
+        "off_grid_dates": 0
+      },
+      "quality_passed": true,
+      "complete_requested_range": true
+    },
+    {
+      "instrument": "DOGE-USDT-SWAP",
+      "file": "DOGE-USDT-SWAP-5m.feather",
+      "rows": 8640,
+      "expected_requested_rows": 8640,
+      "expected_closed_rows_at_server_time": 8640,
+      "missing_closed_bars": 0,
+      "missing_closed_timestamps": [],
+      "first_candle": "2026-06-28T00:00:00+00:00",
+      "last_candle": "2026-07-27T23:55:00+00:00",
+      "sha256": "ef23ae97456319f9fd449b6b83fa383ff79a51473040d50ec7e994ab7dd78ae3",
+      "quality": {
+        "nan_cells": 0,
+        "nonfinite_numeric_cells": 0,
+        "invalid_ohlc_rows": 0,
+        "negative_volume_rows": 0,
+        "duplicate_dates": 0,
+        "off_grid_dates": 0
+      },
+      "quality_passed": true,
+      "complete_requested_range": true
+    },
+    {
+      "instrument": "ADA-USDT-SWAP",
+      "file": "ADA-USDT-SWAP-5m.feather",
+      "rows": 8640,
+      "expected_requested_rows": 8640,
+      "expected_closed_rows_at_server_time": 8640,
+      "missing_closed_bars": 0,
+      "missing_closed_timestamps": [],
+      "first_candle": "2026-06-28T00:00:00+00:00",
+      "last_candle": "2026-07-27T23:55:00+00:00",
+      "sha256": "4799e9cd52dd0a91d09c81e2e3204f564a5d9636d36944fa4bea9a9af3ff678c",
+      "quality": {
+        "nan_cells": 0,
+        "nonfinite_numeric_cells": 0,
+        "invalid_ohlc_rows": 0,
+        "negative_volume_rows": 0,
+        "duplicate_dates": 0,
+        "off_grid_dates": 0
+      },
+      "quality_passed": true,
+      "complete_requested_range": true
+    },
+    {
+      "instrument": "LINK-USDT-SWAP",
+      "file": "LINK-USDT-SWAP-5m.feather",
+      "rows": 8640,
+      "expected_requested_rows": 8640,
+      "expected_closed_rows_at_server_time": 8640,
+      "missing_closed_bars": 0,
+      "missing_closed_timestamps": [],
+      "first_candle": "2026-06-28T00:00:00+00:00",
+      "last_candle": "2026-07-27T23:55:00+00:00",
+      "sha256": "a835f0d757f4f52bcc8fe0cdfa624c52f044c753a50002892734c94e61691c83",
+      "quality": {
+        "nan_cells": 0,
+        "nonfinite_numeric_cells": 0,
+        "invalid_ohlc_rows": 0,
+        "negative_volume_rows": 0,
+        "duplicate_dates": 0,
+        "off_grid_dates": 0
+      },
+      "quality_passed": true,
+      "complete_requested_range": true
+    },
+    {
+      "instrument": "AVAX-USDT-SWAP",
+      "file": "AVAX-USDT-SWAP-5m.feather",
+      "rows": 8640,
+      "expected_requested_rows": 8640,
+      "expected_closed_rows_at_server_time": 8640,
+      "missing_closed_bars": 0,
+      "missing_closed_timestamps": [],
+      "first_candle": "2026-06-28T00:00:00+00:00",
+      "last_candle": "2026-07-27T23:55:00+00:00",
+      "sha256": "af3f8614ae5b22a9a19cb2bb782570f498079589d08bf73b7a9525d0c561c234",
+      "quality": {
+        "nan_cells": 0,
+        "nonfinite_numeric_cells": 0,
+        "invalid_ohlc_rows": 0,
+        "negative_volume_rows": 0,
+        "duplicate_dates": 0,
+        "off_grid_dates": 0
+      },
+      "quality_passed": true,
+      "complete_requested_range": true
+    }
+  ],
+  "server_time_at_completion": "2026-09-26T23:31:54.520000+00:00",
+  "complete": true
+}
