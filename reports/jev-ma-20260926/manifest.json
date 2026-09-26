@@ -1,0 +1,755 @@
+{
+  "status": "completed_research_only",
+  "strategy": {
+    "signal_mode": "dense",
+    "parameters": {
+      "compression_15m_atr": 2.0,
+      "stop_buffer_atr": 0.2,
+      "trend_mode": "basic"
+    }
+  },
+  "options": {
+    "initial_equity": 100.0,
+    "leverage": 3.0,
+    "exit_mode": "fixed3",
+    "time_mode": "24h",
+    "fee_rate": 0.0005,
+    "slippage_rate": 0.0005,
+    "min_notional": 5.0,
+    "compounding_cap_multiple": null,
+    "normal_trade_risk": 0.0075,
+    "reduced_trade_risk": 0.005,
+    "max_portfolio_risk": 0.02,
+    "collateral_fraction": null,
+    "margin_take_profit": 0.5,
+    "missing_funding_rate_per_8h": 0.0001,
+    "pyramid_enabled": false,
+    "pyramid_trigger_r": 1.0,
+    "pyramid_risk_fraction": 0.5,
+    "max_pyramids": 1
+  },
+  "model": "jev-1.13.0",
+  "threshold": 0.6,
+  "start": "2026-06-11 00:00:00+00:00",
+  "split": "2026-07-11 00:00:00+00:00",
+  "end_exclusive": "2026-08-10 00:00:00+00:00",
+  "limit_per_split": 300,
+  "sampling": "uniform chronological, outcome-blind",
+  "live_claim_allowed": false,
+  "snapshot_sha256": "6eb3be1a506535025d0574e6ba6b378a23f58a4a508e6a0bad49a773399f4bb0",
+  "code_sha256": {
+    "scripts/run_jev_ma_research.py": "e8d1b131a1f81797086c6e5f9fce172d64c27573f3dce009e8f571bce65061ff",
+    "user_data/strategy_lib/jev_provider.py": "f2b62c0c0392c8d3e7bbd99d3e84f00b2779095229a8c912371b0cc5fb2351ed",
+    "user_data/strategy_lib/jev_research.py": "53f0b9876a2c60f709d9dc64385da713260544705b75c532e8061d40b8cb59e6",
+    "user_data/strategy_lib/v2_backtester.py": "38062bf750944853c8cbedf0ff69df1cfb1d8be8dd631c4189d10c5475f00d74",
+    "user_data/strategy_lib/trend_compression_history.py": "209ba0804254f8bf8330bfe93bc97afc84a7e536707bf486b6b2828fefbe8afa",
+    "user_data/strategy_lib/dual_ma_signal_engine.py": "3398799a2b1b8338ee0ba0709a02c48e311dda04064bedb8a12f9fdaa6c2795b"
+  },
+  "sources": {
+    "AAVE/USDT:USDT": {
+      "15m": "0f7935e531a4b6b5401c479c4b6c234643dcd17b8977b8925942e7d839632477",
+      "1h": "aa683be9cefd208ccd6f10262f7bdf738d0ad370f6068f184a5929637eed0316",
+      "4h": "9832a9356090fbc248fa24ca4313c3e05ea0067d67de5f972392e4dd01349196",
+      "funding": "87ec101674eb5295cb14de21e17a47ab3479210da0b96138fece5ef65f46c0bf"
+    },
+    "ACT/USDT:USDT": {
+      "15m": "8b28c37010e5be77827c2c5aa4660f8964d3e9f815da019f52bf0735c5fa4ca3",
+      "1h": "8ff350aa9f951b1a48301e4b4c0d9237c5c2e34a513a43a868607abf52af428e",
+      "4h": "bd89e8459700bfa8fd592fc3faf720544f33df0b8c6f15da4d47bffc41b3bceb",
+      "funding": "6be77ec045d64c9c5e1dd0c0530105024c3ead976da6fbad9bb65e63c9e75ad3"
+    },
+    "ADA/USDT:USDT": {
+      "15m": "f50aae8c03dba1eb1dd71134fcccc22dac744561ed24d5de5269a7268ee83883",
+      "1h": "05d4e497ec16bae647e6eb22d93eae3d1aa8cca2fb535da235113f4bb743913c",
+      "4h": "caf54a23220abd7508fbc677c08cc72668a8a6a089c7ada9bd3cca07bdfad7dc",
+      "funding": "10b60a2de29b4f240df97a3f895e5a4b434ba50d4836a30e890e22e226438753"
+    },
+    "AIXBT/USDT:USDT": {
+      "15m": "ab1b5ae6f765d9b4a377ad25f558dfd0148ab1e173dc4e1af1f6d878ffaa430d",
+      "1h": "8c5198a865521096fb9bab2fcc7f8c41d32c5b461b596ed4d35ae97faabf2341",
+      "4h": "ac75b0ff90cae9849b2375c1ee910275c7949ef68769f61641ef088fae3d23ac",
+      "funding": "8c81fd72e1d7660ab9322119e17db64263d83e58123784c2322c79faea7d901d"
+    },
+    "ALLO/USDT:USDT": {
+      "15m": "2be543f96174faeb5f61eb2077745cf40afc1ad98edc94319f20538ecf0a7820",
+      "1h": "f9759a45b6b57c07ccb918be52371a20ddf9822d76217f4acde9c529df42281d",
+      "4h": "934fcd003ac3fca8da61f0a40a4c18d845e8c0e05cade4a54f6accf1ecf6791d",
+      "funding": "2c26daaa369bb05d864de8f6ec1ec8b633bd8b077e40257bb3afba1608536eb1"
+    },
+    "ANIME/USDT:USDT": {
+      "15m": "19e8e9a5a0db2c34fdf4b0592fee8be89fa6d05cdab727bcd4e018359c0101e7",
+      "1h": "493efbcf0d3110948ab074e7735954ad0a268575c11419188fb4431ccbbd963b",
+      "4h": "012c5bdfeb9f69793763ae70ea5487f0c17a50ad67a4a104812655f73577dc6b",
+      "funding": "c290c51bef6a52df1cb5e968e439bc33e33b883f8601cdfcf9087a845ff71887"
+    },
+    "API3/USDT:USDT": {
+      "15m": "781b158bd3d108c1421b24e296eca28014b8236d4a7be59c9d7a2f54a03997fd",
+      "1h": "60701c9698bb269f36a030375826485edb6214e9c85410457b8dba7e525360da",
+      "4h": "5e7dc2819387c258b34562831df967f3746f6fad80ceeb7cd51cec6aecf03b29",
+      "funding": "a610e86a4a8dbee6714dcbd968dbd4fb1592d4c0f0731a3df925413eff949478"
+    },
+    "ARB/USDT:USDT": {
+      "15m": "a7e499e2b760e644ff6357d9462c6431671755178e98ef49f469ea4c43965a26",
+      "1h": "97e657f777e7bbea3ea2805f5510450985811abc6df458100973e6406e689e81",
+      "4h": "9be271af2b9e58116345e3d504806b2ffffd8d0a60a7d23b0dfaed6ea730c92d",
+      "funding": "3e7c7c3ba9f4e25e95b1bd7c00d3b823e2c672eeee858f6998d4f37da57eb2e3"
+    },
+    "ASTER/USDT:USDT": {
+      "15m": "9594cd561e2a9e7167fd59ab5bc21ec52bc38e6520b954113568f6991960af5e",
+      "1h": "2e08f4b0f30462bfa3b21062dd44030c09ba93f922f5ec9bb60863e0001ecbae",
+      "4h": "1ceb29ad57bc5d1be093ebb27f586178fc3ed1270f0ab0b6ed027e40b7c791a9",
+      "funding": "6087b9e73d6a321e3df6f40e68f6b82d5006fc2d5a794922bb20338d7b9a5801"
+    },
+    "AUCTION/USDT:USDT": {
+      "15m": "38b42c234957089ee2b0c518b2d7289f2ce577cb7bac5d52f16306df320ab19d",
+      "1h": "1ba1ec715a002b0ec4da13ae75940e2599f015981834742bf804a309eee5422c",
+      "4h": "7bfa7dc6054b660b996fd7c52f4d90bd0e2b08cf5c72da43734cb67594c1f1df",
+      "funding": "748b4aeaa89874140420928b0dc2284aadcdc4011b8cfe56b5501500e2ed9c90"
+    },
+    "AVAX/USDT:USDT": {
+      "15m": "7c979d07244ef24cc0546074e4dc82b01e35ce6c474c69923564f8301633ec7b",
+      "1h": "6d75322c0b20561a1e0a499760e8825a2f60c4cebbcd7323af27f79b4f6c45e7",
+      "4h": "15c535cdb2199783b1dddaca30c7d436145f6477010c4945f5ca1b5385b2da47",
+      "funding": "9d2708cb85db82d300c8746f617a12472da61c98f7bae1d97ff066c71c024ac7"
+    },
+    "AXS/USDT:USDT": {
+      "15m": "9053376bb93323e5c75c4a9b2887184dc118b6dccd6719d22ce7d1960bc1032c",
+      "1h": "7046768fd924b415692a2179735aaf3c23e8182fffab6ac7b755257ed20d697c",
+      "4h": "6051e5daf54b5c6c511ac02ecb5ebe925164c288c5116e5945df18abf6309c56",
+      "funding": "16f51a1c63a921b717f2759f2b955c9fd6b193364bd184a117112911d33c46e2"
+    },
+    "BARD/USDT:USDT": {
+      "15m": "0145a0bc216983a4877442f9c4d2342cd894f9592e6ffd9584157c8cb5166278",
+      "1h": "7e5a4a539aad846ab5f9a1d8aa523953c86a1fa4d9c39b1094992485163d745a",
+      "4h": "624f860ba98596af73c2ecb7676fbe75d69f2d59db0b36e95c9c26c35ac23b8e",
+      "funding": "b52c37396df59b625b26c4ba4315bdae137506f2c945e9cc194c9c445458c83f"
+    },
+    "BASED/USDT:USDT": {
+      "15m": "77e24252a20171a847e0c715c43ea417ff3548e62c6b61414cbb78065802d15e",
+      "1h": "17d80bc9705dd3a74475f118668bc68f9d705e7c226adb60227363ebc681a7bc",
+      "4h": "cc209957786464d22a31d65b33748e0ceeac017c9cf86beb17cd6c7ce94964bd",
+      "funding": "7a398965ba8275168bda9b958c082794bd48ec0e48d8b33979b5ef114c709987"
+    },
+    "BCH/USDT:USDT": {
+      "15m": "b217ea3e27e974885475cdf48ea708124e6f670daa369a8e2e7a881b0d64fdaa",
+      "1h": "d700a85ba814bfe99230a06bb995ac136b1d8aa169d0a59edb05505cac106438",
+      "4h": "7bf4119a5c1cd75edb0492f26f6a98c6b840c58176234111cd0b4590c221dd6e",
+      "funding": "a415da0a792fc2c3959da5b96eb4a671030ed9f1bdee588d930f447530d0e0bb"
+    },
+    "BEAT/USDT:USDT": {
+      "15m": "186b13793ee11be7cdaf2db80fdce79fcbd6c7f81030bf2791c6457aec5d3056",
+      "1h": "162933e4aa16e286709714a02ebb4fa2f4dc8b3059f108207e9f7c2e6c44459e",
+      "4h": "7decb222c226dd0427fbe0585cded6623994d3996547a94a38cd126d8291e2f3",
+      "funding": "f48185c60e3e0ed6b5a1f65ce13b526a9a2451263ddc668a0c95ff2a1b5c2acd"
+    },
+    "BERA/USDT:USDT": {
+      "15m": "e49049c74eb71ad3bc8e1f1165594f689009b809500454dae3e7d86b558a08d0",
+      "1h": "0e4fbb7a4b16465f236daa132df5b87a2c72a827fb974859afca7b30a344f6cc",
+      "4h": "0ccfe8eca8b73f02bede91051b14960e704771fb4685fffdbc061737735ef851",
+      "funding": "5b2f1cd9b0d6a05a65c9016f57b4430a5e98c2755490ba331eb74021328345b1"
+    },
+    "BIO/USDT:USDT": {
+      "15m": "668a6de6e34b36a401d2be1efcd957f72e08f66e8eae099ccd625c3fa1c1d163",
+      "1h": "6e9ba005b3112b7c291c8762a9c022d1d1e345e97cc135cc43841f3a4f11f24c",
+      "4h": "e80f4cc4ae82951bb88c7ed186a3021be6eb5ec4cfb7d03fc0ef5baedb1880ed",
+      "funding": "3a3af3a3f60a0d19ceea48933d485c2ff424704d45872bfefb96a4a039c3fc53"
+    },
+    "BLEND/USDT:USDT": {
+      "15m": "1ed6543d8ed93b198582c6a037276909dc63185656c6fde2f843b8945d230f3e",
+      "1h": "2ee6be6a55f3f5d2c6743f7b6c71768b5ea2a1b1a3f65390de6d7927db01378f",
+      "4h": "5d419d0703b4d1e1af3869106173142ea436e8986d0d46f26ea113e0ecd276a7",
+      "funding": "34f56338daa9a1ae1fc0cc0124acfe664192cd804f583e2de18ee6d01dbebfdc"
+    },
+    "BNB/USDT:USDT": {
+      "15m": "9c66a626689ba7affc108ec591bb0c8e9f3e20065f86681dedca0a16c751b1d3",
+      "1h": "1afe3405c2d688f008a43e3c9f5174019bf1b80634f58685c9d00686b8b5ad95",
+      "4h": "923717b0c102f7e0b579cefcef1063afe7c0a3d5f1f46ba287a320b6bc6aaef8",
+      "funding": "fdd6b78a5c767db04ba13bb39ab43e6b01c5ac67b0c2a4aeeeedf8731f7a0baa"
+    },
+    "BONK/USDT:USDT": {
+      "15m": "0b55174e448e2d56b734e6377574d83691c60d9971920ffc310c9291142ee6a7",
+      "1h": "b1d59567d195780429a515ead4ba489dabe7925501c09febf1a1b33a90f24b2f",
+      "4h": "768fba3a8a233a161bf7e2f202c8b1fbf0e1bdf0f05f3405104b7e61a74d35fb",
+      "funding": "e6d6c9e64e8ac9a2d914ffbd8a0c2ed3a35ecd18662ebd18be9afa4309207b5e"
+    },
+    "BSB/USDT:USDT": {
+      "15m": "782798eb07ae7c055d935e8bdcd65283472cfc1ca9a508c501a8ab58ed05492e",
+      "1h": "00c8978f41ac4654e24dc6a72f418a0acf2fe7de1754ade79cfc8a45711a32c2",
+      "4h": "3e088834cb092732bc3c612fcb0dabeaec0d5e999997161c8c650834d1045e34",
+      "funding": "6bc832c1131ae8f3ad304b56eba42e8def56d8c4cfa90663134ff313107e0c81"
+    },
+    "CFX/USDT:USDT": {
+      "15m": "d076f6e5093fe42ed6bd13645109df9ecc142e5de4fc65a96576339f8452e42f",
+      "1h": "757a9a7e83c44fd3631e84462f2db0784eb95657a7e8212229cff2a8b09c8ed2",
+      "4h": "f0046a7aae97d99c6d60fbdb4076f33288b4160b31046be5612ec70995d7b775",
+      "funding": "ab40386c5909c22708b1f730b241ad54b37e23e27f68a6a1b9ac9660400be433"
+    },
+    "CL/USDT:USDT": {
+      "15m": "8492de8f8c4c6c0b947b712cc4249ff3ebcdb7980176494aebf9cb7ec703ec1b",
+      "1h": "f38a2199838ae840f31c29af633d319be415e0184487164c8a4eb25ee8fa4035",
+      "4h": "768e1e9bef30ea654c8a413d65d9649e9146be599e40f09c51b12befb40adbc0",
+      "funding": "a520cda626f359612942c458e8843680f72979e8e03309aa1bacede6947668eb"
+    },
+    "CRV/USDT:USDT": {
+      "15m": "ac9514231b4964bc619ee2e81c7b9b30d916361ad45af37d09d80302f5ebfc4e",
+      "1h": "a912dc2ee09cc6db21fbfab7278b4adc8aaa96f243ecf0db93b32aff0c332354",
+      "4h": "c1fdc68b083bf350149ec2d898afde50dda9a9c4e71f729a8591c1a75f86f421",
+      "funding": "a107f78643f49d1c06f63031cabdb00ddb25f3b170a4959b5432db4b087460ca"
+    },
+    "DASH/USDT:USDT": {
+      "15m": "6edd336737360d6ad06571e5d0369d1a8d81fc16d61c7c4043b27ce5e236825e",
+      "1h": "907c7987e26182220ac6d6dbba74a7fb0014d769dd57479ea17e1bda2d0f9d70",
+      "4h": "4e6aae956988a7e5ce016431ec66449416ee823201bfc18efc0adead1d9ba4a8",
+      "funding": "e068f77de9f2392e033fadc6525fbfaf6b0149b35dcc8276fbad72b5bb43995e"
+    },
+    "DOGE/USDT:USDT": {
+      "15m": "bad453270e953e4256b7d3d0b84dc9166d95f3ca52e9d0b43254932b1feb5b2a",
+      "1h": "5569534d680109ee95bce935a0ecbf8969636e5eda3ed013126a734202a662f2",
+      "4h": "90fa0537c08a8e3a0b4ebfd07e0a4627ab53c06c367da4817f1cffc7d74a541c",
+      "funding": "1913e361b83bed6a96629195b0ba788b46de944fe6e0e6536c346bbf9c4643c1"
+    },
+    "DOT/USDT:USDT": {
+      "15m": "30c81d988431618f68afa88cd8b3d5e0ecc320dd5b66c34e05de9899533ea9b6",
+      "1h": "06870b77c505c5c8f596b7a47aad5f88f04e963d2fdaa3dae97d73d86223a356",
+      "4h": "04e1b4c87fc0871fe309f6c1e5a4abd5acbbdf73040907a7a07e6c40a8584ad2",
+      "funding": "64a33391ccb63e35e1a86a395a08727c7478b4c628205d15e28763eabac753cd"
+    },
+    "EIGEN/USDT:USDT": {
+      "15m": "a8c885a8296ea77969039ea22b8749b77aa53d83de7d57794d1b1779266fbb6c",
+      "1h": "c7d9e3845ca0ea19fe54008fab9afc21a301774482bd8f235aecbb5e02991957",
+      "4h": "f4d35b0d5f39cb9621e64e5d42124dc73902dc81153b9842a2d30be710be09eb",
+      "funding": "0fc27b17242ef826bee7aa296b94dd8cf0d9d145210a29eac05ab86ed0aee5d3"
+    },
+    "ENJ/USDT:USDT": {
+      "15m": "e071e572632dfe2540d25ba6c3b204953c4f04678c97c3fd8e2954d0def857d4",
+      "1h": "282e012fe59db67743c994cebb074cf1a407dfa6dcc37ede9efadf63c76cf9bc",
+      "4h": "7f238bead8faeb1ba8c51f1616f4f40bb1259cd28230a3708b9a844e7d675c66",
+      "funding": "6033a616a421be571fe567f2773dd633e527e12e2f3a5b5cfb4e25c37c74a5a2"
+    },
+    "ENSO/USDT:USDT": {
+      "15m": "ce91518ffa6124d8f4567b90ab7ab2f9a36895ea61dde734c7e3fa1cd5c115fb",
+      "1h": "896dcb0cc5baf76e90b7d88fff19f8fa4d32fe848c5067d7495f58e66c16fd49",
+      "4h": "573d7334a568d62f99a11577f834c159aab63760ec33a2912feab1ab05ddf2cb",
+      "funding": "47450b9a7c43f2b05a888c52c41885e010be38201e4bf3fb213d6f8a62e9a508"
+    },
+    "ETHFI/USDT:USDT": {
+      "15m": "802958af98cc77cdee81a6d5c610b21421b4539f709c40b1ec705ec8d1a99b32",
+      "1h": "f250148115168aec7463b6d9b36e908cda467c6f675f668bc9fd2be2a3388b60",
+      "4h": "ee41b6d52fbbcef0a76b972c8c3802cd5e30fa152efce2af3675df9aa2c2d983",
+      "funding": "47d2cdd9d455661130bb90dd6dc554faf1bdbea3049e6f0e37948f8401148a74"
+    },
+    "FARTCOIN/USDT:USDT": {
+      "15m": "dcdb862c32d635f6d84d64424832be4375a8813342470c53f976315b78d2559f",
+      "1h": "76152631174840ef5183003ea3c80ef93fdcfc3c269f596fe11c81bda16d4f49",
+      "4h": "6efc37db4827639386f92dcfe31b1bfec678391dd7dc615f56b650d9e072926c",
+      "funding": "4db81ecb53ee92cc4c750c3676ba1ffa26469b3852d0ac6e95175765e13bf9b2"
+    },
+    "FIL/USDT:USDT": {
+      "15m": "f0328fcf84ca6a28b7c02d29ced7f9df8ed132f9b137492b9ce82b47600c4d72",
+      "1h": "b41439c76034c8ed4405471e5e859cfe8900154aa2c9845c5bca6679e61f0168",
+      "4h": "8a4c036a1e18960bf307feb3504409b61f500e09d70b332384bac5acfdf0ee22",
+      "funding": "d79d31ae2ebb06b7ad0533e0d11eb0296119a2d132dbcf9fd44864171beb973f"
+    },
+    "H/USDT:USDT": {
+      "15m": "1bd21953cb0bba2de7e1003d89d3b93416ef87d5b6cbd05715fb1125dc747ed8",
+      "1h": "58679f2cba926b036c6464a99511cfb368bcbaa1550ecc12196b9746b100ba4b",
+      "4h": "03a4cbeb4b22bf1d7549e14ca3b4c902d0f78fe0b4cf9ff0c7a2494fa3386ba1",
+      "funding": "29d410c1cc0ebbe9a3a27785bd34062f4a5e212146b45356fa0ae383cb43e013"
+    },
+    "HBAR/USDT:USDT": {
+      "15m": "6e35060b16606825af445311989ed3b172c0c140ff7341b3639075ce85f7ccc9",
+      "1h": "72d6e6ec1670c0dcb3d7e359d02647070d542fd368812a801e6c1d99d11da4e1",
+      "4h": "ab8e5f4fd9243199e8f61d30ab6111414be2397a4f78a964938bd81e878c0ca7",
+      "funding": "fa82bf55c43ffe2baa3400824ad6d8a49858af27824731527920b4221f913f87"
+    },
+    "HYPE/USDT:USDT": {
+      "15m": "5cb811bb4b50b841b3c0de71959d23565ea6a136241e80e833a1a5914ab1c7eb",
+      "1h": "252775e0ff66bbe8a1877433fe0f74b08fd32134938407cf6d967d438c10838b",
+      "4h": "813f987e9e6f67d9b36dbf8d8b2b28f99fd3d1fab8b22f8c410926b827c71d74",
+      "funding": "339ec8d27ec88786d09cd2a8fbb3a4ff17a3b5746d1de5f73ef3572078b7a0a5"
+    },
+    "ICP/USDT:USDT": {
+      "15m": "4927bfb2080594509de65a8257a840915ae98a43b7b6dbae5075cbe7251db619",
+      "1h": "9c9191a20729bdc6d2ac3b5d43223bcddeca8594720f9217c49308d352b524f8",
+      "4h": "b97bf4d021b6b1ef9c3a9231013e5cc80435fc153307c2c517b1d9611f33c065",
+      "funding": "fa408f27fc7cb54b6e34fed6d878913f8c6a781867fef7a4fd22d83899b06483"
+    },
+    "INJ/USDT:USDT": {
+      "15m": "bc5148e64ad85d76f2d2e60a3d3944e48461d54dc2250b9dbdf618f9c02616d6",
+      "1h": "704fe07d00be6cdc2380804706ab856f82a4122f670ed09e29be065ea1b25b75",
+      "4h": "fdb5c190c0ce9b5c5c864fe037907e24007f91021bcd74f178eacf4ca8991063",
+      "funding": "a8571dfc35f6ac0bb93fec6b9984c72c9c94cca2d5d5f04d2cc27fe277ea647a"
+    },
+    "JELLYJELLY/USDT:USDT": {
+      "15m": "13b4b0df4baee608346f4d055673b856354dfa7fd861056b0c0f1fcee820b705",
+      "1h": "052b000d8da8d13d1c42ea9538cd6a1a61d785134b49799a8fe736a163c72abf",
+      "4h": "dd87d1af4e4834acec6c4e32c59c250492ed091ef1671055ea297f3399284d7d",
+      "funding": "14f743fff4351b8d6de005fafbb3291a7477542b1641808556be0f4776c909b5"
+    },
+    "JTO/USDT:USDT": {
+      "15m": "9ece42eaf4243ca2f6037985d74c8d8f64a791d39db41146278e4c71372d2dcc",
+      "1h": "7bb7251df4897d755368e8e68eab8770b3aa752e90b7a295601d2d749dcaab6d",
+      "4h": "7fa4f444ce31ab116b13a38bdc25ae71266c860f1a97fa5893bd9db88aee44c3",
+      "funding": "b368c0240d9137c15646dc466b299a81506f8ba2d8ce51cc4ef6ef9a648e711b"
+    },
+    "JUP/USDT:USDT": {
+      "15m": "2ee02aab312b6284535dd8873be67b564fbb4ce2f8595ccd584e5325c20cf416",
+      "1h": "8c48698b1e7ecda9cdd463cf049a7fd7a1ea5f58229474113d47d36bbed8f6c1",
+      "4h": "eab5e163d847cb18f7322eeb655fe67e037e8fbecfdc80ba29891385083bff6d",
+      "funding": "2bbb81ef79f9dba85285559ec885d038f9b18c082ff02301903ac654cf90da77"
+    },
+    "KAITO/USDT:USDT": {
+      "15m": "e3b30553c3ea697da0ed543bcc82e93e82404d0b31631b4764bb703ca0a1ef8c",
+      "1h": "797cfbd41994d2a632bea4c90e90740a8bad26405013bdb2ffe929adf14a0bb4",
+      "4h": "42f5315d8044bd8e905ea7cf6fa097b74b9862b9018bad40cfeb4f177c5334ac",
+      "funding": "d4a67fc8317e324b3d6c83ba566f71a54a47d68bd37a02301f3d7980b8771f77"
+    },
+    "LAB/USDT:USDT": {
+      "15m": "a7feaa76d5b0088fa4d3277c00b1c4baecd0af4f063fe6d70dc4c54c8c97915c",
+      "1h": "c482be57793fbeebc1366ddecf8bf58ff866f7407bc845357211afc10d86df96",
+      "4h": "8512547d8782c24eb2a163d3f099aa2bf9192b731d2dd744389945b75b0dd762",
+      "funding": "bc128aec22f4897c8dd8a654f6dd69c20ea3c0ae9f75052f896560965f312b7c"
+    },
+    "LAYER/USDT:USDT": {
+      "15m": "7a4a7232d90fee52caef0ab6d6d6b71d36ee8eb75138283161a53b85f4eb84af",
+      "1h": "8c4c78cf9803bef0e0afe4c95c0ab0eaccae1be8730e9186c31072ce2d19fce6",
+      "4h": "8a51b3ac2dc600e1095ae302952e5b59c478e5f9f2180d2b44c44f1830b62f50",
+      "funding": "8be40c77e2db2483ee1bfe323936b5d30924e5e32bcf894bf8b0d36b6f039e53"
+    },
+    "LDO/USDT:USDT": {
+      "15m": "47940486df6c67173dabdfd5a68bd140302d8ad7fe08961ffb750300f233efdc",
+      "1h": "1a506d7f48485a9ef3db68797d4f73a65a62b6376e22cea76923a028960edb92",
+      "4h": "5914540c0cc747e90af2ecda78f7098cbb6a488eeb2f4b5a599698f8ae6a0c52",
+      "funding": "5051935f976a40a619cc9ad8f906b187d52fceec632db5af56767eae2bdce305"
+    },
+    "LINK/USDT:USDT": {
+      "15m": "88a6f705f49a23ff43ef0698310e81f7943ce99cb6766baa21869f8ac6b314e5",
+      "1h": "4648e8bb70206bbb57cc574d8d4b2dbf0ba57738e6b8fac86b70beb6581f1147",
+      "4h": "24d6f06a5b3f3f19bc358ccbf8518e3c805d64a724e2065f1d755125ed1b59fb",
+      "funding": "6f48670db18be40a0337c47f2e64d07450b43f1bab69f916d6a25280d1e1c04e"
+    },
+    "LIT/USDT:USDT": {
+      "15m": "71f5d054e19b33825cf55f6c08d62bc4a504084fe76bdedf451bd8f05122c4e8",
+      "1h": "1841ac1086651992f377279b960bdb614dec58f4627604dd3255ba862111d142",
+      "4h": "96ce0392e9f9f531395cb2108b3aaae109e6b71a6df7758e59bfd9d35db71e6c",
+      "funding": "5ac07acc6b9d976e710aaf69e11de982206eb6d50efa1464c676f18104e2c5b4"
+    },
+    "LPT/USDT:USDT": {
+      "15m": "5662a4893627b1a17db0b51fb471f16ca1cbdc37a3f0d01c8d27fefc2ebbc2fc",
+      "1h": "216df3898c59fb7b57baeb4cbc30874640774ee643c59f54c0dae652bc01b382",
+      "4h": "523507ba623dab641fcbe23833b267f5e4bf27d969445091a852090965297d64",
+      "funding": "686d73413f10875a165e38fa05a7b2dbf1a86db9791e1de3dae5535e86593dd5"
+    },
+    "LTC/USDT:USDT": {
+      "15m": "aed53674e444fadaf05a8143eb9780e572ee1651aca01a76debd9df931a6ebaf",
+      "1h": "742e71626a79a02f8a77313cced5a5df831821a37593bdc260a2ffc9b26a5d62",
+      "4h": "f9c22be4d350ab28e204c1bf0968938a487173fbc192682ef7df0e4a0e4a7552",
+      "funding": "01d64c0cd4515703d5f9e575943abc2b827e76544161c31e3edbecc730707204"
+    },
+    "LUNA/USDT:USDT": {
+      "15m": "1c96013b9538b2816152b47b884460eb4bea9c1d29414b619a0237536c405589",
+      "1h": "13be5c0fe529c581971cc6fb771067f488158d7211ab658e19961dae0de462b3",
+      "4h": "b0183730b0537f9f91eec35761091685133c9227aecf9799a32c1078619663b8",
+      "funding": "a065c84c727bb105c0990da372d70ac049b27ca24461c86d8f38d9db7a09e323"
+    },
+    "MAGIC/USDT:USDT": {
+      "15m": "3c929e9c296f59b139beb907a06a5cbb51f4270bc753f5344aed64ab09aaae55",
+      "1h": "a49d9c7be4c0c4f81cfba740e156a2877534f603d96951d566c3b62cc67fc311",
+      "4h": "18def3bc274f06da8a67836055c3ab6b6854231d9468d199406f683020d9dff9",
+      "funding": "55753418ee8ae473e9ced2a8b81bc0940ffdebee7251a783820ca8225b18e4b3"
+    },
+    "MASK/USDT:USDT": {
+      "15m": "6175746bdb02e69294130c8e29a2b2a91a2d1a26b419b91ff30e8bf75d16acd9",
+      "1h": "d86b0202082c46611bee1d3b8603a6b93d1e7b2da6eb51f69aa8cd98fc3bffa3",
+      "4h": "1555a77ef505b5e7a4e1fb43b46a7e1073b0ebfb9073d88ef56562b6e6b88765",
+      "funding": "4dc05b211b27f5a133e0399e9f6dd748da249749a251fe606a89b18adcd912d6"
+    },
+    "MERL/USDT:USDT": {
+      "15m": "ba1aa3f2a2a1eded2d302668da12edb6bbfa4fe7c320eab160fe02b288f7a853",
+      "1h": "bc5e65b2b98de09e9a448bab45b911070869e6c9d81776ed236b94a0e2fd93c5",
+      "4h": "4cb718798f24384c94f4afaafe161f1c35aa81e14f170077aad3714ea3b2936b",
+      "funding": "98680ec05cf305da876081e3fa20373e16138966e6f6124566e65cc44438c0ea"
+    },
+    "MON/USDT:USDT": {
+      "15m": "f46ecb1668d872f51fa081ff5eac4a3251519c1566940d1b48525846f1b30585",
+      "1h": "49b3f0051663edb235f0d18d40001eb22ed97f4ca0c3f573181f8ffbbf44761d",
+      "4h": "872e027cdf095bd60ba03e2b81f82e769d4ff7fd5936061acca26247da198621",
+      "funding": "d9dc64c28ffad50dc78f90c5b7acb87ecc9522c3c22cc4e9ede74a5b6a8ad20e"
+    },
+    "MOODENG/USDT:USDT": {
+      "15m": "b48e24c2f8e82bef9660df13d6a522372da3dc128812700c1bca9ad79d9ae484",
+      "1h": "cc25da31e7642eee2d6ea5852c91db327aa8a3c8beb784a8c6a707d67db1869b",
+      "4h": "c1554c8762393e9a310f20ffce403dc66ae7af8d323760fb4e08b54285f4565b",
+      "funding": "9dfab648b879d193e4d50541c9db7672a3a4369e41de850e3a9e0256c4b2c692"
+    },
+    "MOVE/USDT:USDT": {
+      "15m": "92e2300c5c1c40882f132713840d0becd61c031459c37e6b23b5aa2b80839343",
+      "1h": "1cf265d02f8ee4962baf8b8f99a8d6c091dfa5805ed5292d7338517d0249e588",
+      "4h": "648ffae20cbeeb7359d38a9ec3ae421105505dfe19e971ed7daa8665edfb08d8",
+      "funding": "4968887cce3b86934fb7f748beb3f830e884d0fecbecfe50c6bc1a4a941aa60e"
+    },
+    "MU/USDT:USDT": {
+      "15m": "f227fac6dca028fda447fb0057213b77c989cfc6e45a21cc5d5e460572545d23",
+      "1h": "a3a80301a22795961246e4419a9857a570cc2e34a142e7660a700c6b7ad90772",
+      "4h": "e4b9925756e2bd3c6dc56602e5f0e53ca51c44b9ce358788bfa3a6122ec00ccf",
+      "funding": "1355261129f20c6cdf4e3855acdb64276509f5c21501bc0d910c69ecd8882267"
+    },
+    "NEAR/USDT:USDT": {
+      "15m": "27d5cea0cffb3fd598bd3d58c32908d4a5a9387769f864fac27b22d634561db8",
+      "1h": "23cf72cb8a5ceaa74a09258321ed231d5250db0aca09cc449fee3253a46119d2",
+      "4h": "d26e8d9ad58710c4fa7e447c2e05c990dfb9ccd2086387999540baf3fcb7ae82",
+      "funding": "9c6844c910d84771e3390a2b55cf394a062ab4c803203bb8967740e1b392e8ca"
+    },
+    "NEIRO/USDT:USDT": {
+      "15m": "482d7c4262ef2feae2f8d1bcaf117ed495bbf7d155e4a1ef33eeeedc0a43f0c3",
+      "1h": "7686826fd936f425ae5c6722ae7f4b76c753ee5fa53249e3cc6aff43961e3d52",
+      "4h": "a21b621669de1e02647c108707e59802d78f6f21cf3de2c8aed543f843fedee5",
+      "funding": "6e4cea02099e817b1c3748c948079691575f0e1abdcbc9e7e86d5a982f9127ac"
+    },
+    "NMR/USDT:USDT": {
+      "15m": "53992f385d6cb33c568134e2060e6a579897a0c5156e26e659293e2a9827b85b",
+      "1h": "9a6259fe77198763d7cfe4e2232f452448049fcac404ff17fddab86cf5a2adff",
+      "4h": "b9c03e1459dc42557f6f066ddc909d874141258f88df3f33ad28f6b82938c693",
+      "funding": "d84c899d9b338911468b585858f0fa36dcc3f72852de39ff03871385a8022c8b"
+    },
+    "ONDO/USDT:USDT": {
+      "15m": "854f3e3c3c3776b0974feb2b2012f990812162fb6a003e3e0eb8a868d7cd6d29",
+      "1h": "b4a6e6b01850bd7b1b5296559ff14fa32104dd35fd8fc7063d7b8762e2a7d1cf",
+      "4h": "955abd0380fb51fdbe3849c622a6c9e7fb6c96ffa37c1318c16b8c4ae56ea90b",
+      "funding": "a6ba944cba49f8dca0bb9f4fe1d41fdca3cdf7cb5165c441201c4a48b2bb68af"
+    },
+    "ONT/USDT:USDT": {
+      "15m": "0c92de0e7d14b2f19b0302a40032d2aeb37ed9182b8356c1956342fa0c3a9a77",
+      "1h": "d62d95b7975c817233f0072e42b179f9d58d2987ce8d5f36cba1e924952cbcfe",
+      "4h": "2b8ee51b0f88ab5491f537386137c933093685689baf5d7ce602627ba6a0868b",
+      "funding": "b7c9f5ff7b1513ad97413f182b70496dcf586f5bc3902b16244878356e600253"
+    },
+    "OP/USDT:USDT": {
+      "15m": "8a86950a6527edb5d29f5b894d490d15550855318c0b3758b2deb3c14a695202",
+      "1h": "d330465c8b763328627930ee0a1519335f779d7ce2d86a8d8e8020440459a919",
+      "4h": "ac92ea590b3fa03ba92c165e2e3cc8a90a2a16b2f7d51036ca69aeebfb3fc112",
+      "funding": "18a790f4b18b2fd5906be77b83ebab5c87803bba22d7484991f6810eb16d4526"
+    },
+    "ORDI/USDT:USDT": {
+      "15m": "697e9a9c3b5896c16681d70b092e480d3f1ba23b6683c778b3cc5bdcc1ccaa9d",
+      "1h": "43d6dc1845ca059b35adef0023dd10fb2e8ba6a9a89d05016005f62d229f550a",
+      "4h": "0477c951a0139ba9c0da171d3fccbb2b839a0a3264548e430d1e817968c7e0f8",
+      "funding": "c831e62d6ad053d6f09337f4978635906b8e11578b2e3f3d4e1185483cc81c2a"
+    },
+    "PARTI/USDT:USDT": {
+      "15m": "dbbdcf15ce39da70f19df95862d2c26db9a4a856d6e5bd0cf3e0d65caf0ae660",
+      "1h": "0e86b823a6e19340296b8ac133be2c672ac54f7901dcc8934126f73392b53074",
+      "4h": "711e6fb33199adbf55e3083de19aa5fcd28cb3f4c28d8a199aa786899ebc45a9",
+      "funding": "30b60573bcb15352fd207dbeb2f14b10710c811c459cf082750280165266b2d4"
+    },
+    "PENGU/USDT:USDT": {
+      "15m": "2743c5bec66941972d8b6faaaab66681cc0c3a4577fdef7536a9c10240a6a249",
+      "1h": "57c5ad9100725ee670b91b110c75639326b6b83aa387a28e3ef670140e9eb0e4",
+      "4h": "23afc62301aa21bba5d873bb6c4038733a826e7ac10fcdaa20d556ed2a047616",
+      "funding": "4fba9970a9654971ec3e81182b509fbd5fc5dbf09495d144ebaeac1714ed5e26"
+    },
+    "PEOPLE/USDT:USDT": {
+      "15m": "ad36711e9747dd34def7c42a62f05e51755cab0815f4c30c6e41820860a9a6b7",
+      "1h": "91e17c96079b479b99a872fdfa26eacdc88a954c797ee657d7e682909019aeb7",
+      "4h": "09eb113fa3f317134374fb69b0f3aaaed37423444f032870f5b69888355613ad",
+      "funding": "f27d9d86a9d5335fb00da1f5af3cd38a5dd325910dba5853e1100a0a58eb8201"
+    },
+    "PEPE/USDT:USDT": {
+      "15m": "2172a195ed905a29821575391f32a06f2e616cfe91a4c096f6ddaa0e47e907b8",
+      "1h": "9c5b93d0eb9a57a3c9bfbed7f02bdc4a7219a9ddf4c7fc02e64d0278bc92681a",
+      "4h": "9ba9e22a94b6205a52f47cd71ba3f54b2ce7e9dad86c0824b12cd0b640a5c062",
+      "funding": "71d5fa737fc292b78a95611b4887c09e8003604e1c30458ea3659c4b646f859e"
+    },
+    "PI/USDT:USDT": {
+      "15m": "509e0a7e6e196ba52e1216d5d548efa87ad6aa0db8133ed156b3b6a43e4e6428",
+      "1h": "8b30d992e1fbc54f9f7733cdf3042b8cd52c5ddd7bda5ea88949c99afa26236a",
+      "4h": "194e5903cce4025c96cc2ccb5ecd9a6e6f3719d4b53084a719a0c4d95983d325",
+      "funding": "8501cdd0eda0da2656261111c77a82541ff6e4fc7806a80b959012d01ccb0ccc"
+    },
+    "PIEVERSE/USDT:USDT": {
+      "15m": "238d333b2ce881bb263e0ec37b97626a2e23303f17fcbae53d7e160f84615d4a",
+      "1h": "5b5c04db10d375eb528da53f41be4ca9d51feb7b31305040e594b158baa6a3c1",
+      "4h": "67c3ca447c89402b0cd595c11cd9340c47264f168295b05f2f3635902710aab5",
+      "funding": "effa800e3f0b329bfd700ef9bdc2bad50c9b2efa3752a639bacecaa0c3eac07c"
+    },
+    "PIPPIN/USDT:USDT": {
+      "15m": "9705cbb79cc10bea24ac74c1e7585efc2eb2359f5fbec5fb923bc6e25a89e9fd",
+      "1h": "909cd1bfdc3d598e82c21c992aaa8e3267ab1538dd9c0e77c3079af8037a48ae",
+      "4h": "59a5ba446c61088f4cb28de3c9cad3412260be72c642086f46c6b70d6d53090e",
+      "funding": "25b9d4cb2e3761500001c97a5c4502bd4e21a24983c9815fe5f3dcbcf03ba882"
+    },
+    "PNUT/USDT:USDT": {
+      "15m": "a69f76692c60728c3c0e8ce9f07d6d49b5e515df7cbf5f3e55aef2e5f9e50542",
+      "1h": "da52705fb4473ea1bf88e9cc86cc19d43bc7194266fea6bc3fe1e9577739dbee",
+      "4h": "8a72738773bfc68012703bc24b4a91b257c3ebd82bdb68f199c329d7c8d0e04d",
+      "funding": "89adcb8b9bb247982010dee5db4236fd4c26330f8fb552ca2214a99d68836a85"
+    },
+    "POPCAT/USDT:USDT": {
+      "15m": "a7caad1472766006007234a9a897a04619421f856c7d3db014222bad4e9a33d5",
+      "1h": "bdb6b1d6bb39c9de28204599f3a77cd9e7542365b0871630bfbdceb4d93d35c6",
+      "4h": "bc3ccbe7a324737cfb28b30aaeff3d5497de22b0af39e61880e9c86455a8e316",
+      "funding": "f924338dfbaef81aa62fa97dafdb8584e59c3dc73d849ac07e0130e6c64181cb"
+    },
+    "PUMP/USDT:USDT": {
+      "15m": "c3c8130ebc86db85e79cc1bdb7212ce62c21eef66ef3a0148b1b7f1615693bf9",
+      "1h": "cb43a6fc3c10b8010544f2dd77e8da2e3e4facb801719bc2441219a9530ce69d",
+      "4h": "d459f7d9108f029bc2a2efd98a307df43132737c714763fe40a324f44624eb37",
+      "funding": "4f0f31da6f761a1ce5d0a3c46d63622dd83e152fd192efad6623329a8026bb23"
+    },
+    "RAVE/USDT:USDT": {
+      "15m": "826afe90a6324154a3b24b930af8f538f7da9c07a6e653ebb145756a415e7a49",
+      "1h": "3bbff53ac621ffec25c1caa443aba2910e5ba89476a00e1166b3579088a5e8e5",
+      "4h": "5613f34cd32c28689207ef22b7ce4cc6b3721433e4aafa2c19359207aee240a0",
+      "funding": "e4ad96862b60138270606c2127c2a1e3a476116a4893a2ee6a1bd6edb1387c1a"
+    },
+    "RESOLV/USDT:USDT": {
+      "15m": "706e2e5179cdfbdeb810a1fdd6a7d4dcbdb6fa1823a5bf35435e1148959cca69",
+      "1h": "0287e297b7e094a8a10abdb26a0c67b51316cc60dd6b45fdd3f64a08de7fe455",
+      "4h": "c32c81b468dea00f618ded27cf55fcc4580348dc8473a4418e5f67c61af6c552",
+      "funding": "be583900c730f6aa0d2181ff84216db6ccf20f9386570714ae90ed0053c3e889"
+    },
+    "RIVER/USDT:USDT": {
+      "15m": "237ece18b9fb8e806a8c83e58aa4d93e047b8714c1f07de9c0e2a7330fd7cd06",
+      "1h": "f4b7e0018f5a6b1f16e99b8c7d5c2c37456638adf9c755568fbda10110196ac3",
+      "4h": "ad3d5e21a851654373b263dffae898a228b6adbf46311fa475872b0771524c0e",
+      "funding": "ab56a12b74069c89ce283bdb56fca79ee807ffaec791875489c12956b0cd177b"
+    },
+    "RVN/USDT:USDT": {
+      "15m": "c962121b436ee492820a862083c5a64fa75ef447a205204becddaed8bcba5802",
+      "1h": "2624b684c1d95759d41a8412464b79de575e3b733218f1c0a93120b58b854065",
+      "4h": "1f6edf908d0679caf654dcb593b02d250ebb5f675200423254f520acdd99f3f8",
+      "funding": "2db1924908e9cc4310fd456fca0bc66d4da02aa4688e68c4e7131945c3590190"
+    },
+    "S/USDT:USDT": {
+      "15m": "15dda0a6d7fd765963268a8320b341fe55f09e0f8e103b335841fa0f0772280a",
+      "1h": "5133f499a4a0c4ebd086ada40b8cdd2355edd9e76c6d4207fe7658a6531c61fc",
+      "4h": "f57e1f08c3059b1df0978594c96cd527c5302c0335cd0ef3925f70ae5f6843d8",
+      "funding": "d4c7a4b5d9830041533ece881cad697f3d668af05d6d04936ee9db9d5e33083d"
+    },
+    "SAHARA/USDT:USDT": {
+      "15m": "e66dfa1b3767a3e754367432c86c41e645b745ea3f5f463132e72c1dd99a3249",
+      "1h": "f94261fb106292292964d77bc5d007a35794a9f7df48be72b4dc864287c92ad2",
+      "4h": "2ed50e7a88b61aad95f200f5cfcdead5eb14a3a7e670037031483b4c344a6fe7",
+      "funding": "561d0bd9bd74aeaf8fccc15477b4827598cca664cfb28e2780a71b8f72c680ea"
+    },
+    "SATS/USDT:USDT": {
+      "15m": "54df71eab9a48dbf4fb985472e12f02bac817e3ff0193c9110195e073c2ddc21",
+      "1h": "153f78dbfe5341968205676d3c8713c4d77d5339403d113c9212bb08adb41d9f",
+      "4h": "8e59f89c7832bea4ecc55836744306cc37f2879801c16ca418799fb04ad48a16",
+      "funding": "d7a5ba4b910bf44286e6559836b35db7e09c8a157d617cfdbd67d74f94d10df5"
+    },
+    "SENT/USDT:USDT": {
+      "15m": "466f96d1d277ec846505fc53a5d05489775479385084740329e6bfae0f90be8e",
+      "1h": "4eb19a902440ae855de512967140a5ae2be1b031bf7c851e7296b9c9e59c3bec",
+      "4h": "5759850d4946a1418d7e95e8b828c1759de567a857441db2515c1c1c5f537b78",
+      "funding": "da25b31479be0f14cfa42557a093b6ae304487fa456aa0a0862fe4c687120cbb"
+    },
+    "SKHYNIX/USDT:USDT": {
+      "15m": "c9067d0d187faa3c75ab0ba754120b41568cee602113bb7cee7574356dfcb64b",
+      "1h": "8c174d192dd64632c1b2217ff514ddbaf23bac509b04dd03c5abb21a6233fc74",
+      "4h": "0e0127efec86ac0cbe83975459afd2bd38d92388e3f94431ac689d12932cec8b",
+      "funding": "cd53b1a0a73e7f7d38390d963851317fe42953978a60b5cda8dea4d86fcff3cf"
+    },
+    "SLX/USDT:USDT": {
+      "15m": "642563b0de65dedac85c85d38468074c2f845baadd3edc5a6e65cae634cbc772",
+      "1h": "1c2a08de2e1509bde47aa941e6d9211885d42735e1f17a2a38cd581ca5bcdbb7",
+      "4h": "042cb1a86694c233e4cd7621f38ad1806918a3976c089f6454b80a1bef7cace8",
+      "funding": "b10ef19432a50b274532d70af96a349796a5cb98c344dba3c54a1abd2ff69a32"
+    },
+    "SNDK/USDT:USDT": {
+      "15m": "5112cd1ea557b5832bdca5aa7ceb972adb50497e2847d5ccfc3942781f489f7d",
+      "1h": "f0c459a1c861d6149d1ae8fd239a04d824267bc89444462437497579d7b42975",
+      "4h": "92ead9857812a8861e8ea23bdf9373e3edbe3241c816a3fa5da8f8f947e3a528",
+      "funding": "9966979f2389db4c0344aa1921cfa4069addf32553b7df1a380eb5f1ea0728f1"
+    },
+    "SNX/USDT:USDT": {
+      "15m": "771477ec42fb7560e56ee6140036b600d02c64f837feebb0d06ec17d872ab3b9",
+      "1h": "9f68f9bd9d30fc2ff8fd27dcbd145c4ae2a28eb5eb58d921ea54245a4919ef11",
+      "4h": "f09c6b9be6d24dd8a7e342766b06a1939d778f6e97f4b7826165a635a7b19c9c",
+      "funding": "d97d6d82f69290c78b6336184068caca9edf60a93de7b56b4b00b2d0b1e97135"
+    },
+    "SOL/USDT:USDT": {
+      "15m": "0f7aa928eb2f4c2596d30e13521627acaadb06d1f915e76597eb3cee569af2e1",
+      "1h": "886f42b723387bb72e89cb4ec262cea19342c028af19ec8c2bb055ff111c1ef0",
+      "4h": "b457f1ac3dd09d4346daa150ae4d64dbe4e2a038c4aa03488e5c71dfcaf195cf",
+      "funding": "bfeb8a9d78c5c2a6cf1887c44d589c9e0901541778329f45f1d5805d348a37af"
+    },
+    "SOON/USDT:USDT": {
+      "15m": "73271843b54b69e0e6e251addfe91f7c339f30eacd6a4c12d7298bd39e3f2f46",
+      "1h": "d44b51539cae66125541972bece041557907a3bc3a70496bc8c29610d1025baf",
+      "4h": "cbe54883e7238bf5ea95cc0560ed143a9fb919b0b1e13113069004c527b3e39e",
+      "funding": "f4a8d917695df10e276c89728112a4ce1907a336c956f998bbf34bc42f9a67f3"
+    },
+    "SOXL/USDT:USDT": {
+      "15m": "c0d80779f4c3653355dd64088b2ed9f1ea34966bb79da02689eadfbedbe5bd34",
+      "1h": "b8aad1e7adc28556a9d3684951bcfebd15c8b19fc91f84a8a7eba3673d57ed95",
+      "4h": "1b588c2d73baca25b5f179906458bbbc637aa72aa3f7cc57c076601aca0f09f0",
+      "funding": "71ff9e4a582fc2c80addb648a809e76df31ba4f27563c0a63986ea8b2a9783ed"
+    },
+    "SPCX/USDT:USDT": {
+      "15m": "a1e7ae5b2b1551ba53685fc9612a13ff0b4743f520a75bc9c810786392f646b3",
+      "1h": "92742b0f9661c0cbc030226360f4b2f3f44ed3a47b08ef36c1a0482d2e1857f0",
+      "4h": "23f443ef883f2b798660b51a6abc321ea58b9711650ff7283186f02984df9763",
+      "funding": "98ab3d19be7d481a00229d794396265f7398a049c134dd013d40a38a300a128e"
+    },
+    "SPK/USDT:USDT": {
+      "15m": "9b088e6a09e23601ab886d2ff7533c548347cbaa88b8fd31c9a7efe53e8097f5",
+      "1h": "3297cb3a1344395810554096a25c2061f833abafdfef3c443e173e5f9799477b",
+      "4h": "029e74b79e6c86eb0e6532305d13b6a53677c36467f9aecaeb8db3a7207029e0",
+      "funding": "12ec73ac35141ac17e55e5195eb0d25155d7e7ab2b8eb22c57425097d4dfbc19"
+    },
+    "STABLE/USDT:USDT": {
+      "15m": "f889a9cf0fbdd46fc5d60b196dfa2282e7e53cb25a6651fe829cb5f6b4db6ac7",
+      "1h": "8f89333d79dc2e415939c527823ae4616f79d70518e966cbbde90023d43875b5",
+      "4h": "313187c5f1a34b6cec7d454f9b027fa3b1eb141ae4928b3e89b5b0e3af02bb79",
+      "funding": "3996f044de9ea41726a716d09874a999dae55c7f7c6988c45f773ec4d7c2073d"
+    },
+    "STRK/USDT:USDT": {
+      "15m": "517c5f942e8e073b7f27691ab624c568fe5dcc1197d80faacd54ae9cf262f346",
+      "1h": "07cd66a7c35fdb7740709c177b0d4285434c7b0c12d01eae2e40dcf7e3144b78",
+      "4h": "31130a6b05bd06c0ca3a642df3f623633cc596031072fbff7f701c518bad091f",
+      "funding": "5c2bbfdd7090f6bb94ee3faf947977e15f8735d68b316ce8f2b06cfae78ac0da"
+    },
+    "SUI/USDT:USDT": {
+      "15m": "b302474cfe4f38450e3b33d16e97fd2ac25e65b5ce5281683e477fab51b4bf34",
+      "1h": "deea8465a04ca3ebdafc6433f75b4bf3eda4067fa5a3bd89c4aa889cb435c521",
+      "4h": "17ec581e6944c23ab2059882309e887dd1fb094da00462dde8f29441fdbd6d60",
+      "funding": "1b987c2fbc9a9a963fc32700e6c331a855d8de56407eccd2d5236b756597f36c"
+    },
+    "TAO/USDT:USDT": {
+      "15m": "e3e9c174796c6c227e5ef70ccac9360bf9260fd57f3967ef5a79fd8021404cc2",
+      "1h": "63496a09e2e99d587acb05e9c9971e9c20218cac032a03772a9000a645c05e5c",
+      "4h": "f7b81e7b2d430566222f2dbef472199410a4b515bd37893b2eca98edf39152ff",
+      "funding": "1ed2275120aa3ea9e9f080471c808f7bbdcaad5e5cc05673a4372f4b5ce1feb0"
+    },
+    "TRB/USDT:USDT": {
+      "15m": "0b348d3ea161abc0d4a416125f649d264b823abbe9b341ff3ccf6444ca4db0f0",
+      "1h": "b5898efc62ab8e225efb828202a05b73584eaafc29d35c459f0be981fb363217",
+      "4h": "5e8bded5156e11dbf9d935625fb77e82a0e6dd2f6f914b0d27b1ea9314aa05c8",
+      "funding": "7f17faeec9c6a400f438dd3e477a655c97dfa56d0b0efa62b7c76a58cb2ab12d"
+    },
+    "TRIA/USDT:USDT": {
+      "15m": "7efacaa8f6a0565b9dbd313726ab0f4a91c0378a50a4fa1a887118caeb7555d1",
+      "1h": "a570e1c5a784ae9b3ff27d951865d68ccec48613d35bc6cbd67cb000c42d4286",
+      "4h": "6f5265c82270d30fd0c8136550f6dd5e260a965ca35a97ab7e52ca6803d31436",
+      "funding": "e8d7c73c4b64715fec3dff62c803b56206e36133d9bc366b16878f34ee3afffd"
+    },
+    "TRUMP/USDT:USDT": {
+      "15m": "c59e745d8fb74712f6b0e87d08af0d2ffce5090685766badbab89118b2ee0c93",
+      "1h": "5cc9f697dfe4a75282766ae75602838ab074463be7c149d130388cd98cb1f509",
+      "4h": "2a302f00a6fbe9600e10e2d90510ff760dcacdbb9414e9cd68bd6a0177eb8bbf",
+      "funding": "28f924ea5266291a10c0fee8e358e3af868abc7829958528b0d33bbfc5567be4"
+    },
+    "TURBO/USDT:USDT": {
+      "15m": "38274d29e6b846ac7e9713fa284db61aa5cb22239aba5b30288499039b36a6bb",
+      "1h": "f12ff09b44fa636d64978987e6d32270257505416e5d38390e903784e37fdd14",
+      "4h": "c1a5fa33f7fc7eb8f1df93a0ed9b6671cfa2fb2f32c4da3d3d571d9f4d5235b3",
+      "funding": "44a0a042259571ad0b218ad2222fa13d1301437625de19520a70d48fa5fc00ac"
+    },
+    "UB/USDT:USDT": {
+      "15m": "f4735005f192d50890a63dae03fa0f498eeeff2d00d620f26cd7a26afad5bd89",
+      "1h": "e0a13918b0c8721d4b6a0289f4f941c901edfb122571b0674223beff290214b7",
+      "4h": "ca453897e3f06ea8cea7495f6b341b764ed74e742bda3b32e13195ccd0b0c8bd",
+      "funding": "0f20d9321429172f4cbf6182ab1327b226ebe60716c184f7adeef3c596dd699e"
+    },
+    "UNI/USDT:USDT": {
+      "15m": "3f89eb9e8b6f819daba5858404fc62ea5588b0c3b7a3016c42dc807bc8fc529d",
+      "1h": "626849cdf50d148efca5943d7b83d6fe6a0d05f5d9331eb92e5cfaa61e896d9f",
+      "4h": "7984148ed9800dd704d407c8c100b2b390d410a31860f37d22fbf85018ae985e",
+      "funding": "056f44a88728d84c98bbda3475a2755fe24f7decbfe20f6d2941d793ac0e5710"
+    },
+    "USELESS/USDT:USDT": {
+      "15m": "001eda2568c3c1ad4fe70780209046d31e808b906821ada4fbfdbf7dcd8e5e89",
+      "1h": "d8c678b29c6865d07260113369382f1c272bfc75ec0205d99868e972e236c13a",
+      "4h": "63a091ab7f7f78f169ebc855d109eb13148cf58be0a6392c1261964c49c51665",
+      "funding": "56e357238b1a841832b56ccfa352c1386b5a932d499a3ab68103fee1ca98daf2"
+    },
+    "VIRTUAL/USDT:USDT": {
+      "15m": "12eaeaf9cc7781c2bf54222b938fc9072c0be03a33f019e6e9c9fee410c9149b",
+      "1h": "46cc734a67f0ab7c7cbc7523c6b3117e124b82876329fbe1039680e0d9d35b5e",
+      "4h": "d82bd2201abff71689d9e3b970aefca118ba0cccfa278964f6079b61f37051cd",
+      "funding": "387d6be2234b102a21842eee268203fbd99135baec3942be9aaa755a568f906e"
+    },
+    "WCT/USDT:USDT": {
+      "15m": "85c047d1f53db1f3e7e84d4c33a4a4b8df9643ee481b97cebcaad32cca5d13d3",
+      "1h": "66d7e6eea547963d414e47b900d925362d574837a96414be4a238e883123e680",
+      "4h": "de7cb991195952f3b39e53afcf6bd4d5c03c19ea40849d0a3fddc7861292655c",
+      "funding": "0d9f4060d125fc949998c22de323c7f88d80ba209984c6cdc46b34d10a91b600"
+    },
+    "WIF/USDT:USDT": {
+      "15m": "de0f166d65be0e1389af39d139a741bfb63b71c316aa7700d8e602b73828a7f4",
+      "1h": "2f56641e17993f4b59b7b19d8bb9efb1126211bc2d54ab19e91006f3e8c02757",
+      "4h": "4a8fd7c202e470c1b658e51460a40dfe8d8c5f2294f9189a9f179e4c7b052df8",
+      "funding": "97e7a798e7347a6ebb6f965b6b6746038c0d730c1b97b2461aa8aaca1053073a"
+    },
+    "WLD/USDT:USDT": {
+      "15m": "934403a1889d577db2118ded7c619b7129ecbf3a3e0ee0a24a07006c77827fab",
+      "1h": "3bd3cda53f478bb8f2a10d64e8b4170d11e4db2d7194ff873f2b6aecec677181",
+      "4h": "2a0f86ac57509a02e0b3c36ec24cdaf74199631a1e4b5208fcbf11fa2cf8ad1a",
+      "funding": "55ca7c8bf79aa3dc08cb4a13a71941a37ed626a3fa8dec26f349cf4a38f86f4e"
+    },
+    "WLFI/USDT:USDT": {
+      "15m": "829cc05197a51a65ff6f59b2ba992ffe2a420052c3e9a93a334feb97b6362c89",
+      "1h": "67f73f3e2bcdc29ff8fac245e8cf59da6802ad81f711aefe7487af91c018c207",
+      "4h": "e16db8e994260afe0861a31f187a484dea34dec2995c371cec379bd472545d8b",
+      "funding": "b85e64fa6295c66474aa13f7bf584b714e1d12001b05b101aed2199bab46475a"
+    },
+    "XAG/USDT:USDT": {
+      "15m": "d50e4daf6b7306dd1d822f696280685c1964ca25c054a053a0ee998a23932390",
+      "1h": "29bba82debe07184673991d93cb2e1c61ee39bee577220c86d9affab5abb6645",
+      "4h": "b2673a66333799419d05e04294a0c52ea2cb39d854d978e2ae72fe595d05a3d9",
+      "funding": "664647bb1f3e723280aefefed4847bf761e5dde6c33bfc07fc8c0e11de274689"
+    },
+    "XAU/USDT:USDT": {
+      "15m": "4345d04b1fd2098f342b5a6ea7c45b945f2c9b172a94ac9ae4e45980fb45caa7",
+      "1h": "5500019ea2b4b1795218fd09f294cf2fe0f328f26cb026f49bbf9974e254fd63",
+      "4h": "2b766f0ac72fdaca455868547f83ccf847520be7707ecc3bce5c1c6f06ce960c",
+      "funding": "849600ab032415907b8135f94f5b4f437aa8499e3938d3849e58babf898033f6"
+    },
+    "XLM/USDT:USDT": {
+      "15m": "8c524f64a25524d92f1f27882dbfa6da020ddf9105ab7a12be87f0a25f85fa0b",
+      "1h": "f12a001173ff122ef4d4a262a452e221dcfa654fdf6b8d8bbdbcfe62761058a7",
+      "4h": "219b926af5376f09a9f1fc43693248971fe7d57425f434d322a358c80cb3beea",
+      "funding": "1e376bf207c3ff33e40056b9b6adb65bc13c8f0fe2aa240f2c1fb95d8128240e"
+    },
+    "XPL/USDT:USDT": {
+      "15m": "2275a8cc80e9739a023f268474f491d0774445a6030543ab940f3ffd40b5a5cb",
+      "1h": "e793f77ef27ec982e31a8e4de40b7f674d9c8608bb4683cbaeb2b180b7ef8070",
+      "4h": "6c79dca87bea1160372e22a8a76a4a9cbcf3314974e10fbf7054aa9ced2bd500",
+      "funding": "54903c2f2d61b0df41124e8c5d4e4f01055e8e36ff8df3db5869884b05a5cceb"
+    },
+    "XRP/USDT:USDT": {
+      "15m": "a5c635e28ae2bdb487692d1e0a464238ab8bdbc3a7fbe77bf0d12349b7f719d7",
+      "1h": "2609a5281f8ad3acb41111975bb5d1f0ca7f0e857379f7390b2883db20f99ff7",
+      "4h": "17d25a7ba27ed87610a1d6f6f64d3c925743f45261597d588b442593350c89c6",
+      "funding": "efec7d1c6ebd2249b357a6088240cc24d165d89cb9fc0f948cf759d175317f77"
+    },
+    "ZAMA/USDT:USDT": {
+      "15m": "bcfcabd326f3cdacfc22acdf1f271beca4efc26e1c70caccf733c0856f9d8072",
+      "1h": "c9b540a8e2b9498868a6021662bd3306dddcbaeb52c2e54c7a61ae10e9e28ca2",
+      "4h": "7437d9219eb51a8491138af2cec743ea8f8e9006e347c8fb5d8e1636fd071a50",
+      "funding": "048c51dd58ae747477a2e1e69a382b00ac71420935e81f5032f75d04ff84d7aa"
+    },
+    "ZEC/USDT:USDT": {
+      "15m": "59cdbc7a9e0cf9aa0a2ecf1a4d30b8206fd9e87d6702159f9f39997cb598b0f8",
+      "1h": "64637e18b472ea7ab5e607ec61b7f65df46708f6a2a920416e14a204c7ee615e",
+      "4h": "f4d7eb8344b19992477e7967ba85e6d66a71c565fb879f4fe49e816d888ce1c7",
+      "funding": "b8bcd0ed269e6b7ae4eded759ab22895d5cd6fa5242e4f4f0f301c87714d677e"
+    },
+    "ZRO/USDT:USDT": {
+      "15m": "fbc7fbe5eb46c322ed280eff003a0bc49ac6b82e2ae78e17cb957b2c64141efd",
+      "1h": "9aa6f014a74593ce7cad44092bc2bdd2c6211288c97ca8857c95a5ee98ec4ea6",
+      "4h": "389952caa3f93d3bcb395538c7adb059e3102baff9611df901d349289bd0fdea",
+      "funding": "435fbe9804047722a1bb0587785c2e98ef62c6190771d6314437d9bbc1d9b5dc"
+    }
+  },
+  "generated_events": 3867,
+  "prediction_progress": {
+    "split": "late",
+    "completed": 300,
+    "total": 300
+  },
+  "provider_models": [
+    "jev-1.13.0"
+  ]
+}

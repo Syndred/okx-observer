@@ -1,0 +1,312 @@
+{
+  "early": {
+    "eligible_events": 1650,
+    "sampled_events": 300,
+    "accepted_events": 0,
+    "cache_hits": 0,
+    "calibration": {
+      "win_rate": 0.30333333333333334,
+      "brier": 0.23306799999999994,
+      "log_loss": 0.6878289011191809,
+      "accuracy": 0.6966666666666667,
+      "mean_probability": 0.19280000000000005,
+      "wilson95": {
+        "low": 0.2540711301237818,
+        "high": 0.3575684385578729
+      },
+      "n": 300,
+      "calibration_bins": [
+        {
+          "lower": 0.0,
+          "upper": 0.2,
+          "n": 188,
+          "mean_probability": 0.1302127659574468,
+          "win_rate": 0.30851063829787234
+        },
+        {
+          "lower": 0.2,
+          "upper": 0.4,
+          "n": 107,
+          "mean_probability": 0.2923364485981308,
+          "win_rate": 0.2897196261682243
+        },
+        {
+          "lower": 0.4,
+          "upper": 0.6,
+          "n": 5,
+          "mean_probability": 0.41600000000000004,
+          "win_rate": 0.4
+        },
+        {
+          "lower": 0.6,
+          "upper": 0.8,
+          "n": 0,
+          "mean_probability": null,
+          "win_rate": null
+        },
+        {
+          "lower": 0.8,
+          "upper": 1.0,
+          "n": 0,
+          "mean_probability": null,
+          "win_rate": null
+        }
+      ]
+    },
+    "accepted_calibration": {
+      "win_rate": null,
+      "brier": null,
+      "log_loss": null,
+      "accuracy": null,
+      "mean_probability": null,
+      "wilson95": null,
+      "n": 0,
+      "calibration_bins": [
+        {
+          "lower": 0.0,
+          "upper": 0.2,
+          "n": 0,
+          "mean_probability": null,
+          "win_rate": null
+        },
+        {
+          "lower": 0.2,
+          "upper": 0.4,
+          "n": 0,
+          "mean_probability": null,
+          "win_rate": null
+        },
+        {
+          "lower": 0.4,
+          "upper": 0.6,
+          "n": 0,
+          "mean_probability": null,
+          "win_rate": null
+        },
+        {
+          "lower": 0.6,
+          "upper": 0.8,
+          "n": 0,
+          "mean_probability": null,
+          "win_rate": null
+        },
+        {
+          "lower": 0.8,
+          "upper": 1.0,
+          "n": 0,
+          "mean_probability": null,
+          "win_rate": null
+        }
+      ]
+    },
+    "baseline": {
+      "trades": 142,
+      "wins": 36,
+      "losses": 106,
+      "win_rate": 0.2535211267605634,
+      "average_win": 1.1002089348301363,
+      "average_loss": -0.5870127158186144,
+      "payoff_ratio": 1.874250599999095,
+      "gross_profit": 39.60752165388491,
+      "gross_loss": 62.22334787677312,
+      "pf": 0.6365379396223343,
+      "drawdown": 0.23183909911015366,
+      "max_consecutive_losses": 10,
+      "average_holding_hours": 5.448943661971831,
+      "median_holding_hours": 1.25,
+      "initial_equity": 100.0,
+      "final_equity": 77.3841737771117,
+      "return_pct": -22.615826222888302,
+      "min_equity": 76.89761763535513,
+      "max_equity": 100.10613342370857,
+      "max_concurrent_positions": 3,
+      "skipped_entries": 158,
+      "fees": 9.88280812956195,
+      "funding": 0.1632681525895162,
+      "imputed_funding": 0.0,
+      "stress_pf": 0.4679880494497369
+    },
+    "jev": {
+      "trades": 0,
+      "wins": 0,
+      "losses": 0,
+      "win_rate": null,
+      "average_win": 0.0,
+      "average_loss": 0.0,
+      "payoff_ratio": 0.0,
+      "gross_profit": 0,
+      "gross_loss": 0,
+      "pf": null,
+      "drawdown": 0.0,
+      "max_consecutive_losses": 0,
+      "average_holding_hours": 0.0,
+      "median_holding_hours": 0.0,
+      "initial_equity": 100.0,
+      "final_equity": 100.0,
+      "return_pct": 0.0,
+      "min_equity": 100.0,
+      "max_equity": 100.0,
+      "max_concurrent_positions": 0,
+      "skipped_entries": 0,
+      "fees": 0,
+      "funding": 0,
+      "imputed_funding": 0,
+      "stress_pf": null
+    }
+  },
+  "late": {
+    "eligible_events": 2118,
+    "sampled_events": 300,
+    "accepted_events": 0,
+    "cache_hits": 0,
+    "calibration": {
+      "win_rate": 0.25333333333333335,
+      "brier": 0.18854333333333329,
+      "log_loss": 0.5695495596419439,
+      "accuracy": 0.7466666666666667,
+      "mean_probability": 0.18886666666666665,
+      "wilson95": {
+        "low": 0.20744975020452644,
+        "high": 0.30545411559958296
+      },
+      "n": 300,
+      "calibration_bins": [
+        {
+          "lower": 0.0,
+          "upper": 0.2,
+          "n": 184,
+          "mean_probability": 0.1309782608695652,
+          "win_rate": 0.20108695652173914
+        },
+        {
+          "lower": 0.2,
+          "upper": 0.4,
+          "n": 113,
+          "mean_probability": 0.2755752212389381,
+          "win_rate": 0.3274336283185841
+        },
+        {
+          "lower": 0.4,
+          "upper": 0.6,
+          "n": 3,
+          "mean_probability": 0.47333333333333333,
+          "win_rate": 0.6666666666666666
+        },
+        {
+          "lower": 0.6,
+          "upper": 0.8,
+          "n": 0,
+          "mean_probability": null,
+          "win_rate": null
+        },
+        {
+          "lower": 0.8,
+          "upper": 1.0,
+          "n": 0,
+          "mean_probability": null,
+          "win_rate": null
+        }
+      ]
+    },
+    "accepted_calibration": {
+      "win_rate": null,
+      "brier": null,
+      "log_loss": null,
+      "accuracy": null,
+      "mean_probability": null,
+      "wilson95": null,
+      "n": 0,
+      "calibration_bins": [
+        {
+          "lower": 0.0,
+          "upper": 0.2,
+          "n": 0,
+          "mean_probability": null,
+          "win_rate": null
+        },
+        {
+          "lower": 0.2,
+          "upper": 0.4,
+          "n": 0,
+          "mean_probability": null,
+          "win_rate": null
+        },
+        {
+          "lower": 0.4,
+          "upper": 0.6,
+          "n": 0,
+          "mean_probability": null,
+          "win_rate": null
+        },
+        {
+          "lower": 0.6,
+          "upper": 0.8,
+          "n": 0,
+          "mean_probability": null,
+          "win_rate": null
+        },
+        {
+          "lower": 0.8,
+          "upper": 1.0,
+          "n": 0,
+          "mean_probability": null,
+          "win_rate": null
+        }
+      ]
+    },
+    "baseline": {
+      "trades": 148,
+      "wins": 40,
+      "losses": 108,
+      "win_rate": 0.2702702702702703,
+      "average_win": 0.9186117752638188,
+      "average_loss": -0.5551407842522177,
+      "payoff_ratio": 1.654736602538042,
+      "gross_profit": 36.74447101055275,
+      "gross_loss": 59.955204699239516,
+      "pf": 0.6128654083474229,
+      "drawdown": 0.26850106438704463,
+      "max_consecutive_losses": 11,
+      "average_holding_hours": 6.694256756756757,
+      "median_holding_hours": 2.5,
+      "initial_equity": 100.0,
+      "final_equity": 76.78926631131327,
+      "return_pct": -23.210733688686737,
+      "min_equity": 76.31431745854181,
+      "max_equity": 104.32594463667218,
+      "max_concurrent_positions": 3,
+      "skipped_entries": 152,
+      "fees": 11.938117467007737,
+      "funding": -0.13138125334070774,
+      "imputed_funding": 0.0,
+      "stress_pf": 0.46634070176346104
+    },
+    "jev": {
+      "trades": 0,
+      "wins": 0,
+      "losses": 0,
+      "win_rate": null,
+      "average_win": 0.0,
+      "average_loss": 0.0,
+      "payoff_ratio": 0.0,
+      "gross_profit": 0,
+      "gross_loss": 0,
+      "pf": null,
+      "drawdown": 0.0,
+      "max_consecutive_losses": 0,
+      "average_holding_hours": 0.0,
+      "median_holding_hours": 0.0,
+      "initial_equity": 100.0,
+      "final_equity": 100.0,
+      "return_pct": 0.0,
+      "min_equity": 100.0,
+      "max_equity": 100.0,
+      "max_concurrent_positions": 0,
+      "skipped_entries": 0,
+      "fees": 0,
+      "funding": 0,
+      "imputed_funding": 0,
+      "stress_pf": null
+    }
+  }
+}
