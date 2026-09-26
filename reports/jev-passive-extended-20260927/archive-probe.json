@@ -1,0 +1,15 @@
+{
+  "source": "https://static.okx.com/cdn/okex/traderecords/swaprates/monthly/202603/BTC-USDT-SWAP-fundingrates-2026-03.zip?v=999",
+  "sha256": "56c6d567c67f8ffb2ab3302679829a2ee54e001eb30b6ebc0e90ecd4092b0441",
+  "rows": 93,
+  "columns": [
+    "instrument_name",
+    "funding_rate",
+    "funding_time"
+  ],
+  "first_settlement_utc": "2026-02-28T16:00:00+00:00",
+  "last_settlement_utc": "2026-03-31T08:00:00+00:00",
+  "official_page": "https://www.okx.com/en-sg/historical-data",
+  "public_endpoint": "https://www.okx.com/priapi/v5/broker/public/trade-data/download-link",
+  "scope": "One funding file probe, not candle or performance verification"
+}
