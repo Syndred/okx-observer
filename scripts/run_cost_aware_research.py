@@ -27,23 +27,35 @@ def select_a(records):
 
 
 def run(args):
+    confirmed = getattr(args, "confirmed_retest", False)
     out=args.output_dir
     if out.exists() and any(out.iterdir()): raise ValueError('output directory must be empty')
     out.mkdir(parents=True,exist_ok=True)
     sources=['scripts/run_cost_aware_research.py','user_data/strategy_lib/cost_aware_signal_engine.py',
              'user_data/strategy_lib/profit_signal_engine.py','user_data/strategy_lib/scalp_signal_engine.py',
              'user_data/strategy_lib/scalp_paths.py','user_data/strategy_lib/v2_backtester.py']
-    manifest={'status':'development','grid_trials':96,'heldout_prices_opened':False,
+    trials = 36 if confirmed else 96
+    protocol = 'JEV_CONFIRMED_RETEST_PROTOCOL.md' if confirmed else 'JEV_COST_AWARE_PROTOCOL.md'
+    if confirmed:
+        sources.append('user_data/strategy_lib/confirmed_retest_signal_engine.py')
+    manifest={'status':'development','grid_trials':trials,'heldout_prices_opened':False,
               'live_claim_allowed':False,'created_at':pd.Timestamp.now(tz='UTC').isoformat(),
-              'protocol_sha256':fingerprint(ROOT/'docs/research/JEV_COST_AWARE_PROTOCOL.md'),
+              'protocol_sha256':fingerprint(ROOT/'docs/research'/protocol),
               'code_sha256':{p:fingerprint(ROOT/p) for p in sources}}
     write_json(out/'manifest.json',manifest)
     frames,funding,hashes=load_dataset(args.data_dir,DEV_SYMBOLS,START)
     manifest['development_data_sha256']=hashes;write_json(out/'manifest.json',manifest)
     training=[];configs={};events_by_id={}
-    for family,stop,atr,body in product(['retest','breakout'],[2.,3.],[.002,.004,.006],[0.,.5]):
-        params=CostAwareParameters(family=family,stop_atr=stop,min_atr_pct=atr,min_body_atr=body)
-        signals={pair:scan_cost_aware(frame,params) for pair,frame in frames.items()}
+    if confirmed:
+        from user_data.strategy_lib.confirmed_retest_signal_engine import scan_confirmed_retest
+        grid=[CostAwareParameters(family="confirmed_retest",stop_atr=stop,min_atr_pct=atr) for stop,atr in product([1.,2.,3.],[0.,.002,.004])]
+        scanner=lambda frame,params: scan_confirmed_retest(frame,params.stop_atr,params.min_atr_pct)
+    else:
+        grid=[CostAwareParameters(family=family,stop_atr=stop,min_atr_pct=atr,min_body_atr=body)
+              for family,stop,atr,body in product(['retest','breakout'],[2.,3.],[.002,.004,.006],[0.,.5])]
+        scanner=scan_cost_aware
+    for params in grid:
+        signals={pair:scanner(frame,params) for pair,frame in frames.items()}
         for target,hold in product([1.,2.],[30,60]):
             cid=len(configs);configs[cid]=(params,target,hold)
             events=event_set(signals,target);events_by_id[cid]=events
@@ -55,7 +67,7 @@ def run(args):
             training.append({'candidate':cid,**asdict(params),'target_r':target,'hold_minutes':hold,
                              **regular,'stress_pf':stress['pf'],'zero_execution_cost_pf':zero['pf']})
         pd.DataFrame(training).to_csv(out/'training-grid.csv',index=False)
-        print(f'training {len(training)}/96',flush=True)
+        print(f'training {len(training)}/{trials}',flush=True)
     shortlist=sorted(training,key=train_rank,reverse=True)[:6]
     results=[]
     for row in shortlist:
@@ -86,6 +98,7 @@ def run(args):
 
 def main():
     parser=argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--confirmed-retest',action='store_true',help='Run the separately frozen 36-trial confirmation study')
     parser.add_argument('--data-dir',type=Path,default=Path('user_data/data/okx_scalp'))
     parser.add_argument('--output-dir',type=Path,default=Path('user_data/backtest_results/cost-aware-20260927'))
     args=parser.parse_args()

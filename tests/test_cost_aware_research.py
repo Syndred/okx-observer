@@ -18,7 +18,8 @@ def test_empty_output_guard_precedes_dataset_access(tmp_path,monkeypatch):
     assert (tmp_path/'existing.txt').read_text()=='preserve'
 
 
-def test_failed_development_never_evaluates_b_or_opens_reserved(tmp_path,monkeypatch):
+@pytest.mark.parametrize("confirmed", [False, True])
+def test_failed_development_never_evaluates_b_or_opens_reserved(tmp_path,monkeypatch,confirmed):
     calls=[]
     monkeypatch.setattr(study,'load_dataset',lambda *a: ({}, {}, {}))
     monkeypatch.setattr(study,'event_set',lambda *a: [])
@@ -29,10 +30,11 @@ def test_failed_development_never_evaluates_b_or_opens_reserved(tmp_path,monkeyp
     def measurement(out,prefix,frames,funding,events,target,hold,begin,end):
         calls.append((begin,end));return {'passed':False,'regular':{'pf':None},'stress':{'pf':None}}
     monkeypatch.setattr(study,'measure_portfolio',measurement)
-    study.run(Namespace(output_dir=tmp_path/'result',data_dir=Path('/dev-only')))
+    study.run(Namespace(output_dir=tmp_path/'result',data_dir=Path('/dev-only'),confirmed_retest=confirmed))
     assert len(calls)==6
     assert all(begin==study.SPLIT_A and end==study.SPLIT_B for begin,end in calls)
     import json
     manifest=json.loads((tmp_path/'result'/'manifest.json').read_text())
     assert manifest['status']=='no_profitable_development_candidate'
     assert manifest['heldout_prices_opened'] is False
+    assert manifest['grid_trials']==(36 if confirmed else 96)
