@@ -13,7 +13,9 @@
 - 五个定向测试文件共 81 项通过；Jev 配置可加载，模型为 `jev-1.13.0`。测试有 68 条 NumPy `Timedelta` 弃用警告。
 - 首轮固定长历史训练结束状态为 `no_qualified_training_threshold`：233 条训练订单均真实调用 Jev（缓存 0）；六个阈值全部未通过。基线166笔成交，净胜率35.54%、PF0.509、均值-0.279%。未评估开发A/B、组合风控或预留；没有实盘订单，也没有盈利结论。
 - 结果、训练门槛及亏损归因见 `reports/jev-passive-long-desktop-20260927/PROGRESS_REPORT.md`。归因显示首轮多数成交到60分钟仍未触及2R，已冻结唯一变更为1R目标，协议见 `docs/research/JEV_LONG_HISTORY_TARGET_1R_PROTOCOL.md`。
-- 已新增 `--long-history-target-1r` 入口；85项定向测试通过。第二轮尚未评分，须先提交并推送此协议与代码，再运行新输出目录。
+- 第二轮1R目标训练同样为 `no_qualified_training_threshold`：233条真实Jev调用、缓存0；基线166笔成交，胜率36.75%、PF0.490、均值-0.287%。开发A/B仍未评估。
+- 第二轮亏损归因：32笔止盈、43笔初始止损、91笔60分钟到期；到期组胜率31.87%、PF0.288、均值-0.242%。下一轮假设是在1R目标下将持仓上限从60分钟改为30分钟；协议冻结前不启动。详见 `reports/jev-passive-long-desktop-20260927-target1r/PROGRESS_REPORT.md`。
+- `--long-history-target-1r` 入口对应修订协议已推送；当前扩展入口共88项定向测试通过。1R/30分钟协议与代码已准备，提交推送前不启动评分。
 
 ## 台式机迁移交接（2026-09-27）
 
