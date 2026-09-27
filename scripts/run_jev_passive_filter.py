@@ -28,7 +28,9 @@ def state_for_order(order,signals,funding,target_r=TARGET,hold_minutes=HOLD,para
     if params.family=='trend_pullback':
         state['hypothesis']='passive-limit-net-profit-conditional-on-fill-trend-pullback-target-1r-hold-30m-v1'
     elif params.family=='range_reversion':
-        state['hypothesis']='passive-limit-net-profit-conditional-on-fill-range-reversion-ema9-21-atr003-target-1r-hold-30m-v1'
+        state['hypothesis']=('passive-limit-net-profit-conditional-on-fill-range-reversion-ema9-21-body05-atr003-offset05-target-1r-hold-30m-v1'
+                             if params.min_body_atr==.5 else
+                             'passive-limit-net-profit-conditional-on-fill-range-reversion-ema9-21-atr003-target-1r-hold-30m-v1')
     elif params.family=='retest':
         state['hypothesis']='passive-limit-net-profit-conditional-on-fill-retest-target-1r-hold-30m-v1'
     elif target_r==1. and hold_minutes==30:
@@ -91,6 +93,17 @@ def choose_threshold(records):
 
 
 def study_windows(args):
+    if getattr(args,'long_history_range_reversion_offset05_body05_1r_hold_30m',False):
+        if (getattr(args,'extended_training',False) or getattr(args,'long_history',False)
+                or getattr(args,'long_history_target_1r',False)
+                or getattr(args,'long_history_target_1r_hold_30m',False)
+                or getattr(args,'long_history_retest_1r_hold_30m',False)
+                or getattr(args,'long_history_trend_pullback_1r_hold_30m',False)
+                or getattr(args,'long_history_range_reversion_1r_hold_30m',False)
+                or getattr(args,'long_history_range_reversion_1r_hold_30m_offset_05',False)):
+            raise ValueError('choose one history mode')
+        return (pd.Timestamp('2026-03-01',tz='UTC'),pd.Timestamp('2026-06-01',tz='UTC'),
+                pd.Timestamp('2026-07-15',tz='UTC'),'JEV_LONG_HISTORY_RANGE_REVERSION_OFFSET_05_BODY_05_1R_HOLD_30M_PROTOCOL.md')
     if getattr(args,'long_history_range_reversion_1r_hold_30m_offset_05',False):
         if (getattr(args,'extended_training',False) or getattr(args,'long_history',False)
                 or getattr(args,'long_history_target_1r',False)
@@ -150,16 +163,19 @@ def run(args):
     trend_pullback_mode=getattr(args,'long_history_trend_pullback_1r_hold_30m',False)
     range_reversion_mode=getattr(args,'long_history_range_reversion_1r_hold_30m',False)
     range_reversion_offset_05_mode=getattr(args,'long_history_range_reversion_1r_hold_30m_offset_05',False)
+    range_reversion_offset_body_mode=getattr(args,'long_history_range_reversion_offset05_body05_1r_hold_30m',False)
     range_reversion_mode=range_reversion_mode or range_reversion_offset_05_mode
+    range_reversion_mode=range_reversion_mode or range_reversion_offset_body_mode
     target_1r=(getattr(args,'long_history_target_1r',False)
                or getattr(args,'long_history_target_1r_hold_30m',False) or retest_mode or trend_pullback_mode or range_reversion_mode)
     target_r=1. if target_1r else TARGET
     hold_minutes=30 if getattr(args,'long_history_target_1r_hold_30m',False) or retest_mode or trend_pullback_mode or range_reversion_mode else HOLD
-    offset_atr=.5 if range_reversion_offset_05_mode else OFFSET
-    params=(CostAwareParameters('range_reversion',3.,.003,0.,fast=9,slow=21) if range_reversion_mode
+    offset_atr=.5 if range_reversion_offset_05_mode or range_reversion_offset_body_mode else OFFSET
+    params=(CostAwareParameters('range_reversion',3.,.003,.5 if range_reversion_offset_body_mode else 0.,fast=9,slow=21) if range_reversion_mode
             else CostAwareParameters('trend_pullback',3.,.004,0.) if trend_pullback_mode
             else CostAwareParameters('retest',3.,.004,0.) if retest_mode else PARAMS)
-    candidate=('61-range-reversion-ema9-21-atr003-offset05-target-1r-hold-30m' if range_reversion_offset_05_mode
+    candidate=('62-range-reversion-ema9-21-atr003-body05-offset05-target-1r-hold-30m' if range_reversion_offset_body_mode
+               else '61-range-reversion-ema9-21-atr003-offset05-target-1r-hold-30m' if range_reversion_offset_05_mode
                else '60-range-reversion-ema9-21-atr003-target-1r-hold-30m' if range_reversion_mode
                else '59-trend-pullback-target-1r-hold-30m' if trend_pullback_mode
                else '59-retest-target-1r-hold-30m' if retest_mode
@@ -227,6 +243,7 @@ def main():
     parser.add_argument('--long-history-trend-pullback-1r-hold-30m',action='store_true',help='Use the frozen trend-pullback, 1R-target, 30-minute-hold amendment')
     parser.add_argument('--long-history-range-reversion-1r-hold-30m',action='store_true',help='Use the frozen range-reversion, EMA9/21, 1R-target, 30-minute-hold amendment')
     parser.add_argument('--long-history-range-reversion-1r-hold-30m-offset-05',action='store_true',help='Use the frozen range-reversion with a 0.5 ATR passive-limit offset')
+    parser.add_argument('--long-history-range-reversion-offset05-body05-1r-hold-30m',action='store_true',help='Require a 0.5 ATR reversal body on the frozen range-reversion candidate')
     parser.add_argument('--extended-training',action='store_true',help='Use the frozen July 1 training start with the expanded dataset')
     parser.add_argument('--data-dir',type=Path,default=ROOT/'user_data/data/okx_scalp')
     parser.add_argument('--output-dir',type=Path,default=ROOT/'user_data/backtest_results/jev-passive-filter-20260927')
