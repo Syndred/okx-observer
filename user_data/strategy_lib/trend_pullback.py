@@ -19,6 +19,8 @@ class TrendPullbackParameters:
     stop_buffer_atr: float = 0.10
     minimum_risk_fraction: float = 0.004
     cooldown_bars: int = 25
+    quote_volume_multiple: float | None = None
+    quote_volume_lookback: int = 20
 
 
 def generate_events(
@@ -34,17 +36,28 @@ def generate_events(
     if (type(params.cadence_minutes) is not int or params.cadence_minutes <= 0
             or 60 % params.cadence_minutes
             or type(params.cooldown_bars) is not int or params.cooldown_bars < 1
+            or type(params.quote_volume_lookback) is not int or params.quote_volume_lookback < 1
             or any(isinstance(value, bool) or not math.isfinite(value) or value <= 0
                    for value in (params.touch_atr,
                                  params.confirmation_body_atr,
                                  params.stop_buffer_atr,
-                                 params.minimum_risk_fraction))):
+                                 params.minimum_risk_fraction))
+            or (params.quote_volume_multiple is not None
+                and (isinstance(params.quote_volume_multiple, bool)
+                     or not isinstance(params.quote_volume_multiple, (int, float))
+                     or not math.isfinite(params.quote_volume_multiple)
+                     or params.quote_volume_multiple <= 0))):
         raise ValueError("invalid cadence, pullback, confirmation or stop parameters")
 
     required = {"date", "open", "high", "low", "close"}
     if not required.issubset(frame.columns):
         raise ValueError("candles are missing required OHLC columns")
-    raw = frame[["date", "open", "high", "low", "close"]].copy()
+    if params.quote_volume_multiple is not None and "quote_volume" not in frame.columns:
+        raise ValueError("quote_volume is required for volume confirmation")
+    columns = ["date", "open", "high", "low", "close"]
+    if params.quote_volume_multiple is not None:
+        columns.append("quote_volume")
+    raw = frame[columns].copy()
     raw["date"] = pd.to_datetime(raw["date"], utc=True).dt.as_unit("ns")
     raw = raw.sort_values("date").reset_index(drop=True)
     if raw.empty or raw["date"].duplicated().any():
@@ -56,6 +69,10 @@ def generate_events(
             or (raw["high"] < raw[["open", "low", "close"]].max(axis=1)).any()
             or (raw["low"] > raw[["open", "high", "close"]].min(axis=1)).any()):
         raise ValueError("candles contain invalid OHLC values")
+    if params.quote_volume_multiple is not None:
+        quote_volume = raw["quote_volume"].to_numpy(dtype=float)
+        if not np.isfinite(quote_volume).all() or (quote_volume < 0).any():
+            raise ValueError("candles contain invalid quote volume")
 
     features = add_v2_indicators(raw)
     atr = features["atr14"]
@@ -63,6 +80,22 @@ def generate_events(
     ema60 = features["ema60"]
     body = features["close"] - features["open"]
     span = features["high"] - features["low"]
+    if params.quote_volume_multiple is None:
+        quote_volume_confirmed = pd.Series(True, index=features.index)
+    else:
+        baseline_quote_volume = (
+            features["quote_volume"].shift(1)
+            .rolling(params.quote_volume_lookback,
+                     min_periods=params.quote_volume_lookback)
+            .median()
+        )
+        quote_volume_confirmed = (
+            features["quote_volume"].gt(0)
+            & baseline_quote_volume.gt(0)
+            & features["quote_volume"].ge(
+                params.quote_volume_multiple * baseline_quote_volume
+            )
+        )
 
     touched_ema20 = (
         features["low"].le(ema20 + params.touch_atr * atr)
@@ -97,11 +130,13 @@ def generate_events(
     long_signal = (
         features["trend_long"].fillna(False)
         & touched_recently & long_pullback_shallow & long_confirmation
+        & quote_volume_confirmed
         & (features["close"] - long_stop).ge(params.minimum_risk_fraction * features["close"])
     )
     short_signal = (
         features["trend_short"].fillna(False)
         & touched_recently & short_pullback_shallow & short_confirmation
+        & quote_volume_confirmed
         & (short_stop - features["close"]).ge(params.minimum_risk_fraction * features["close"])
     )
 

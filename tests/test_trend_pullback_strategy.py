@@ -63,3 +63,26 @@ def test_rejects_invalid_cadence():
     with pytest.raises(ValueError, match="parameters"):
         generate_events("TEST", frame,
                         params=TrendPullbackParameters(cadence_minutes=7))
+
+
+def test_quote_volume_filter_uses_previous_twenty_bar_median():
+    frame = _frame()
+    frame["quote_volume"] = 100.0
+    frame.loc[362, "quote_volume"] = 150.0
+    params = TrendPullbackParameters(quote_volume_multiple=1.5)
+
+    events = generate_events("TEST", frame, params)
+
+    assert len(events) == 1
+    assert events[0].date == frame.date.iloc[363]
+
+    frame.loc[362, "quote_volume"] = 149.99
+    assert generate_events("TEST", frame, params) == []
+
+
+def test_quote_volume_filter_requires_quote_volume_column():
+    with pytest.raises(ValueError, match="quote_volume"):
+        generate_events(
+            "TEST", _frame(),
+            TrendPullbackParameters(quote_volume_multiple=1.5),
+        )
