@@ -19,22 +19,26 @@ class CostAwareParameters:
     stop_atr: float = 1.5
     min_atr_pct: float = 0.0
     min_body_atr: float = 0.0
+    fast: int = 20
+    slow: int = 60
 
 
 def scan_cost_aware(frame: pd.DataFrame, params: CostAwareParameters) -> pd.DataFrame:
-    if params.family not in {'retest', 'trend_pullback', 'breakout'}:
+    if params.family not in {'retest', 'trend_pullback', 'range_reversion', 'breakout'}:
         raise ValueError('invalid cost-aware family')
     try:
         valid = (np.isfinite(params.stop_atr) and params.stop_atr > 0
                  and np.isfinite(params.min_atr_pct) and params.min_atr_pct >= 0
-                 and np.isfinite(params.min_body_atr) and params.min_body_atr >= 0)
+                 and np.isfinite(params.min_body_atr) and params.min_body_atr >= 0
+                 and type(params.fast) is int and type(params.slow) is int
+                 and 0 < params.fast < params.slow)
     except (TypeError, ValueError):
         valid = False
     if not valid:
-        raise ValueError('stop must be positive and ATR/body floors nonnegative and finite')
-    if params.family in {'retest', 'trend_pullback'}:
-        family='breakout_retest' if params.family=='retest' else 'trend_pullback'
-        f = scan_profit(frame, ProfitParameters(family=family, fast=20, slow=60,
+        raise ValueError('stop must be positive, EMA periods increasing, and ATR/body floors nonnegative and finite')
+    if params.family in {'retest', 'trend_pullback', 'range_reversion'}:
+        family='breakout_retest' if params.family=='retest' else params.family
+        f = scan_profit(frame, ProfitParameters(family=family, fast=params.fast, slow=params.slow,
                                               volume_multiple=1., stop_buffer_atr=.3,
                                               cooldown_bars=12))
     else:

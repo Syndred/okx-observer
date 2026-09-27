@@ -27,6 +27,8 @@ def state_for_order(order,signals,funding,target_r=TARGET,hold_minutes=HOLD,para
     ref=float(signals.loc[signals.decision_at<=order.date].iloc[-1].close)
     if params.family=='trend_pullback':
         state['hypothesis']='passive-limit-net-profit-conditional-on-fill-trend-pullback-target-1r-hold-30m-v1'
+    elif params.family=='range_reversion':
+        state['hypothesis']='passive-limit-net-profit-conditional-on-fill-range-reversion-ema9-21-atr003-target-1r-hold-30m-v1'
     elif params.family=='retest':
         state['hypothesis']='passive-limit-net-profit-conditional-on-fill-retest-target-1r-hold-30m-v1'
     elif target_r==1. and hold_minutes==30:
@@ -89,6 +91,15 @@ def choose_threshold(records):
 
 
 def study_windows(args):
+    if getattr(args,'long_history_range_reversion_1r_hold_30m',False):
+        if (getattr(args,'extended_training',False) or getattr(args,'long_history',False)
+                or getattr(args,'long_history_target_1r',False)
+                or getattr(args,'long_history_target_1r_hold_30m',False)
+                or getattr(args,'long_history_retest_1r_hold_30m',False)
+                or getattr(args,'long_history_trend_pullback_1r_hold_30m',False)):
+            raise ValueError('choose one history mode')
+        return (pd.Timestamp('2026-03-01',tz='UTC'),pd.Timestamp('2026-06-01',tz='UTC'),
+                pd.Timestamp('2026-07-15',tz='UTC'),'JEV_LONG_HISTORY_RANGE_REVERSION_1R_HOLD_30M_PROTOCOL.md')
     if getattr(args,'long_history_trend_pullback_1r_hold_30m',False):
         if (getattr(args,'extended_training',False) or getattr(args,'long_history',False)
                 or getattr(args,'long_history_target_1r',False)
@@ -127,13 +138,16 @@ def run(args):
     train_start,split_a,split_b,protocol=study_windows(args)
     retest_mode=getattr(args,'long_history_retest_1r_hold_30m',False)
     trend_pullback_mode=getattr(args,'long_history_trend_pullback_1r_hold_30m',False)
+    range_reversion_mode=getattr(args,'long_history_range_reversion_1r_hold_30m',False)
     target_1r=(getattr(args,'long_history_target_1r',False)
-               or getattr(args,'long_history_target_1r_hold_30m',False) or retest_mode or trend_pullback_mode)
+               or getattr(args,'long_history_target_1r_hold_30m',False) or retest_mode or trend_pullback_mode or range_reversion_mode)
     target_r=1. if target_1r else TARGET
-    hold_minutes=30 if getattr(args,'long_history_target_1r_hold_30m',False) or retest_mode or trend_pullback_mode else HOLD
-    params=(CostAwareParameters('trend_pullback',3.,.004,0.) if trend_pullback_mode
+    hold_minutes=30 if getattr(args,'long_history_target_1r_hold_30m',False) or retest_mode or trend_pullback_mode or range_reversion_mode else HOLD
+    params=(CostAwareParameters('range_reversion',3.,.003,0.,fast=9,slow=21) if range_reversion_mode
+            else CostAwareParameters('trend_pullback',3.,.004,0.) if trend_pullback_mode
             else CostAwareParameters('retest',3.,.004,0.) if retest_mode else PARAMS)
-    candidate=('59-trend-pullback-target-1r-hold-30m' if trend_pullback_mode
+    candidate=('60-range-reversion-ema9-21-atr003-target-1r-hold-30m' if range_reversion_mode
+               else '59-trend-pullback-target-1r-hold-30m' if trend_pullback_mode
                else '59-retest-target-1r-hold-30m' if retest_mode
                else '59-target-1r-hold-30m' if hold_minutes==30 and target_1r
                else '59-target-1r' if target_r==1. else 59)
@@ -197,6 +211,7 @@ def main():
     parser.add_argument('--long-history-target-1r-hold-30m',action='store_true',help='Use the frozen 1R-target, 30-minute-hold amendment')
     parser.add_argument('--long-history-retest-1r-hold-30m',action='store_true',help='Use the frozen retest, 1R-target, 30-minute-hold amendment')
     parser.add_argument('--long-history-trend-pullback-1r-hold-30m',action='store_true',help='Use the frozen trend-pullback, 1R-target, 30-minute-hold amendment')
+    parser.add_argument('--long-history-range-reversion-1r-hold-30m',action='store_true',help='Use the frozen range-reversion, EMA9/21, 1R-target, 30-minute-hold amendment')
     parser.add_argument('--extended-training',action='store_true',help='Use the frozen July 1 training start with the expanded dataset')
     parser.add_argument('--data-dir',type=Path,default=ROOT/'user_data/data/okx_scalp')
     parser.add_argument('--output-dir',type=Path,default=ROOT/'user_data/backtest_results/jev-passive-filter-20260927')

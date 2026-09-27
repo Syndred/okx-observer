@@ -86,10 +86,27 @@ def test_trend_pullback_family_uses_existing_profit_engine_and_atr_stop_floor():
     assert out.initial_stop_price.iloc[0] == 94.
 
 
+def test_range_reversion_family_uses_frozen_ema_periods_and_atr_stop_floor():
+    source = pd.DataFrame(dict(date=[pd.Timestamp('2026-01-01',tz='UTC')],
+                               open=[99.], high=[101.], low=[98.], close=[100.],
+                               volume=[10.], quote_volume=[1000.], atr14=[2.],
+                               initial_stop_price=[98.], side=['long']))
+    with patch('user_data.strategy_lib.cost_aware_signal_engine.scan_profit', return_value=source.copy()) as scan:
+        out = scan_cost_aware(pd.DataFrame(), CostAwareParameters(
+            family='range_reversion',stop_atr=3.,min_atr_pct=.003,fast=9,slow=21))
+    params=scan.call_args.args[1]
+    assert params.family == 'range_reversion'
+    assert params.fast == 9 and params.slow == 21 and params.cooldown_bars == 12
+    assert out.side.tolist() == ['long']
+    assert out.initial_stop_price.iloc[0] == 94.
+
+
 @pytest.mark.parametrize('kwargs', [dict(family='unknown'), dict(stop_atr=0), dict(stop_atr=-1),
                                     dict(stop_atr=np.inf), dict(stop_atr=np.nan), dict(stop_atr='x'),
                                     dict(min_atr_pct=-1), dict(min_atr_pct=np.nan),
-                                    dict(min_body_atr=-1), dict(min_body_atr=np.inf)])
+                                    dict(min_body_atr=-1), dict(min_body_atr=np.inf),
+                                    dict(fast=21,slow=21), dict(fast=0,slow=21),
+                                    dict(fast=9.0,slow=21)])
 def test_invalid_parameters(kwargs):
     with pytest.raises(ValueError):
         scan_cost_aware(candles(), CostAwareParameters(**kwargs))
