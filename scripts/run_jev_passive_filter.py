@@ -91,6 +91,16 @@ def choose_threshold(records):
 
 
 def study_windows(args):
+    if getattr(args,'long_history_range_reversion_1r_hold_30m_offset_05',False):
+        if (getattr(args,'extended_training',False) or getattr(args,'long_history',False)
+                or getattr(args,'long_history_target_1r',False)
+                or getattr(args,'long_history_target_1r_hold_30m',False)
+                or getattr(args,'long_history_retest_1r_hold_30m',False)
+                or getattr(args,'long_history_trend_pullback_1r_hold_30m',False)
+                or getattr(args,'long_history_range_reversion_1r_hold_30m',False)):
+            raise ValueError('choose one history mode')
+        return (pd.Timestamp('2026-03-01',tz='UTC'),pd.Timestamp('2026-06-01',tz='UTC'),
+                pd.Timestamp('2026-07-15',tz='UTC'),'JEV_LONG_HISTORY_RANGE_REVERSION_OFFSET_05_1R_HOLD_30M_PROTOCOL.md')
     if getattr(args,'long_history_range_reversion_1r_hold_30m',False):
         if (getattr(args,'extended_training',False) or getattr(args,'long_history',False)
                 or getattr(args,'long_history_target_1r',False)
@@ -139,14 +149,18 @@ def run(args):
     retest_mode=getattr(args,'long_history_retest_1r_hold_30m',False)
     trend_pullback_mode=getattr(args,'long_history_trend_pullback_1r_hold_30m',False)
     range_reversion_mode=getattr(args,'long_history_range_reversion_1r_hold_30m',False)
+    range_reversion_offset_05_mode=getattr(args,'long_history_range_reversion_1r_hold_30m_offset_05',False)
+    range_reversion_mode=range_reversion_mode or range_reversion_offset_05_mode
     target_1r=(getattr(args,'long_history_target_1r',False)
                or getattr(args,'long_history_target_1r_hold_30m',False) or retest_mode or trend_pullback_mode or range_reversion_mode)
     target_r=1. if target_1r else TARGET
     hold_minutes=30 if getattr(args,'long_history_target_1r_hold_30m',False) or retest_mode or trend_pullback_mode or range_reversion_mode else HOLD
+    offset_atr=.5 if range_reversion_offset_05_mode else OFFSET
     params=(CostAwareParameters('range_reversion',3.,.003,0.,fast=9,slow=21) if range_reversion_mode
             else CostAwareParameters('trend_pullback',3.,.004,0.) if trend_pullback_mode
             else CostAwareParameters('retest',3.,.004,0.) if retest_mode else PARAMS)
-    candidate=('60-range-reversion-ema9-21-atr003-target-1r-hold-30m' if range_reversion_mode
+    candidate=('61-range-reversion-ema9-21-atr003-offset05-target-1r-hold-30m' if range_reversion_offset_05_mode
+               else '60-range-reversion-ema9-21-atr003-target-1r-hold-30m' if range_reversion_mode
                else '59-trend-pullback-target-1r-hold-30m' if trend_pullback_mode
                else '59-retest-target-1r-hold-30m' if retest_mode
                else '59-target-1r-hold-30m' if hold_minutes==30 and target_1r
@@ -158,7 +172,7 @@ def run(args):
         'user_data/strategy_lib/passive_scalp_paths.py','user_data/strategy_lib/cost_aware_signal_engine.py','user_data/strategy_lib/jev_provider.py',
         'scripts/run_jev_ma_research.py','user_data/strategy_lib/scalp_signal_engine.py','user_data/strategy_lib/profit_signal_engine.py']
     manifest={'status':'training','heldout_prices_opened':False,'portfolio_verified':False,'live_claim_allowed':False,
-        'model':'jev-1.13.0','candidate':candidate,'target_r':target_r,'hold_minutes':hold_minutes,
+        'model':'jev-1.13.0','candidate':candidate,'offset_atr':offset_atr,'target_r':target_r,'hold_minutes':hold_minutes,
         'strategy_parameters':asdict(params),
         'training_start':train_start.isoformat(),
         'development_a_start':split_a.isoformat(),'development_b_start':split_b.isoformat(),
@@ -169,7 +183,7 @@ def run(args):
     frames,funding,hashes=load_dataset(args.data_dir,DEV_SYMBOLS,train_start)
     manifest['development_data_sha256']=hashes;write_json(out/'manifest.json',manifest)
     signals={pair:scan_cost_aware(frame,params) for pair,frame in frames.items()}
-    orders=make_orders(signals,OFFSET,target_r)
+    orders=make_orders(signals,offset_atr,target_r)
     load_key_file(args.env_file);client=JevClient(model='jev-1.13.0',timeout=30)
     cache=ROOT/'user_data/backtest_results/jev-passive-cache'
     train=window(orders,train_start,split_a,hold_minutes)
@@ -186,7 +200,7 @@ def run(args):
     if chosen is None:
         manifest.update(status='no_qualified_training_threshold',reason='No train-only Jev cutoff met sample, net win-rate, profitability and both stress gates')
         write_json(out/'manifest.json',manifest);print(manifest['status'],flush=True);return
-    frozen={'candidate':candidate,'parameters':asdict(params),'offset_atr':OFFSET,'target_r':target_r,'hold_minutes':hold_minutes,
+    frozen={'candidate':candidate,'parameters':asdict(params),'offset_atr':offset_atr,'target_r':target_r,'hold_minutes':hold_minutes,
             'threshold':chosen['threshold'],'training':chosen,'frozen_at':pd.Timestamp.now(tz='UTC').isoformat()}
     write_json(out/'frozen-candidate.json',frozen)
     total=0
@@ -212,6 +226,7 @@ def main():
     parser.add_argument('--long-history-retest-1r-hold-30m',action='store_true',help='Use the frozen retest, 1R-target, 30-minute-hold amendment')
     parser.add_argument('--long-history-trend-pullback-1r-hold-30m',action='store_true',help='Use the frozen trend-pullback, 1R-target, 30-minute-hold amendment')
     parser.add_argument('--long-history-range-reversion-1r-hold-30m',action='store_true',help='Use the frozen range-reversion, EMA9/21, 1R-target, 30-minute-hold amendment')
+    parser.add_argument('--long-history-range-reversion-1r-hold-30m-offset-05',action='store_true',help='Use the frozen range-reversion with a 0.5 ATR passive-limit offset')
     parser.add_argument('--extended-training',action='store_true',help='Use the frozen July 1 training start with the expanded dataset')
     parser.add_argument('--data-dir',type=Path,default=ROOT/'user_data/data/okx_scalp')
     parser.add_argument('--output-dir',type=Path,default=ROOT/'user_data/backtest_results/jev-passive-filter-20260927')

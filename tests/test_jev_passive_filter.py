@@ -159,10 +159,10 @@ def test_threshold_selection_has_no_fallback_and_uses_only_passed_records():
     assert research.choose_threshold([failed, first, second]) is second
 
 
-@pytest.mark.parametrize("mode", ["base", "extended", "long", "long_target_1r", "long_target_1r_hold_30m", "long_retest_1r_hold_30m", "long_trend_pullback_1r_hold_30m", "long_range_reversion_1r_hold_30m"])
+@pytest.mark.parametrize("mode", ["base", "extended", "long", "long_target_1r", "long_target_1r_hold_30m", "long_retest_1r_hold_30m", "long_trend_pullback_1r_hold_30m", "long_range_reversion_1r_hold_30m", "long_range_reversion_offset05_1r_hold_30m"])
 def test_failed_training_scores_all_orders_before_fill_filter_and_stops(monkeypatch, tmp_path, mode):
-    train_start={"base":research.START,"extended":pd.Timestamp("2026-07-01",tz="UTC"),"long":pd.Timestamp("2026-03-01",tz="UTC"),"long_target_1r":pd.Timestamp("2026-03-01",tz="UTC"),"long_target_1r_hold_30m":pd.Timestamp("2026-03-01",tz="UTC"),"long_retest_1r_hold_30m":pd.Timestamp("2026-03-01",tz="UTC"),"long_trend_pullback_1r_hold_30m":pd.Timestamp("2026-03-01",tz="UTC"),"long_range_reversion_1r_hold_30m":pd.Timestamp("2026-03-01",tz="UTC")}[mode]
-    is_long=mode in ("long","long_target_1r","long_target_1r_hold_30m","long_retest_1r_hold_30m","long_trend_pullback_1r_hold_30m","long_range_reversion_1r_hold_30m")
+    train_start={"base":research.START,"extended":pd.Timestamp("2026-07-01",tz="UTC"),"long":pd.Timestamp("2026-03-01",tz="UTC"),"long_target_1r":pd.Timestamp("2026-03-01",tz="UTC"),"long_target_1r_hold_30m":pd.Timestamp("2026-03-01",tz="UTC"),"long_retest_1r_hold_30m":pd.Timestamp("2026-03-01",tz="UTC"),"long_trend_pullback_1r_hold_30m":pd.Timestamp("2026-03-01",tz="UTC"),"long_range_reversion_1r_hold_30m":pd.Timestamp("2026-03-01",tz="UTC"),"long_range_reversion_offset05_1r_hold_30m":pd.Timestamp("2026-03-01",tz="UTC")}[mode]
+    is_long=mode in ("long","long_target_1r","long_target_1r_hold_30m","long_retest_1r_hold_30m","long_trend_pullback_1r_hold_30m","long_range_reversion_1r_hold_30m","long_range_reversion_offset05_1r_hold_30m")
     split_a=pd.Timestamp("2026-06-01",tz="UTC") if is_long else research.SPLIT_A
     split_b=pd.Timestamp("2026-07-15",tz="UTC") if is_long else research.SPLIT_B
     pair = 'SYNTHETIC'
@@ -178,7 +178,9 @@ def test_failed_training_scores_all_orders_before_fill_filter_and_stops(monkeypa
         return pd.DataFrame()
     monkeypatch.setattr(research, 'scan_cost_aware', mock_scan)
     made_targets = []
+    made_offsets = []
     def mock_make_orders(signals, offset, target_r):
+        made_offsets.append(offset)
         made_targets.append(target_r)
         return orders
     monkeypatch.setattr(research, 'make_orders', mock_make_orders)
@@ -203,14 +205,17 @@ def test_failed_training_scores_all_orders_before_fill_filter_and_stops(monkeypa
         long_history_target_1r_hold_30m=mode=="long_target_1r_hold_30m",
         long_history_retest_1r_hold_30m=mode=="long_retest_1r_hold_30m",
         long_history_trend_pullback_1r_hold_30m=mode=="long_trend_pullback_1r_hold_30m",
-        long_history_range_reversion_1r_hold_30m=mode=="long_range_reversion_1r_hold_30m")
+        long_history_range_reversion_1r_hold_30m=mode=="long_range_reversion_1r_hold_30m",
+        long_history_range_reversion_1r_hold_30m_offset_05=mode=="long_range_reversion_offset05_1r_hold_30m")
     research.run(args)
-    expected_target = 1. if mode in ("long_target_1r","long_target_1r_hold_30m","long_retest_1r_hold_30m","long_trend_pullback_1r_hold_30m","long_range_reversion_1r_hold_30m") else research.TARGET
-    expected_hold = 30 if mode in ("long_target_1r_hold_30m","long_retest_1r_hold_30m","long_trend_pullback_1r_hold_30m","long_range_reversion_1r_hold_30m") else research.HOLD
-    expected_family = ('range_reversion' if mode=="long_range_reversion_1r_hold_30m"
+    expected_target = 1. if mode in ("long_target_1r","long_target_1r_hold_30m","long_retest_1r_hold_30m","long_trend_pullback_1r_hold_30m","long_range_reversion_1r_hold_30m","long_range_reversion_offset05_1r_hold_30m") else research.TARGET
+    expected_hold = 30 if mode in ("long_target_1r_hold_30m","long_retest_1r_hold_30m","long_trend_pullback_1r_hold_30m","long_range_reversion_1r_hold_30m","long_range_reversion_offset05_1r_hold_30m") else research.HOLD
+    expected_family = ('range_reversion' if mode in ("long_range_reversion_1r_hold_30m","long_range_reversion_offset05_1r_hold_30m")
                        else 'trend_pullback' if mode=="long_trend_pullback_1r_hold_30m"
                        else 'retest' if mode=="long_retest_1r_hold_30m" else 'breakout')
+    expected_offset = .5 if mode=="long_range_reversion_offset05_1r_hold_30m" else research.OFFSET
     assert made_targets == [expected_target]
+    assert made_offsets == [expected_offset]
     assert scored == [('training', orders[:3], expected_target, expected_hold, expected_family)]
     assert len(scanned_params) == 1
     assert scanned_params[0].family == expected_family
@@ -222,14 +227,16 @@ def test_failed_training_scores_all_orders_before_fill_filter_and_stops(monkeypa
     assert manifest['development_b_start']==split_b.isoformat()
     assert manifest['target_r']==expected_target
     assert manifest['hold_minutes']==expected_hold
-    expected_candidate=('60-range-reversion-ema9-21-atr003-target-1r-hold-30m' if mode=="long_range_reversion_1r_hold_30m"
+    expected_candidate=('61-range-reversion-ema9-21-atr003-offset05-target-1r-hold-30m' if mode=="long_range_reversion_offset05_1r_hold_30m"
+                        else '60-range-reversion-ema9-21-atr003-target-1r-hold-30m' if mode=="long_range_reversion_1r_hold_30m"
                         else '59-trend-pullback-target-1r-hold-30m' if mode=="long_trend_pullback_1r_hold_30m"
                         else '59-retest-target-1r-hold-30m' if mode=="long_retest_1r_hold_30m"
                         else '59-target-1r-hold-30m' if mode=="long_target_1r_hold_30m"
                         else '59-target-1r' if mode=="long_target_1r" else 59)
     assert manifest['candidate']==expected_candidate
     assert manifest['strategy_parameters']['family']==expected_family
-    if mode=="long_range_reversion_1r_hold_30m":
+    assert manifest['offset_atr']==expected_offset
+    if mode in ("long_range_reversion_1r_hold_30m","long_range_reversion_offset05_1r_hold_30m"):
         assert manifest['strategy_parameters']['fast']==9
         assert manifest['strategy_parameters']['slow']==21
         assert manifest['strategy_parameters']['min_atr_pct']==.003
@@ -290,6 +297,9 @@ def test_history_modes_cannot_be_combined():
     with pytest.raises(ValueError,match="one history mode"):
         research.study_windows(SimpleNamespace(long_history_range_reversion_1r_hold_30m=True,
                                                long_history_trend_pullback_1r_hold_30m=True))
+    with pytest.raises(ValueError,match="one history mode"):
+        research.study_windows(SimpleNamespace(long_history_range_reversion_1r_hold_30m_offset_05=True,
+                                               long_history_range_reversion_1r_hold_30m=True))
 
 
 def test_target_1r_amendment_keeps_frozen_long_history_windows():
@@ -330,3 +340,12 @@ def test_trend_pullback_amendment_keeps_frozen_long_history_windows():
     assert split_a == pd.Timestamp('2026-06-01', tz='UTC')
     assert split_b == pd.Timestamp('2026-07-15', tz='UTC')
     assert protocol == 'JEV_LONG_HISTORY_TREND_PULLBACK_1R_HOLD_30M_PROTOCOL.md'
+
+
+def test_range_reversion_offset_amendment_keeps_frozen_long_history_windows():
+    start, split_a, split_b, protocol = research.study_windows(SimpleNamespace(
+        long_history_range_reversion_1r_hold_30m_offset_05=True))
+    assert start == pd.Timestamp('2026-03-01', tz='UTC')
+    assert split_a == pd.Timestamp('2026-06-01', tz='UTC')
+    assert split_b == pd.Timestamp('2026-07-15', tz='UTC')
+    assert protocol == 'JEV_LONG_HISTORY_RANGE_REVERSION_OFFSET_05_1R_HOLD_30M_PROTOCOL.md'
