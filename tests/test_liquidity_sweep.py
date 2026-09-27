@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
+from scripts.run_liquidity_sweep_research import _parameters
 from user_data.strategy_lib.liquidity_sweep import (
     LiquiditySweepParameters,
     generate_events,
@@ -79,3 +80,13 @@ def test_twelve_hour_mode_uses_older_range_boundary():
     assert generate_events(
         "TEST", frame, LiquiditySweepParameters(lookback_bars=144)
     ) == []
+
+
+def test_four_hour_hold_adds_one_bar_beyond_maximum_hold_to_cooldown():
+    params = _parameters(lookback_bars=144, hold_minutes=240)
+
+    assert params.cooldown_bars == 49
+    assert params.lookback_bars == 144
+
+    with pytest.raises(ValueError, match="144-bar"):
+        _parameters(lookback_bars=24, hold_minutes=240)
