@@ -37,7 +37,8 @@
 - 成交额确认回踩训练失败：555笔，净胜率35.68%、PF0.628、均值-0.1582%；双倍成本/严格压力PF0.372/0.321。结果在 `user_data/backtest_results/trend-pullback-volume-20260927-train-only/`，预留数据未读。
 - 2小时区间假突破训练失败：772笔，净胜率34.72%、PF0.436、均值-0.2228%；双倍成本/严格压力PF0.216/0.180。结果在 `user_data/backtest_results/range-liquidity-sweep-20260927-train-only/`，预留未读。
 - 12小时区间假突破训练失败：423笔，净胜率37.12%、PF0.518、均值-0.1789%；双倍成本/严格压力PF0.258/0.209。215笔超时交易平均净收益+0.0036%，预留未读。结果在 `user_data/backtest_results/liquidity-sweep-12h-20260927-train-only/`。
-- 下一候选已冻结为12小时假突破、4小时最长持仓；唯一变量是持仓上限60→240分钟、冷却13→49根。协议 `docs/research/JEV_12H_SWEEP_HOLD_240_PROTOCOL.md`，尚未评分。短线盈利目标仍进行中，每5分钟监督任务保持启用，失败后继续下一轮。
+- 12小时假突破、4小时持仓训练失败：395笔，净胜率36.46%、PF0.593、均值-0.2032%；双倍成本/严格压力PF0.367/0.310，预留未读。结果在 `user_data/backtest_results/liquidity-sweep-12h-hold240m-20260927-train-only/`。
+- 下一候选已冻结为EMA趋势内RSI(2)极端回撤回归：RSI(2)从≤10/≥90回穿信号，1.5 ATR止损、1.5R目标、120分钟上限；协议 `docs/research/JEV_RSI2_TREND_REVERSION_PROTOCOL.md`，尚未评分。短线盈利目标仍进行中，每5分钟监督任务保持启用，失败后继续下一轮。
 
 ## 台式机迁移交接（2026-09-27）
 
