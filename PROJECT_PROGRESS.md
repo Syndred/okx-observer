@@ -12,7 +12,8 @@
 - 数据包 SHA-256 与交接文档一致；包内 2,478 项清单全部校验通过。长历史 `complete=true`：488,448 根 K 线、5,088 条资金费，所有拼接输入及输出哈希、标准资金费结算检查通过；未读取预留价格。
 - 五个定向测试文件共 81 项通过；Jev 配置可加载，模型为 `jev-1.13.0`。测试有 68 条 NumPy `Timedelta` 弃用警告。
 - 首轮固定长历史训练结束状态为 `no_qualified_training_threshold`：233 条训练订单均真实调用 Jev（缓存 0）；六个阈值全部未通过。基线166笔成交，净胜率35.54%、PF0.509、均值-0.279%。未评估开发A/B、组合风控或预留；没有实盘订单，也没有盈利结论。
-- 结果、训练门槛及亏损归因见 `reports/jev-passive-long-desktop-20260927/PROGRESS_REPORT.md`。下一轮研究假设为将目标从2R固定改为1R，其他参数和所有验收门槛不变；先冻结新协议再运行。此改动尚未验证。
+- 结果、训练门槛及亏损归因见 `reports/jev-passive-long-desktop-20260927/PROGRESS_REPORT.md`。归因显示首轮多数成交到60分钟仍未触及2R，已冻结唯一变更为1R目标，协议见 `docs/research/JEV_LONG_HISTORY_TARGET_1R_PROTOCOL.md`。
+- 已新增 `--long-history-target-1r` 入口；85项定向测试通过。第二轮尚未评分，须先提交并推送此协议与代码，再运行新输出目录。
 
 ## 台式机迁移交接（2026-09-27）
 

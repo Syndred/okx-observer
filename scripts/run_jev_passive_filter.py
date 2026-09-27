@@ -22,10 +22,11 @@ OFFSET,TARGET,HOLD=.25,2.,60
 THRESHOLDS=(.15,.25,.35,.45,.55,.65)
 
 
-def state_for_order(order,signals,funding):
-    state=model_state(order,signals,PARAMS,TARGET,HOLD,funding)
+def state_for_order(order,signals,funding,target_r=TARGET):
+    state=model_state(order,signals,PARAMS,target_r,HOLD,funding)
     ref=float(signals.loc[signals.decision_at<=order.date].iloc[-1].close)
-    state['hypothesis']='passive-limit-net-profit-conditional-on-fill-v1'
+    state['hypothesis']=('passive-limit-net-profit-conditional-on-fill-target-1r-v1'
+                         if target_r==1. else 'passive-limit-net-profit-conditional-on-fill-v1')
     state['execution_rules']={
         'outcome':'Estimate probability of strictly positive NET PnL CONDITIONAL ON execution under the hypothetical fill rules. Unfilled orders are excluded, not labelled losses. Future fill status is unknown.',
         'entry':'Fixed passive limit active only during the next 5m bar; no future opening price provided. Hypothetical full fill only if penetration occurs.',
@@ -34,7 +35,7 @@ def state_for_order(order,signals,funding):
         'post_only':'Cancel if next opening is at or below limit for long, or at or above limit for short.',
         'fill':'Long next-bar low <= limit*(1-0.0001); short next-bar high >= limit*(1+0.0001). Otherwise cancel unfilled.',
         'entry_slippage':0.,'entry_maker_fee':.0002,'exit_taker_fee':.0005,'exit_adverse_slippage':.0005,
-        'target_r':TARGET,'r_definition':'distance between fixed limit fill and fixed stop',
+        'target_r':target_r,'r_definition':'distance between fixed limit fill and fixed stop',
         'maximum_minutes_from_order_activation':HOLD,
         'path':'Entry bar may stop out but may NOT take profit. Later stop first if stop and target touch; gap stop fills at worse opening, then exit slippage. All exits are taker.',
         'time_exit':'Final complete 5m candle close by the fixed holding deadline',
@@ -43,10 +44,10 @@ def state_for_order(order,signals,funding):
     return state
 
 
-def score(client,signals,funding,orders,cache,out,name):
+def score(client,signals,funding,orders,cache,out,name,target_r=TARGET):
     answers={};hits=0
     def one(order):
-        value,cached=predict(client,state_for_order(order,signals[order.pair],funding[order.pair]),cache)
+        value,cached=predict(client,state_for_order(order,signals[order.pair],funding[order.pair],target_r),cache)
         return event_key(order),value,cached
     with ThreadPoolExecutor(max_workers=4) as pool:
         for i,(key,value,cached) in enumerate(pool.map(one,orders)):
@@ -57,10 +58,10 @@ def score(client,signals,funding,orders,cache,out,name):
     return answers,{'orders':len(orders),'cached':hits,'api_calls':len(orders)-hits}
 
 
-def all_metrics(frames,funding,orders,out=None,prefix=''):
+def all_metrics(frames,funding,orders,out=None,prefix='',target_r=TARGET):
     metrics={}
     for name,stress,strict in [('regular',False,True),('cost_only_stress',True,False),('strict_stress',True,True)]:
-        result,rows=measure(frames,funding,orders,TARGET,HOLD,stress,strict)
+        result,rows=measure(frames,funding,orders,target_r,HOLD,stress,strict)
         metrics[name]=result
         if out is not None:rows.to_csv(out/f'{prefix}-{name}-labels.csv',index=False)
     return metrics
@@ -80,6 +81,11 @@ def choose_threshold(records):
 
 
 def study_windows(args):
+    if getattr(args,'long_history_target_1r',False):
+        if getattr(args,'extended_training',False) or getattr(args,'long_history',False):
+            raise ValueError('choose one history mode')
+        return (pd.Timestamp('2026-03-01',tz='UTC'),pd.Timestamp('2026-06-01',tz='UTC'),
+                pd.Timestamp('2026-07-15',tz='UTC'),'JEV_LONG_HISTORY_TARGET_1R_PROTOCOL.md')
     if getattr(args,'long_history',False):
         if getattr(args,'extended_training',False):raise ValueError('choose one history mode')
         return (pd.Timestamp('2026-03-01',tz='UTC'),pd.Timestamp('2026-06-01',tz='UTC'),
@@ -90,6 +96,8 @@ def study_windows(args):
 
 def run(args):
     train_start,split_a,split_b,protocol=study_windows(args)
+    target_r=1. if getattr(args,'long_history_target_1r',False) else TARGET
+    candidate='59-target-1r' if target_r==1. else 59
     out=args.output_dir
     if out.exists() and any(out.iterdir()):raise ValueError('output directory must be empty')
     out.mkdir(parents=True,exist_ok=True)
@@ -97,7 +105,7 @@ def run(args):
         'user_data/strategy_lib/passive_scalp_paths.py','user_data/strategy_lib/cost_aware_signal_engine.py','user_data/strategy_lib/jev_provider.py',
         'scripts/run_jev_ma_research.py','user_data/strategy_lib/scalp_signal_engine.py','user_data/strategy_lib/profit_signal_engine.py']
     manifest={'status':'training','heldout_prices_opened':False,'portfolio_verified':False,'live_claim_allowed':False,
-        'model':'jev-1.13.0','candidate':59,'training_start':train_start.isoformat(),
+        'model':'jev-1.13.0','candidate':candidate,'target_r':target_r,'training_start':train_start.isoformat(),
         'development_a_start':split_a.isoformat(),'development_b_start':split_b.isoformat(),
         'protocol_sha256':fingerprint(ROOT/'docs/research'/protocol),
         'filter_protocol_sha256':fingerprint(ROOT/'docs/research/JEV_PASSIVE_FILTER_PROTOCOL.md'),
@@ -106,33 +114,33 @@ def run(args):
     frames,funding,hashes=load_dataset(args.data_dir,DEV_SYMBOLS,train_start)
     manifest['development_data_sha256']=hashes;write_json(out/'manifest.json',manifest)
     signals={pair:scan_cost_aware(frame,PARAMS) for pair,frame in frames.items()}
-    orders=make_orders(signals,OFFSET,TARGET)
+    orders=make_orders(signals,OFFSET,target_r)
     load_key_file(args.env_file);client=JevClient(model='jev-1.13.0',timeout=30)
     cache=ROOT/'user_data/backtest_results/jev-passive-cache'
     train=window(orders,train_start,split_a,HOLD)
-    predictions,usage=score(client,signals,funding,train,cache,out,'training')
+    predictions,usage=score(client,signals,funding,train,cache,out,'training',target_r)
     manifest['training_prediction_usage']=usage
-    write_json(out/'training-baseline.json',all_metrics(frames,funding,train,out,'training-baseline'))
+    write_json(out/'training-baseline.json',all_metrics(frames,funding,train,out,'training-baseline',target_r))
     trials=[]
     for threshold in THRESHOLDS:
         accepted=[o for o in train if predictions[event_key(o)]['probability']>=threshold]
-        metrics=all_metrics(frames,funding,accepted)
+        metrics=all_metrics(frames,funding,accepted,target_r=target_r)
         trials.append({'threshold':threshold,'accepted_orders':len(accepted),'metrics':metrics,'passed':qualifies(metrics,80)})
     write_json(out/'thresholds.json',{'trials':trials})
     chosen=choose_threshold(trials)
     if chosen is None:
         manifest.update(status='no_qualified_training_threshold',reason='No train-only Jev cutoff met sample, net win-rate, profitability and both stress gates')
         write_json(out/'manifest.json',manifest);print(manifest['status'],flush=True);return
-    frozen={'candidate':59,'parameters':asdict(PARAMS),'offset_atr':OFFSET,'target_r':TARGET,'hold_minutes':HOLD,
+    frozen={'candidate':candidate,'parameters':asdict(PARAMS),'offset_atr':OFFSET,'target_r':target_r,'hold_minutes':HOLD,
             'threshold':chosen['threshold'],'training':chosen,'frozen_at':pd.Timestamp.now(tz='UTC').isoformat()}
     write_json(out/'frozen-candidate.json',frozen)
     total=0
     for name,begin,end in [('a',split_a,split_b),('b',split_b,END)]:
         subset=window(orders,begin,end,HOLD)
-        answers,usage=score(client,signals,funding,subset,cache,out,name);manifest[f'{name}_prediction_usage']=usage
+        answers,usage=score(client,signals,funding,subset,cache,out,name,target_r);manifest[f'{name}_prediction_usage']=usage
         accepted=[o for o in subset if answers[event_key(o)]['probability']>=chosen['threshold']]
-        metrics=all_metrics(frames,funding,accepted,out,name)
-        baseline=all_metrics(frames,funding,subset,out,name+'-baseline')
+        metrics=all_metrics(frames,funding,accepted,out,name,target_r)
+        baseline=all_metrics(frames,funding,subset,out,name+'-baseline',target_r)
         write_json(out/f'{name}-metrics.json',{'baseline':baseline,'jev':metrics,'passed':qualifies(metrics,30)})
         total+=metrics['regular']['n']
         if not qualifies(metrics,30):
@@ -144,6 +152,7 @@ def run(args):
 def main():
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--long-history',action='store_true',help='Use frozen March/June/July long-history development windows')
+    parser.add_argument('--long-history-target-1r',action='store_true',help='Use the frozen long-history 1R-target amendment')
     parser.add_argument('--extended-training',action='store_true',help='Use the frozen July 1 training start with the expanded dataset')
     parser.add_argument('--data-dir',type=Path,default=ROOT/'user_data/data/okx_scalp')
     parser.add_argument('--output-dir',type=Path,default=ROOT/'user_data/backtest_results/jev-passive-filter-20260927')
