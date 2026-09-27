@@ -18,9 +18,6 @@ from scripts.run_jev_profit_research import (
     AUDIT_START,
     AUDIT_SYMBOLS,
     DEV_SYMBOLS,
-    END,
-    SPLIT_A,
-    SPLIT_B,
     load_dataset,
 )
 from scripts.run_okx_v2_research import write_json
@@ -37,6 +34,9 @@ from user_data.strategy_lib.v2_backtester import (
 )
 
 TRAIN_START = pd.Timestamp("2026-03-01", tz="UTC")
+SPLIT_A = pd.Timestamp("2026-06-01", tz="UTC")
+SPLIT_B = pd.Timestamp("2026-07-15", tz="UTC")
+END = pd.Timestamp("2026-09-26", tz="UTC")
 PROTOCOL = ROOT / "docs/research/JEV_CROSS_SECTIONAL_MOMENTUM_PROTOCOL.md"
 PARAMS = CrossSectionalMomentumParameters()
 TARGET_R = 1.0

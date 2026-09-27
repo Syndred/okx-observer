@@ -6,6 +6,12 @@ from user_data.strategy_lib.cross_sectional_momentum import (
     CrossSectionalMomentumParameters,
     generate_events,
 )
+from scripts.run_cross_sectional_momentum_research import (
+    END,
+    SPLIT_A,
+    SPLIT_B,
+    TRAIN_START,
+)
 
 
 def _frame(drift: float) -> pd.DataFrame:
@@ -68,3 +74,10 @@ def test_requires_at_least_two_symbols_and_hour_aligned_rebalance():
             {"A": _frame(.001), "B": _frame(-.001)},
             CrossSectionalMomentumParameters(rebalance_bars=5),
         )
+
+
+def test_research_windows_match_the_frozen_protocol():
+    assert TRAIN_START == pd.Timestamp("2026-03-01", tz="UTC")
+    assert SPLIT_A == pd.Timestamp("2026-06-01", tz="UTC")
+    assert SPLIT_B == pd.Timestamp("2026-07-15", tz="UTC")
+    assert END == pd.Timestamp("2026-09-26", tz="UTC")
