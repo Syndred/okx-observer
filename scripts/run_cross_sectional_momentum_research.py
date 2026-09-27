@@ -77,9 +77,10 @@ def _metrics(rows: pd.DataFrame) -> dict[str, object]:
 
 def _label(frames, funding, events, *, fee: float, slippage: float, missing_funding: float,
            out: Path | None = None, name: str = "",
-           hold_minutes: int = HOLD_MINUTES) -> dict[str, object]:
+           hold_minutes: int = HOLD_MINUTES,
+           target_r: float = TARGET_R) -> dict[str, object]:
     rows = evaluate_events(
-        frames, events, TARGET_R, hold_minutes,
+        frames, events, target_r, hold_minutes,
         fee_rate=fee,
         slippage_rate=slippage,
         funding_rate_per_8h=missing_funding,
@@ -91,7 +92,8 @@ def _label(frames, funding, events, *, fee: float, slippage: float, missing_fund
 
 
 def _label_scenarios(frames, funding, events, start, end, out, prefix,
-                     hold_minutes: int = HOLD_MINUTES):
+                     hold_minutes: int = HOLD_MINUTES,
+                     target_r: float = TARGET_R):
     regular_events = _period(events, start, end, hold_minutes=hold_minutes)
     stress_events = regular_events
     strict_events = _delay(_period(events, start, end, delay=DELAY,
@@ -99,16 +101,16 @@ def _label_scenarios(frames, funding, events, start, end, out, prefix,
     return {
         "regular": _label(frames, funding, regular_events, fee=.0005, slippage=.0005,
                           missing_funding=.0001, out=out, name=f"{prefix}-regular",
-                          hold_minutes=hold_minutes),
+                          hold_minutes=hold_minutes, target_r=target_r),
         "cost_stress": _label(frames, funding, stress_events, fee=.001, slippage=.001,
                               missing_funding=.0002, out=out, name=f"{prefix}-cost-stress",
-                              hold_minutes=hold_minutes),
+                              hold_minutes=hold_minutes, target_r=target_r),
         "strict_stress": _label(frames, funding, strict_events, fee=.001, slippage=.001,
                                 missing_funding=.0002, out=out, name=f"{prefix}-strict-stress",
-                                hold_minutes=hold_minutes),
+                                hold_minutes=hold_minutes, target_r=target_r),
         "delayed_regular": _label(frames, funding, strict_events, fee=.0005, slippage=.0005,
                                   missing_funding=.0001, out=out, name=f"{prefix}-delayed-regular",
-                                  hold_minutes=hold_minutes),
+                                  hold_minutes=hold_minutes, target_r=target_r),
     }
 
 
@@ -130,7 +132,8 @@ def _qualifies_labels(metrics: dict[str, object], minimum: int) -> bool:
 
 
 def _portfolio(frames, funding, events, start, end, *, fee, slippage,
-               missing_funding, delayed=False, hold_minutes: int = HOLD_MINUTES):
+               missing_funding, delayed=False, hold_minutes: int = HOLD_MINUTES,
+               target_r: float = TARGET_R):
     selected = _period(events, start, end, delay=DELAY if delayed else pd.Timedelta(0),
                        hold_minutes=hold_minutes)
     if delayed:
@@ -144,7 +147,7 @@ def _portfolio(frames, funding, events, start, end, *, fee, slippage,
         normal_trade_risk=.0075,
         max_portfolio_risk=.02,
         missing_funding_rate_per_8h=missing_funding,
-        take_profit_r=TARGET_R,
+        take_profit_r=target_r,
         max_hold_minutes=hold_minutes,
         candle_minutes=5,
     )
@@ -172,20 +175,21 @@ def _qualifies_portfolio(metrics: dict[str, object], minimum: int = 30) -> bool:
 
 
 def _portfolio_scenarios(frames, funding, events, start, end,
-                         hold_minutes: int = HOLD_MINUTES):
+                         hold_minutes: int = HOLD_MINUTES,
+                         target_r: float = TARGET_R):
     return {
         "regular": _portfolio(frames, funding, events, start, end, fee=.0005,
                               slippage=.0005, missing_funding=.0001,
-                              hold_minutes=hold_minutes),
+                              hold_minutes=hold_minutes, target_r=target_r),
         "cost_stress": _portfolio(frames, funding, events, start, end, fee=.001,
                                   slippage=.001, missing_funding=.0002,
-                                  hold_minutes=hold_minutes),
+                                  hold_minutes=hold_minutes, target_r=target_r),
         "strict_stress": _portfolio(frames, funding, events, start, end, fee=.001,
                                      slippage=.001, missing_funding=.0002, delayed=True,
-                                     hold_minutes=hold_minutes),
+                                     hold_minutes=hold_minutes, target_r=target_r),
         "delayed_regular": _portfolio(frames, funding, events, start, end, fee=.0005,
                                       slippage=.0005, missing_funding=.0001, delayed=True,
-                                      hold_minutes=hold_minutes),
+                                      hold_minutes=hold_minutes, target_r=target_r),
     }
 
 
