@@ -34,7 +34,8 @@
 - BTC一小时方向过滤横截面动量训练失败：1,818笔，净胜率33.44%、PF0.341、平均净收益-0.1945%；双倍成本/严格压力PF0.127/0.104。未计算开发A/B或组合，预留价格未读。结果在 `user_data/backtest_results/cross-sectional-btc-regime-20260927-train-only/`。
 - EMA20/60/120强趋势回踩确认训练失败：1,009笔，净胜率34.39%、PF0.542、均值-0.1987%；双倍成本/严格压力PF0.305/0.269。开发A/B与预留未评分。结果在 `user_data/backtest_results/trend-pullback-20260927-train-only/`；协议 `docs/research/JEV_TREND_PULLBACK_PROTOCOL.md`，实现提交 `5a422c1`。
 - 趋势回踩归因：237笔到1.5R，452笔止损，320笔超时；各组平均净收益+0.854%、-0.799%、-0.130%。下一候选已冻结为确认K线quote volume至少达到前20根中位数的1.5倍，其他信号、退出与成本固定；协议 `docs/research/JEV_VOLUME_TREND_PULLBACK_PROTOCOL.md`，尚未评分。
-- 短线盈利目标仍进行中。每5分钟监督任务保持启用；从这里继续完成成交额过滤实现和训练验证，失败后保留结果并继续下一轮。
+- 成交额确认回踩训练失败：555笔，净胜率35.68%、PF0.628、均值-0.1582%；双倍成本/严格压力PF0.372/0.321。结果在 `user_data/backtest_results/trend-pullback-volume-20260927-train-only/`，预留数据未读。
+- 下一候选已冻结为2小时区间边界假突破回归：前24根高低点、0.20 ATR扫过、强反向K线收回、1.5R止盈、60分钟上限；协议 `docs/research/JEV_RANGE_LIQUIDITY_SWEEP_PROTOCOL.md`，尚未评分。短线盈利目标仍进行中，每5分钟监督任务保持启用，失败后继续下一轮。
 
 ## 台式机迁移交接（2026-09-27）
 
