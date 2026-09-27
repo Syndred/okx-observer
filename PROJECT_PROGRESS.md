@@ -16,10 +16,9 @@
 - 第二轮1R目标训练同样为 `no_qualified_training_threshold`：233条真实Jev调用、缓存0；基线166笔成交，胜率36.75%、PF0.490、均值-0.287%。开发A/B仍未评估。
 - 第二轮亏损归因：32笔止盈、43笔初始止损、91笔60分钟到期；到期组胜率31.87%、PF0.288、均值-0.242%。下一轮假设是在1R目标下将持仓上限从60分钟改为30分钟；协议冻结前不启动。详见 `reports/jev-passive-long-desktop-20260927-target1r/PROGRESS_REPORT.md`。
 - 第三轮1R/30分钟训练也为 `no_qualified_training_threshold`：233条真实Jev调用、缓存0；基线166笔成交，净胜率36.14%、PF0.458、均值-0.232%。133笔（80.1%）到30分钟退出，PF0.337、均值-0.222%；开发A/B仍未评估。
-- 第三轮报告见 `reports/jev-passive-long-desktop-20260927-target1r-hold30m/PROGRESS_REPORT.md`。已推送1R/30分钟版本 `4970aff`，当时88项定向测试通过。下一轮改用已有5分钟EMA20/60突破回踩信号族（15/60分钟趋势同向并等待回踩确认），保持1R/30分钟及所有门槛；协议和代码先冻结。
-- 回踩信号族入口与独立协议已完成；六个定向测试文件共112项通过（281条既有NumPy `Timedelta`弃用警告）。第三轮回踩评分尚未启动，待提交推送后执行。
-- 第四轮突破回踩训练只有2个挂单、1笔成交，真实Jev调用2次；样本门槛不可能达标，状态仍为 `no_qualified_training_threshold`。详见 `reports/jev-passive-long-desktop-20260927-retest-target1r-hold30m/PROGRESS_REPORT.md`。
-- 下一轮将信号族改为5分钟EMA20/60趋势回调，并保持1R/30分钟及其他门槛；理由是上一信号族在固定训练期只产生2个订单。新协议与实现推送前不启动。
+- 第三轮报告见 `reports/jev-passive-long-desktop-20260927-target1r-hold30m/PROGRESS_REPORT.md`。已推送1R/30分钟版本 `4970aff`，当时88项定向测试通过；A/B仍未评估。
+- 第四轮突破回踩信号族训练仅2个挂单、1笔成交，真实Jev调用2次，样本门槛不可能达标；状态为 `no_qualified_training_threshold`。对应版本提交前112项定向测试通过。详见 `reports/jev-passive-long-desktop-20260927-retest-target1r-hold30m/PROGRESS_REPORT.md`。
+- 下一轮已切到5分钟EMA20/60趋势回调信号族，保留1R/30分钟及其他门槛。新协议与入口已完成，六个定向测试文件共116项通过（292条NumPy `Timedelta`弃用警告）；先提交推送，再评分。
 
 ## 台式机迁移交接（2026-09-27）
 

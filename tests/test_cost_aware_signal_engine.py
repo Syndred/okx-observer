@@ -72,6 +72,20 @@ def test_volatility_and_directional_body_gates_include_equal_boundary():
             assert scan_cost_aware(pd.DataFrame(), p).side.eq('').all()
 
 
+def test_trend_pullback_family_uses_existing_profit_engine_and_atr_stop_floor():
+    source = pd.DataFrame(dict(date=[pd.Timestamp('2026-01-01',tz='UTC')],
+                               open=[99.], high=[101.], low=[98.], close=[100.],
+                               volume=[10.], quote_volume=[1000.], atr14=[2.],
+                               initial_stop_price=[98.], side=['long']))
+    with patch('user_data.strategy_lib.cost_aware_signal_engine.scan_profit', return_value=source.copy()) as scan:
+        out = scan_cost_aware(pd.DataFrame(), CostAwareParameters(family='trend_pullback',stop_atr=3.))
+    params=scan.call_args.args[1]
+    assert params.family == 'trend_pullback'
+    assert params.fast == 20 and params.slow == 60 and params.cooldown_bars == 12
+    assert out.side.tolist() == ['long']
+    assert out.initial_stop_price.iloc[0] == 94.
+
+
 @pytest.mark.parametrize('kwargs', [dict(family='unknown'), dict(stop_atr=0), dict(stop_atr=-1),
                                     dict(stop_atr=np.inf), dict(stop_atr=np.nan), dict(stop_atr='x'),
                                     dict(min_atr_pct=-1), dict(min_atr_pct=np.nan),
