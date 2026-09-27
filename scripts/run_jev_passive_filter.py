@@ -22,10 +22,12 @@ OFFSET,TARGET,HOLD=.25,2.,60
 THRESHOLDS=(.15,.25,.35,.45,.55,.65)
 
 
-def state_for_order(order,signals,funding,target_r=TARGET,hold_minutes=HOLD):
-    state=model_state(order,signals,PARAMS,target_r,hold_minutes,funding)
+def state_for_order(order,signals,funding,target_r=TARGET,hold_minutes=HOLD,params=PARAMS):
+    state=model_state(order,signals,params,target_r,hold_minutes,funding)
     ref=float(signals.loc[signals.decision_at<=order.date].iloc[-1].close)
-    if target_r==1. and hold_minutes==30:
+    if params.family=='retest':
+        state['hypothesis']='passive-limit-net-profit-conditional-on-fill-retest-target-1r-hold-30m-v1'
+    elif target_r==1. and hold_minutes==30:
         state['hypothesis']='passive-limit-net-profit-conditional-on-fill-target-1r-hold-30m-v1'
     elif target_r==1.:
         state['hypothesis']='passive-limit-net-profit-conditional-on-fill-target-1r-v1'
@@ -48,10 +50,10 @@ def state_for_order(order,signals,funding,target_r=TARGET,hold_minutes=HOLD):
     return state
 
 
-def score(client,signals,funding,orders,cache,out,name,target_r=TARGET,hold_minutes=HOLD):
+def score(client,signals,funding,orders,cache,out,name,target_r=TARGET,hold_minutes=HOLD,params=PARAMS):
     answers={};hits=0
     def one(order):
-        value,cached=predict(client,state_for_order(order,signals[order.pair],funding[order.pair],target_r,hold_minutes),cache)
+        value,cached=predict(client,state_for_order(order,signals[order.pair],funding[order.pair],target_r,hold_minutes,params),cache)
         return event_key(order),value,cached
     with ThreadPoolExecutor(max_workers=4) as pool:
         for i,(key,value,cached) in enumerate(pool.map(one,orders)):
@@ -85,6 +87,13 @@ def choose_threshold(records):
 
 
 def study_windows(args):
+    if getattr(args,'long_history_retest_1r_hold_30m',False):
+        if (getattr(args,'extended_training',False) or getattr(args,'long_history',False)
+                or getattr(args,'long_history_target_1r',False)
+                or getattr(args,'long_history_target_1r_hold_30m',False)):
+            raise ValueError('choose one history mode')
+        return (pd.Timestamp('2026-03-01',tz='UTC'),pd.Timestamp('2026-06-01',tz='UTC'),
+                pd.Timestamp('2026-07-15',tz='UTC'),'JEV_LONG_HISTORY_RETEST_1R_HOLD_30M_PROTOCOL.md')
     if getattr(args,'long_history_target_1r_hold_30m',False):
         if (getattr(args,'extended_training',False) or getattr(args,'long_history',False)
                 or getattr(args,'long_history_target_1r',False)):
@@ -106,10 +115,14 @@ def study_windows(args):
 
 def run(args):
     train_start,split_a,split_b,protocol=study_windows(args)
-    target_1r=getattr(args,'long_history_target_1r',False) or getattr(args,'long_history_target_1r_hold_30m',False)
+    retest_mode=getattr(args,'long_history_retest_1r_hold_30m',False)
+    target_1r=(getattr(args,'long_history_target_1r',False)
+               or getattr(args,'long_history_target_1r_hold_30m',False) or retest_mode)
     target_r=1. if target_1r else TARGET
-    hold_minutes=30 if getattr(args,'long_history_target_1r_hold_30m',False) else HOLD
-    candidate=('59-target-1r-hold-30m' if hold_minutes==30 and target_1r
+    hold_minutes=30 if getattr(args,'long_history_target_1r_hold_30m',False) or retest_mode else HOLD
+    params=CostAwareParameters('retest',3.,.004,0.) if retest_mode else PARAMS
+    candidate=('59-retest-target-1r-hold-30m' if retest_mode
+               else '59-target-1r-hold-30m' if hold_minutes==30 and target_1r
                else '59-target-1r' if target_r==1. else 59)
     out=args.output_dir
     if out.exists() and any(out.iterdir()):raise ValueError('output directory must be empty')
@@ -119,6 +132,7 @@ def run(args):
         'scripts/run_jev_ma_research.py','user_data/strategy_lib/scalp_signal_engine.py','user_data/strategy_lib/profit_signal_engine.py']
     manifest={'status':'training','heldout_prices_opened':False,'portfolio_verified':False,'live_claim_allowed':False,
         'model':'jev-1.13.0','candidate':candidate,'target_r':target_r,'hold_minutes':hold_minutes,
+        'strategy_parameters':asdict(params),
         'training_start':train_start.isoformat(),
         'development_a_start':split_a.isoformat(),'development_b_start':split_b.isoformat(),
         'protocol_sha256':fingerprint(ROOT/'docs/research'/protocol),
@@ -127,12 +141,12 @@ def run(args):
     write_json(out/'manifest.json',manifest)
     frames,funding,hashes=load_dataset(args.data_dir,DEV_SYMBOLS,train_start)
     manifest['development_data_sha256']=hashes;write_json(out/'manifest.json',manifest)
-    signals={pair:scan_cost_aware(frame,PARAMS) for pair,frame in frames.items()}
+    signals={pair:scan_cost_aware(frame,params) for pair,frame in frames.items()}
     orders=make_orders(signals,OFFSET,target_r)
     load_key_file(args.env_file);client=JevClient(model='jev-1.13.0',timeout=30)
     cache=ROOT/'user_data/backtest_results/jev-passive-cache'
     train=window(orders,train_start,split_a,hold_minutes)
-    predictions,usage=score(client,signals,funding,train,cache,out,'training',target_r,hold_minutes)
+    predictions,usage=score(client,signals,funding,train,cache,out,'training',target_r,hold_minutes,params)
     manifest['training_prediction_usage']=usage
     write_json(out/'training-baseline.json',all_metrics(frames,funding,train,out,'training-baseline',target_r,hold_minutes))
     trials=[]
@@ -145,13 +159,13 @@ def run(args):
     if chosen is None:
         manifest.update(status='no_qualified_training_threshold',reason='No train-only Jev cutoff met sample, net win-rate, profitability and both stress gates')
         write_json(out/'manifest.json',manifest);print(manifest['status'],flush=True);return
-    frozen={'candidate':candidate,'parameters':asdict(PARAMS),'offset_atr':OFFSET,'target_r':target_r,'hold_minutes':hold_minutes,
+    frozen={'candidate':candidate,'parameters':asdict(params),'offset_atr':OFFSET,'target_r':target_r,'hold_minutes':hold_minutes,
             'threshold':chosen['threshold'],'training':chosen,'frozen_at':pd.Timestamp.now(tz='UTC').isoformat()}
     write_json(out/'frozen-candidate.json',frozen)
     total=0
     for name,begin,end in [('a',split_a,split_b),('b',split_b,END)]:
         subset=window(orders,begin,end,hold_minutes)
-        answers,usage=score(client,signals,funding,subset,cache,out,name,target_r,hold_minutes);manifest[f'{name}_prediction_usage']=usage
+        answers,usage=score(client,signals,funding,subset,cache,out,name,target_r,hold_minutes,params);manifest[f'{name}_prediction_usage']=usage
         accepted=[o for o in subset if answers[event_key(o)]['probability']>=chosen['threshold']]
         metrics=all_metrics(frames,funding,accepted,out,name,target_r,hold_minutes)
         baseline=all_metrics(frames,funding,subset,out,name+'-baseline',target_r,hold_minutes)
@@ -168,6 +182,7 @@ def main():
     parser.add_argument('--long-history',action='store_true',help='Use frozen March/June/July long-history development windows')
     parser.add_argument('--long-history-target-1r',action='store_true',help='Use the frozen long-history 1R-target amendment')
     parser.add_argument('--long-history-target-1r-hold-30m',action='store_true',help='Use the frozen 1R-target, 30-minute-hold amendment')
+    parser.add_argument('--long-history-retest-1r-hold-30m',action='store_true',help='Use the frozen retest, 1R-target, 30-minute-hold amendment')
     parser.add_argument('--extended-training',action='store_true',help='Use the frozen July 1 training start with the expanded dataset')
     parser.add_argument('--data-dir',type=Path,default=ROOT/'user_data/data/okx_scalp')
     parser.add_argument('--output-dir',type=Path,default=ROOT/'user_data/backtest_results/jev-passive-filter-20260927')

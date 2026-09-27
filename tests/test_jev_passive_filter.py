@@ -91,6 +91,13 @@ def test_target_1r_30m_state_records_the_altered_hold():
     assert state['execution_rules']['maximum_minutes_from_order_activation'] == 30
 
 
+def test_retest_state_names_the_frozen_signal_hypothesis():
+    order, signals, funding = inputs()
+    params = research.CostAwareParameters('retest',3.,.004,0.)
+    state = research.state_for_order(order, signals, funding, target_r=1., hold_minutes=30, params=params)
+    assert state['hypothesis'] == 'passive-limit-net-profit-conditional-on-fill-retest-target-1r-hold-30m-v1'
+
+
 def metrics():
     return {
         'regular': {'n': 80, 'pf': 1.2, 'mean_net_return': .001, 'win_rate': .5},
@@ -137,10 +144,10 @@ def test_threshold_selection_has_no_fallback_and_uses_only_passed_records():
     assert research.choose_threshold([failed, first, second]) is second
 
 
-@pytest.mark.parametrize("mode", ["base", "extended", "long", "long_target_1r", "long_target_1r_hold_30m"])
+@pytest.mark.parametrize("mode", ["base", "extended", "long", "long_target_1r", "long_target_1r_hold_30m", "long_retest_1r_hold_30m"])
 def test_failed_training_scores_all_orders_before_fill_filter_and_stops(monkeypatch, tmp_path, mode):
-    train_start={"base":research.START,"extended":pd.Timestamp("2026-07-01",tz="UTC"),"long":pd.Timestamp("2026-03-01",tz="UTC"),"long_target_1r":pd.Timestamp("2026-03-01",tz="UTC"),"long_target_1r_hold_30m":pd.Timestamp("2026-03-01",tz="UTC")}[mode]
-    is_long=mode in ("long","long_target_1r","long_target_1r_hold_30m")
+    train_start={"base":research.START,"extended":pd.Timestamp("2026-07-01",tz="UTC"),"long":pd.Timestamp("2026-03-01",tz="UTC"),"long_target_1r":pd.Timestamp("2026-03-01",tz="UTC"),"long_target_1r_hold_30m":pd.Timestamp("2026-03-01",tz="UTC"),"long_retest_1r_hold_30m":pd.Timestamp("2026-03-01",tz="UTC")}[mode]
+    is_long=mode in ("long","long_target_1r","long_target_1r_hold_30m","long_retest_1r_hold_30m")
     split_a=pd.Timestamp("2026-06-01",tz="UTC") if is_long else research.SPLIT_A
     split_b=pd.Timestamp("2026-07-15",tz="UTC") if is_long else research.SPLIT_B
     pair = 'SYNTHETIC'
@@ -150,7 +157,11 @@ def test_failed_training_scores_all_orders_before_fill_filter_and_stops(monkeypa
     dataset = Mock(return_value=({pair: pd.DataFrame()}, {}, {'synthetic': 'hash'}))
     monkeypatch.setattr(research, 'load_dataset', dataset)
     monkeypatch.setattr(research, 'fingerprint', lambda _: 'synthetic-hash')
-    monkeypatch.setattr(research, 'scan_cost_aware', lambda *_: pd.DataFrame())
+    scanned_params=[]
+    def mock_scan(frame,params):
+        scanned_params.append(params)
+        return pd.DataFrame()
+    monkeypatch.setattr(research, 'scan_cost_aware', mock_scan)
     made_targets = []
     def mock_make_orders(signals, offset, target_r):
         made_targets.append(target_r)
@@ -159,8 +170,8 @@ def test_failed_training_scores_all_orders_before_fill_filter_and_stops(monkeypa
     monkeypatch.setattr(research, 'load_key_file', Mock())
     monkeypatch.setattr(research, 'JevClient', Mock())
     scored = []
-    def mock_score(client, signals, funding, subset, cache, out, name, target_r=research.TARGET, hold_minutes=research.HOLD):
-        scored.append((name, list(subset), target_r, hold_minutes))
+    def mock_score(client, signals, funding, subset, cache, out, name, target_r=research.TARGET, hold_minutes=research.HOLD, params=research.PARAMS):
+        scored.append((name, list(subset), target_r, hold_minutes, params.family))
         return ({research.event_key(o): {'probability': .4} for o in subset},
                 {'orders': len(subset), 'cached': 0, 'api_calls': len(subset)})
     monkeypatch.setattr(research, 'score', mock_score)
@@ -174,12 +185,16 @@ def test_failed_training_scores_all_orders_before_fill_filter_and_stops(monkeypa
     args = SimpleNamespace(output_dir=tmp_path/'out', data_dir=tmp_path/'development', env_file=None,
         extended_training=mode=="extended", long_history=mode=="long",
         long_history_target_1r=mode=="long_target_1r",
-        long_history_target_1r_hold_30m=mode=="long_target_1r_hold_30m")
+        long_history_target_1r_hold_30m=mode=="long_target_1r_hold_30m",
+        long_history_retest_1r_hold_30m=mode=="long_retest_1r_hold_30m")
     research.run(args)
-    expected_target = 1. if mode in ("long_target_1r","long_target_1r_hold_30m") else research.TARGET
-    expected_hold = 30 if mode=="long_target_1r_hold_30m" else research.HOLD
+    expected_target = 1. if mode in ("long_target_1r","long_target_1r_hold_30m","long_retest_1r_hold_30m") else research.TARGET
+    expected_hold = 30 if mode in ("long_target_1r_hold_30m","long_retest_1r_hold_30m") else research.HOLD
+    expected_family = 'retest' if mode=="long_retest_1r_hold_30m" else 'breakout'
     assert made_targets == [expected_target]
-    assert scored == [('training', orders[:3], expected_target, expected_hold)]
+    assert scored == [('training', orders[:3], expected_target, expected_hold, expected_family)]
+    assert len(scanned_params) == 1
+    assert scanned_params[0].family == expected_family
     dataset.assert_called_once_with(args.data_dir, research.DEV_SYMBOLS, train_start)
     manifest = json.loads((args.output_dir/'manifest.json').read_text())
     assert manifest['status'] == 'no_qualified_training_threshold'
@@ -188,8 +203,11 @@ def test_failed_training_scores_all_orders_before_fill_filter_and_stops(monkeypa
     assert manifest['development_b_start']==split_b.isoformat()
     assert manifest['target_r']==expected_target
     assert manifest['hold_minutes']==expected_hold
-    assert manifest['candidate']==('59-target-1r-hold-30m' if mode=="long_target_1r_hold_30m"
-                                   else '59-target-1r' if mode=="long_target_1r" else 59)
+    expected_candidate=('59-retest-target-1r-hold-30m' if mode=="long_retest_1r_hold_30m"
+                        else '59-target-1r-hold-30m' if mode=="long_target_1r_hold_30m"
+                        else '59-target-1r' if mode=="long_target_1r" else 59)
+    assert manifest['candidate']==expected_candidate
+    assert manifest['strategy_parameters']['family']==expected_family
     assert manifest['heldout_prices_opened'] is False
     assert manifest['portfolio_verified'] is False
     assert manifest['live_claim_allowed'] is False
@@ -238,6 +256,9 @@ def test_history_modes_cannot_be_combined():
     with pytest.raises(ValueError,match="one history mode"):
         research.study_windows(SimpleNamespace(extended_training=False,long_history_target_1r=True,
                                                long_history_target_1r_hold_30m=True))
+    with pytest.raises(ValueError,match="one history mode"):
+        research.study_windows(SimpleNamespace(extended_training=False,long_history_target_1r_hold_30m=True,
+                                               long_history_retest_1r_hold_30m=True))
 
 
 def test_target_1r_amendment_keeps_frozen_long_history_windows():
@@ -257,3 +278,13 @@ def test_target_1r_30m_amendment_keeps_frozen_long_history_windows():
     assert split_a == pd.Timestamp('2026-06-01', tz='UTC')
     assert split_b == pd.Timestamp('2026-07-15', tz='UTC')
     assert protocol == 'JEV_LONG_HISTORY_TARGET_1R_HOLD_30M_PROTOCOL.md'
+
+
+def test_retest_amendment_keeps_frozen_long_history_windows():
+    start, split_a, split_b, protocol = research.study_windows(SimpleNamespace(
+        extended_training=False, long_history=False, long_history_target_1r=False,
+        long_history_target_1r_hold_30m=False, long_history_retest_1r_hold_30m=True))
+    assert start == pd.Timestamp('2026-03-01', tz='UTC')
+    assert split_a == pd.Timestamp('2026-06-01', tz='UTC')
+    assert split_b == pd.Timestamp('2026-07-15', tz='UTC')
+    assert protocol == 'JEV_LONG_HISTORY_RETEST_1R_HOLD_30M_PROTOCOL.md'
