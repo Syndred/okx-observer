@@ -44,10 +44,12 @@ DELAY = pd.Timedelta(300_000_000_000, unit="ns")
 
 
 def _period(events: list[EntryEvent], start: pd.Timestamp, end: pd.Timestamp,
-            *, delay: pd.Timedelta = pd.Timedelta(0)) -> list[EntryEvent]:
+            *, delay: pd.Timedelta = pd.Timedelta(0),
+            hold_minutes: int = HOLD_MINUTES) -> list[EntryEvent]:
     """Keep signals and their complete exit window within the requested split."""
+    hold = pd.Timedelta(hold_minutes * 60 * 1_000_000_000, unit="ns")
     return [event for event in events
-            if start <= event.date and event.date + delay + HOLD <= end]
+            if start <= event.date and event.date + delay + hold <= end]
 
 
 def _delay(events: list[EntryEvent]) -> list[EntryEvent]:
@@ -74,9 +76,10 @@ def _metrics(rows: pd.DataFrame) -> dict[str, object]:
 
 
 def _label(frames, funding, events, *, fee: float, slippage: float, missing_funding: float,
-           out: Path | None = None, name: str = "") -> dict[str, object]:
+           out: Path | None = None, name: str = "",
+           hold_minutes: int = HOLD_MINUTES) -> dict[str, object]:
     rows = evaluate_events(
-        frames, events, TARGET_R, HOLD_MINUTES,
+        frames, events, TARGET_R, hold_minutes,
         fee_rate=fee,
         slippage_rate=slippage,
         funding_rate_per_8h=missing_funding,
@@ -87,19 +90,25 @@ def _label(frames, funding, events, *, fee: float, slippage: float, missing_fund
     return _metrics(rows)
 
 
-def _label_scenarios(frames, funding, events, start, end, out, prefix):
-    regular_events = _period(events, start, end)
+def _label_scenarios(frames, funding, events, start, end, out, prefix,
+                     hold_minutes: int = HOLD_MINUTES):
+    regular_events = _period(events, start, end, hold_minutes=hold_minutes)
     stress_events = regular_events
-    strict_events = _delay(_period(events, start, end, delay=DELAY))
+    strict_events = _delay(_period(events, start, end, delay=DELAY,
+                                   hold_minutes=hold_minutes))
     return {
         "regular": _label(frames, funding, regular_events, fee=.0005, slippage=.0005,
-                          missing_funding=.0001, out=out, name=f"{prefix}-regular"),
+                          missing_funding=.0001, out=out, name=f"{prefix}-regular",
+                          hold_minutes=hold_minutes),
         "cost_stress": _label(frames, funding, stress_events, fee=.001, slippage=.001,
-                              missing_funding=.0002, out=out, name=f"{prefix}-cost-stress"),
+                              missing_funding=.0002, out=out, name=f"{prefix}-cost-stress",
+                              hold_minutes=hold_minutes),
         "strict_stress": _label(frames, funding, strict_events, fee=.001, slippage=.001,
-                                missing_funding=.0002, out=out, name=f"{prefix}-strict-stress"),
+                                missing_funding=.0002, out=out, name=f"{prefix}-strict-stress",
+                                hold_minutes=hold_minutes),
         "delayed_regular": _label(frames, funding, strict_events, fee=.0005, slippage=.0005,
-                                  missing_funding=.0001, out=out, name=f"{prefix}-delayed-regular"),
+                                  missing_funding=.0001, out=out, name=f"{prefix}-delayed-regular",
+                                  hold_minutes=hold_minutes),
     }
 
 
@@ -121,8 +130,9 @@ def _qualifies_labels(metrics: dict[str, object], minimum: int) -> bool:
 
 
 def _portfolio(frames, funding, events, start, end, *, fee, slippage,
-               missing_funding, delayed=False):
-    selected = _period(events, start, end, delay=DELAY if delayed else pd.Timedelta(0))
+               missing_funding, delayed=False, hold_minutes: int = HOLD_MINUTES):
+    selected = _period(events, start, end, delay=DELAY if delayed else pd.Timedelta(0),
+                       hold_minutes=hold_minutes)
     if delayed:
         selected = _delay(selected)
     options = BacktestOptions(
@@ -135,7 +145,7 @@ def _portfolio(frames, funding, events, start, end, *, fee, slippage,
         max_portfolio_risk=.02,
         missing_funding_rate_per_8h=missing_funding,
         take_profit_r=TARGET_R,
-        max_hold_minutes=HOLD_MINUTES,
+        max_hold_minutes=hold_minutes,
         candle_minutes=5,
     )
     result = simulate_portfolio(
@@ -161,16 +171,21 @@ def _qualifies_portfolio(metrics: dict[str, object], minimum: int = 30) -> bool:
     return True
 
 
-def _portfolio_scenarios(frames, funding, events, start, end):
+def _portfolio_scenarios(frames, funding, events, start, end,
+                         hold_minutes: int = HOLD_MINUTES):
     return {
         "regular": _portfolio(frames, funding, events, start, end, fee=.0005,
-                              slippage=.0005, missing_funding=.0001),
+                              slippage=.0005, missing_funding=.0001,
+                              hold_minutes=hold_minutes),
         "cost_stress": _portfolio(frames, funding, events, start, end, fee=.001,
-                                  slippage=.001, missing_funding=.0002),
+                                  slippage=.001, missing_funding=.0002,
+                                  hold_minutes=hold_minutes),
         "strict_stress": _portfolio(frames, funding, events, start, end, fee=.001,
-                                     slippage=.001, missing_funding=.0002, delayed=True),
+                                     slippage=.001, missing_funding=.0002, delayed=True,
+                                     hold_minutes=hold_minutes),
         "delayed_regular": _portfolio(frames, funding, events, start, end, fee=.0005,
-                                      slippage=.0005, missing_funding=.0001, delayed=True),
+                                      slippage=.0005, missing_funding=.0001, delayed=True,
+                                      hold_minutes=hold_minutes),
     }
 
 
