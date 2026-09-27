@@ -40,7 +40,8 @@
 - 12小时假突破、4小时持仓训练失败：395笔，净胜率36.46%、PF0.593、均值-0.2032%；双倍成本/严格压力PF0.367/0.310，预留未读。结果在 `user_data/backtest_results/liquidity-sweep-12h-hold240m-20260927-train-only/`。
 - EMA趋势内RSI(2)回归训练失败：6,078笔，净胜率31.67%、PF0.417、均值-0.2077%；双倍成本/严格压力PF0.203/0.189。开发A/B及预留未读，结果 `user_data/backtest_results/rsi2-trend-reversion-20260927-train-only/`。
 - RSI(2)逐时逻辑回归过滤已完成训练外打分：两折共4,011笔验证事件，固定0.50阈值选出0笔（最高预测概率0.4963），训练失败；未评分开发A/B和预留，manifest为 `heldout_prices_opened=false`。结果 `user_data/backtest_results/rsi2-walk-forward-filter-20260927-train-only/`。
-- 下一候选已冻结为24小时区间突破延续：0.10 ATR越过前288根K线高/低、EMA顺势和成交额确认，1.25 ATR止损、2R目标、240分钟上限；协议 `docs/research/JEV_24H_RANGE_BREAKOUT_CONTINUATION_PROTOCOL.md`。短线盈利目标仍进行中，每5分钟监督任务保持启用，失败后继续下一轮。
+- 24小时区间突破延续训练失败：1,394笔，净胜率30.49%、PF0.547、均值-0.1922%；双倍成本/严格压力PF0.315/0.272。开发A/B及预留未读，结果 `user_data/backtest_results/range-breakout-24h-20260927-train-only/`。
+- 下一候选已冻结为历史资金费极端值逆向：此前90次结算费率的10%/90%分位，低费率做多、高费率做空，结算后下一根5分钟K线入场，1.5 ATR止损、1.5R、240分钟上限；协议 `docs/research/JEV_FUNDING_EXTREME_CONTRARIAN_PROTOCOL.md`。每5分钟监督任务保持启用，盈利目标仍未达。
 
 ## 台式机迁移交接（2026-09-27）
 
