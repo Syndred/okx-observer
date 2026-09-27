@@ -38,12 +38,11 @@ from user_data.strategy_lib.liquidity_sweep import (
 TARGET_R = 1.5
 HOLD_MINUTES = 60
 PARAMS = LiquiditySweepParameters()
-PROTOCOL = ROOT / "docs/research/JEV_RANGE_LIQUIDITY_SWEEP_PROTOCOL.md"
 
 
-def _all_events(frames):
+def _all_events(frames, params=PARAMS):
     events = [event for pair, frame in frames.items()
-              for event in generate_events(pair, frame, PARAMS)]
+              for event in generate_events(pair, frame, params)]
     return sorted(events, key=lambda event: (event.date, event.pair, event.side))
 
 
@@ -52,6 +51,11 @@ def run(args: argparse.Namespace) -> None:
     if out.exists() and any(out.iterdir()):
         raise ValueError("output directory must be empty")
     out.mkdir(parents=True, exist_ok=True)
+    params = LiquiditySweepParameters(lookback_bars=args.lookback_bars)
+    protocol = ROOT / "docs/research" / (
+        "JEV_12H_LIQUIDITY_SWEEP_PROTOCOL.md" if args.lookback_bars == 144
+        else "JEV_RANGE_LIQUIDITY_SWEEP_PROTOCOL.md"
+    )
     code_paths = [
         Path(__file__).resolve(),
         ROOT / "scripts/run_cross_sectional_momentum_research.py",
@@ -63,8 +67,10 @@ def run(args: argparse.Namespace) -> None:
     ]
     manifest: dict[str, object] = {
         "status": "training",
-        "candidate": "2-hour range boundary sweep and reclaim",
-        "parameters": asdict(PARAMS),
+        "candidate": ("12-hour range boundary sweep and reclaim"
+                      if args.lookback_bars == 144 else
+                      "2-hour range boundary sweep and reclaim"),
+        "parameters": asdict(params),
         "target_r": TARGET_R,
         "hold_minutes": HOLD_MINUTES,
         "development_symbols": DEV_SYMBOLS,
@@ -74,14 +80,14 @@ def run(args: argparse.Namespace) -> None:
         "development_b": [SPLIT_B.isoformat(), END.isoformat()],
         "heldout_prices_opened": False,
         "live_claim_allowed": False,
-        "protocol_sha256": fingerprint(PROTOCOL),
+        "protocol_sha256": fingerprint(protocol),
         "code_sha256": {str(path.relative_to(ROOT)): fingerprint(path) for path in code_paths},
     }
     write_json(out / "manifest.json", manifest)
     frames, funding, hashes = load_dataset(args.data_dir, DEV_SYMBOLS, TRAIN_START)
     manifest["development_data_sha256"] = hashes
     write_json(out / "manifest.json", manifest)
-    events = _all_events(frames)
+    events = _all_events(frames, params)
     _events_csv(events, out / "candidate-events.csv")
 
     train = _label_scenarios(
@@ -162,7 +168,7 @@ def run(args: argparse.Namespace) -> None:
     manifest["heldout_prices_opened"] = True
     manifest["audit_data_sha256"] = audit_hashes
     write_json(out / "manifest.json", manifest)
-    audit_events = _all_events(audit_frames)
+    audit_events = _all_events(audit_frames, params)
     audit = _label_scenarios(
         audit_frames, audit_funding, audit_events, AUDIT_START, END, out, "reserve",
         hold_minutes=HOLD_MINUTES, target_r=TARGET_R,
@@ -205,6 +211,8 @@ def main() -> None:
                         default=ROOT / "user_data/data/okx_scalp_long")
     parser.add_argument("--holdout-dir", type=Path,
                         default=ROOT / "user_data/data/okx_profit_holdout")
+    parser.add_argument("--lookback-bars", type=int, choices=(24, 144), default=24,
+                        help="Range length in completed 5-minute bars: 24 (2h) or 144 (12h)")
     parser.add_argument("--output-dir", type=Path,
                         default=ROOT / "user_data/backtest_results/range-liquidity-sweep-20260927-train-only")
     args = parser.parse_args()

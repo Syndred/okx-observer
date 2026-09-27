@@ -2,15 +2,17 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from user_data.strategy_lib.liquidity_sweep import generate_events
+from user_data.strategy_lib.liquidity_sweep import (
+    LiquiditySweepParameters,
+    generate_events,
+)
 
 
-def _frame(side="long", count=100):
+def _frame(side="long", count=100, signal_at=70):
     open_ = np.full(count, 100.0)
     high = np.full(count, 100.5)
     low = np.full(count, 99.5)
     close = np.full(count, 100.0)
-    signal_at = 70
     if side == "long":
         open_[signal_at] = 99.2
         high[signal_at] = 100.15
@@ -65,3 +67,15 @@ def test_rejects_duplicate_dates():
 
     with pytest.raises(ValueError, match="unique"):
         generate_events("TEST", frame)
+
+
+def test_twelve_hour_mode_uses_older_range_boundary():
+    frame = _frame(count=220, signal_at=180)
+    frame.loc[40, "low"] = 95.0
+
+    assert len(generate_events(
+        "TEST", frame, LiquiditySweepParameters(lookback_bars=24)
+    )) == 1
+    assert generate_events(
+        "TEST", frame, LiquiditySweepParameters(lookback_bars=144)
+    ) == []
