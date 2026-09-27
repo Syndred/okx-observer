@@ -39,7 +39,8 @@
 - 12小时区间假突破训练失败：423笔，净胜率37.12%、PF0.518、均值-0.1789%；双倍成本/严格压力PF0.258/0.209。215笔超时交易平均净收益+0.0036%，预留未读。结果在 `user_data/backtest_results/liquidity-sweep-12h-20260927-train-only/`。
 - 12小时假突破、4小时持仓训练失败：395笔，净胜率36.46%、PF0.593、均值-0.2032%；双倍成本/严格压力PF0.367/0.310，预留未读。结果在 `user_data/backtest_results/liquidity-sweep-12h-hold240m-20260927-train-only/`。
 - EMA趋势内RSI(2)回归训练失败：6,078笔，净胜率31.67%、PF0.417、均值-0.2077%；双倍成本/严格压力PF0.203/0.189。开发A/B及预留未读，结果 `user_data/backtest_results/rsi2-trend-reversion-20260927-train-only/`。
-- 下一候选已冻结为RSI(2)信号的逐时逻辑回归过滤，固定双折扩展窗口、特征、L2系数和0.50概率阈值；协议 `docs/research/JEV_RSI2_WALK_FORWARD_FILTER_PROTOCOL.md`，尚未实现和评分。短线盈利目标仍进行中，每5分钟监督任务保持启用，失败后继续下一轮。
+- RSI(2)逐时逻辑回归过滤已完成训练外打分：两折共4,011笔验证事件，固定0.50阈值选出0笔（最高预测概率0.4963），训练失败；未评分开发A/B和预留，manifest为 `heldout_prices_opened=false`。结果 `user_data/backtest_results/rsi2-walk-forward-filter-20260927-train-only/`。
+- 下一候选已冻结为24小时区间突破延续：0.10 ATR越过前288根K线高/低、EMA顺势和成交额确认，1.25 ATR止损、2R目标、240分钟上限；协议 `docs/research/JEV_24H_RANGE_BREAKOUT_CONTINUATION_PROTOCOL.md`。短线盈利目标仍进行中，每5分钟监督任务保持启用，失败后继续下一轮。
 
 ## 台式机迁移交接（2026-09-27）
 
