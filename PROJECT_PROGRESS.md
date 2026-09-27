@@ -15,7 +15,8 @@
 - 结果、训练门槛及亏损归因见 `reports/jev-passive-long-desktop-20260927/PROGRESS_REPORT.md`。归因显示首轮多数成交到60分钟仍未触及2R，已冻结唯一变更为1R目标，协议见 `docs/research/JEV_LONG_HISTORY_TARGET_1R_PROTOCOL.md`。
 - 第二轮1R目标训练同样为 `no_qualified_training_threshold`：233条真实Jev调用、缓存0；基线166笔成交，胜率36.75%、PF0.490、均值-0.287%。开发A/B仍未评估。
 - 第二轮亏损归因：32笔止盈、43笔初始止损、91笔60分钟到期；到期组胜率31.87%、PF0.288、均值-0.242%。下一轮假设是在1R目标下将持仓上限从60分钟改为30分钟；协议冻结前不启动。详见 `reports/jev-passive-long-desktop-20260927-target1r/PROGRESS_REPORT.md`。
-- `--long-history-target-1r` 入口对应修订协议已推送；当前扩展入口共88项定向测试通过。1R/30分钟协议与代码已准备，提交推送前不启动评分。
+- 第三轮1R/30分钟训练也为 `no_qualified_training_threshold`：233条真实Jev调用、缓存0；基线166笔成交，净胜率36.14%、PF0.458、均值-0.232%。133笔（80.1%）到30分钟退出，PF0.337、均值-0.222%；开发A/B仍未评估。
+- 第三轮报告见 `reports/jev-passive-long-desktop-20260927-target1r-hold30m/PROGRESS_REPORT.md`。已推送1R/30分钟版本 `4970aff`，88项定向测试通过。下一轮假设改用已有5分钟EMA20/60突破回踩信号族（15/60分钟趋势同向并等待回踩确认），保持1R/30分钟及所有门槛；协议和代码冻结前不评分。
 
 ## 台式机迁移交接（2026-09-27）
 
