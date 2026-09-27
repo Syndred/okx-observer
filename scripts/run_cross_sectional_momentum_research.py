@@ -201,14 +201,19 @@ def run(args: argparse.Namespace) -> None:
     if out.exists() and any(out.iterdir()):
         raise ValueError("output directory must be empty")
     out.mkdir(parents=True, exist_ok=True)
-    params = CrossSectionalMomentumParameters(reversal=args.reversal)
-    protocol = ROOT / "docs/research" / (
-        "JEV_CROSS_SECTIONAL_REVERSION_PROTOCOL.md" if params.reversal
-        else "JEV_CROSS_SECTIONAL_MOMENTUM_PROTOCOL.md"
+    params = CrossSectionalMomentumParameters(
+        reversal=args.reversal,
+        btc_regime_filter=args.btc_regime_filter,
     )
-    candidate = ("one-hour cross-sectional reversion, 30-minute rebalance and hold"
-                 if params.reversal else
-                 "one-hour cross-sectional momentum, 30-minute rebalance and hold")
+    if params.btc_regime_filter:
+        protocol = ROOT / "docs/research/JEV_BTC_REGIME_CROSS_SECTIONAL_PROTOCOL.md"
+        candidate = "BTC one-hour regime-filtered cross-sectional momentum"
+    elif params.reversal:
+        protocol = ROOT / "docs/research/JEV_CROSS_SECTIONAL_REVERSION_PROTOCOL.md"
+        candidate = "one-hour cross-sectional reversion, 30-minute rebalance and hold"
+    else:
+        protocol = ROOT / "docs/research/JEV_CROSS_SECTIONAL_MOMENTUM_PROTOCOL.md"
+        candidate = "one-hour cross-sectional momentum, 30-minute rebalance and hold"
     code_paths = [
         Path(__file__).resolve(),
         ROOT / "user_data/strategy_lib/cross_sectional_momentum.py",
@@ -345,6 +350,8 @@ def main() -> None:
                         default=ROOT / "user_data/backtest_results/cross-sectional-momentum-20260927")
     parser.add_argument("--reversal", action="store_true",
                         help="Fade the strongest/weakest one-hour cross-sectional performers")
+    parser.add_argument("--btc-regime-filter", action="store_true",
+                        help="Trade one cross-sectional extreme in the direction of BTC's one-hour return")
     args = parser.parse_args()
     try:
         run(args)

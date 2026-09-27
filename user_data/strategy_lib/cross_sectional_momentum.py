@@ -18,6 +18,7 @@ class CrossSectionalMomentumParameters:
     minimum_spread: float = 0.006
     stop_atr: float = 1.5
     reversal: bool = False
+    btc_regime_filter: bool = False
 
 
 def generate_events(
@@ -37,8 +38,12 @@ def generate_events(
             or isinstance(params.minimum_spread, bool)
             or not math.isfinite(params.minimum_spread) or params.minimum_spread < 0
             or isinstance(params.stop_atr, bool) or not math.isfinite(params.stop_atr)
-            or params.stop_atr <= 0 or type(params.reversal) is not bool):
+            or params.stop_atr <= 0 or type(params.reversal) is not bool
+            or type(params.btc_regime_filter) is not bool
+            or (params.reversal and params.btc_regime_filter)):
         raise ValueError("invalid lookback, rebalance interval, spread or stop")
+    if params.btc_regime_filter and "BTC-USDT-SWAP" not in frames:
+        raise ValueError("BTC-USDT-SWAP candles are required for the regime filter")
     interval_minutes = params.rebalance_bars * 5
     if interval_minutes > 60 or 60 % interval_minutes:
         raise ValueError("rebalance interval must divide one hour")
@@ -100,10 +105,19 @@ def generate_events(
         if not all(math.isfinite(value) and value > 0 for value in
                    (long_close, long_atr, short_close, short_atr)):
             continue
-        events.extend((
-            EntryEvent(available_at, long_pair, "long",
-                       long_close - params.stop_atr * long_atr, 1),
-            EntryEvent(available_at, short_pair, "short",
-                       short_close + params.stop_atr * short_atr, 1),
-        ))
+        if not params.btc_regime_filter:
+            events.extend((
+                EntryEvent(available_at, long_pair, "long",
+                           long_close - params.stop_atr * long_atr, 1),
+                EntryEvent(available_at, short_pair, "short",
+                           short_close + params.stop_atr * short_atr, 1),
+            ))
+        else:
+            btc_return = float(values["BTC-USDT-SWAP"])
+            if btc_return > 0 and float(values[high_pair]) > 0:
+                events.append(EntryEvent(available_at, long_pair, "long",
+                                         long_close - params.stop_atr * long_atr, 1))
+            elif btc_return < 0 and float(values[low_pair]) < 0:
+                events.append(EntryEvent(available_at, short_pair, "short",
+                                         short_close + params.stop_atr * short_atr, 1))
     return sorted(events, key=lambda event: (event.date, event.pair, event.side))

@@ -52,6 +52,38 @@ def test_reversal_fades_the_one_hour_extremes():
     }
 
 
+@pytest.mark.parametrize(
+    "btc_drift,expected_pair,expected_side",
+    [(.0002, "ALT-UP", "long"), (-.0002, "ALT-DOWN", "short")],
+)
+def test_btc_regime_filter_selects_one_aligned_extreme(
+    btc_drift, expected_pair, expected_side
+):
+    frames = {
+        "BTC-USDT-SWAP": _frame(btc_drift),
+        "ALT-UP": _frame(.001),
+        "ALT-DOWN": _frame(-.001),
+    }
+    events = generate_events(
+        frames, CrossSectionalMomentumParameters(btc_regime_filter=True)
+    )
+
+    first = [event for event in events if event.date == events[0].date]
+    assert len(first) == 1
+    assert (first[0].pair, first[0].side) == (expected_pair, expected_side)
+
+
+def test_btc_regime_filter_requires_btc_and_skips_flat_benchmark():
+    params = CrossSectionalMomentumParameters(btc_regime_filter=True)
+    with pytest.raises(ValueError, match="BTC-USDT-SWAP"):
+        generate_events({"ALT-UP": _frame(.001), "ALT-DOWN": _frame(-.001)}, params)
+    assert generate_events({
+        "BTC-USDT-SWAP": _frame(0),
+        "ALT-UP": _frame(.001),
+        "ALT-DOWN": _frame(-.001),
+    }, params) == []
+
+
 def test_decision_is_causal_to_future_candle_changes():
     frames = {"A": _frame(.001), "B": _frame(-.001)}
     original = generate_events(frames)
