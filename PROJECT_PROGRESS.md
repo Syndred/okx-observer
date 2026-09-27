@@ -36,7 +36,8 @@
 - 趋势回踩归因：237笔到1.5R，452笔止损，320笔超时；各组平均净收益+0.854%、-0.799%、-0.130%。下一候选已冻结为确认K线quote volume至少达到前20根中位数的1.5倍，其他信号、退出与成本固定；协议 `docs/research/JEV_VOLUME_TREND_PULLBACK_PROTOCOL.md`，尚未评分。
 - 成交额确认回踩训练失败：555笔，净胜率35.68%、PF0.628、均值-0.1582%；双倍成本/严格压力PF0.372/0.321。结果在 `user_data/backtest_results/trend-pullback-volume-20260927-train-only/`，预留数据未读。
 - 2小时区间假突破训练失败：772笔，净胜率34.72%、PF0.436、均值-0.2228%；双倍成本/严格压力PF0.216/0.180。结果在 `user_data/backtest_results/range-liquidity-sweep-20260927-train-only/`，预留未读。
-- 下一候选已冻结为12小时区间假突破回归：前144根高低点，其余扫过、确认、止损和退出规则不变；协议 `docs/research/JEV_12H_LIQUIDITY_SWEEP_PROTOCOL.md`，尚未评分。短线盈利目标仍进行中，每5分钟监督任务保持启用，失败后继续下一轮。
+- 12小时区间假突破训练失败：423笔，净胜率37.12%、PF0.518、均值-0.1789%；双倍成本/严格压力PF0.258/0.209。215笔超时交易平均净收益+0.0036%，预留未读。结果在 `user_data/backtest_results/liquidity-sweep-12h-20260927-train-only/`。
+- 下一候选已冻结为12小时假突破、4小时最长持仓；唯一变量是持仓上限60→240分钟、冷却13→49根。协议 `docs/research/JEV_12H_SWEEP_HOLD_240_PROTOCOL.md`，尚未评分。短线盈利目标仍进行中，每5分钟监督任务保持启用，失败后继续下一轮。
 
 ## 台式机迁移交接（2026-09-27）
 
