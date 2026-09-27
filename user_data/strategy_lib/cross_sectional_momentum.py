@@ -17,6 +17,7 @@ class CrossSectionalMomentumParameters:
     rebalance_bars: int = 6
     minimum_spread: float = 0.006
     stop_atr: float = 1.5
+    reversal: bool = False
 
 
 def generate_events(
@@ -36,7 +37,7 @@ def generate_events(
             or isinstance(params.minimum_spread, bool)
             or not math.isfinite(params.minimum_spread) or params.minimum_spread < 0
             or isinstance(params.stop_atr, bool) or not math.isfinite(params.stop_atr)
-            or params.stop_atr <= 0):
+            or params.stop_atr <= 0 or type(params.reversal) is not bool):
         raise ValueError("invalid lookback, rebalance interval, spread or stop")
     interval_minutes = params.rebalance_bars * 5
     if interval_minutes > 60 or 60 % interval_minutes:
@@ -90,17 +91,19 @@ def generate_events(
         low_pair = min(names, key=lambda pair: (float(values[pair]), pair))
         if high_pair == low_pair:
             continue
-        high_close = float(close_matrix.at[decision_at, high_pair])
-        high_atr = float(atr_matrix.at[decision_at, high_pair])
-        low_close = float(close_matrix.at[decision_at, low_pair])
-        low_atr = float(atr_matrix.at[decision_at, low_pair])
+        long_pair = low_pair if params.reversal else high_pair
+        short_pair = high_pair if params.reversal else low_pair
+        long_close = float(close_matrix.at[decision_at, long_pair])
+        long_atr = float(atr_matrix.at[decision_at, long_pair])
+        short_close = float(close_matrix.at[decision_at, short_pair])
+        short_atr = float(atr_matrix.at[decision_at, short_pair])
         if not all(math.isfinite(value) and value > 0 for value in
-                   (high_close, high_atr, low_close, low_atr)):
+                   (long_close, long_atr, short_close, short_atr)):
             continue
         events.extend((
-            EntryEvent(available_at, high_pair, "long",
-                       high_close - params.stop_atr * high_atr, 1),
-            EntryEvent(available_at, low_pair, "short",
-                       low_close + params.stop_atr * low_atr, 1),
+            EntryEvent(available_at, long_pair, "long",
+                       long_close - params.stop_atr * long_atr, 1),
+            EntryEvent(available_at, short_pair, "short",
+                       short_close + params.stop_atr * short_atr, 1),
         ))
     return sorted(events, key=lambda event: (event.date, event.pair, event.side))

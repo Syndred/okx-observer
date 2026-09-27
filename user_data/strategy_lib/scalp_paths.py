@@ -17,7 +17,7 @@ _COLUMNS = [
     "funding_return", "funding_actual_return", "funding_imputed_return",
     "initial_risk_return", "rank", "category",
 ]
-_STEP_NS = pd.Timedelta(minutes=5).value
+_STEP_NS = 5 * 60 * 1_000_000_000
 
 
 def evaluate_events(

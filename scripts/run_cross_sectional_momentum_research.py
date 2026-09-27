@@ -37,18 +37,17 @@ TRAIN_START = pd.Timestamp("2026-03-01", tz="UTC")
 SPLIT_A = pd.Timestamp("2026-06-01", tz="UTC")
 SPLIT_B = pd.Timestamp("2026-07-15", tz="UTC")
 END = pd.Timestamp("2026-09-26", tz="UTC")
-PROTOCOL = ROOT / "docs/research/JEV_CROSS_SECTIONAL_MOMENTUM_PROTOCOL.md"
-PARAMS = CrossSectionalMomentumParameters()
 TARGET_R = 1.0
 HOLD_MINUTES = 30
-DELAY = pd.Timedelta(minutes=5)
+HOLD = pd.Timedelta(1_800_000_000_000, unit="ns")
+DELAY = pd.Timedelta(300_000_000_000, unit="ns")
 
 
 def _period(events: list[EntryEvent], start: pd.Timestamp, end: pd.Timestamp,
             *, delay: pd.Timedelta = pd.Timedelta(0)) -> list[EntryEvent]:
     """Keep signals and their complete exit window within the requested split."""
     return [event for event in events
-            if start <= event.date and event.date + delay + pd.Timedelta(minutes=HOLD_MINUTES) <= end]
+            if start <= event.date and event.date + delay + HOLD <= end]
 
 
 def _delay(events: list[EntryEvent]) -> list[EntryEvent]:
@@ -187,6 +186,14 @@ def run(args: argparse.Namespace) -> None:
     if out.exists() and any(out.iterdir()):
         raise ValueError("output directory must be empty")
     out.mkdir(parents=True, exist_ok=True)
+    params = CrossSectionalMomentumParameters(reversal=args.reversal)
+    protocol = ROOT / "docs/research" / (
+        "JEV_CROSS_SECTIONAL_REVERSION_PROTOCOL.md" if params.reversal
+        else "JEV_CROSS_SECTIONAL_MOMENTUM_PROTOCOL.md"
+    )
+    candidate = ("one-hour cross-sectional reversion, 30-minute rebalance and hold"
+                 if params.reversal else
+                 "one-hour cross-sectional momentum, 30-minute rebalance and hold")
     code_paths = [
         Path(__file__).resolve(),
         ROOT / "user_data/strategy_lib/cross_sectional_momentum.py",
@@ -195,8 +202,8 @@ def run(args: argparse.Namespace) -> None:
     ]
     manifest: dict[str, object] = {
         "status": "training",
-        "candidate": "one-hour cross-sectional momentum, 30-minute rebalance and hold",
-        "parameters": asdict(PARAMS),
+        "candidate": candidate,
+        "parameters": asdict(params),
         "target_r": TARGET_R,
         "hold_minutes": HOLD_MINUTES,
         "development_symbols": DEV_SYMBOLS,
@@ -206,7 +213,7 @@ def run(args: argparse.Namespace) -> None:
         "development_b": [SPLIT_B.isoformat(), END.isoformat()],
         "heldout_prices_opened": False,
         "live_claim_allowed": False,
-        "protocol_sha256": fingerprint(PROTOCOL),
+        "protocol_sha256": fingerprint(protocol),
         "code_sha256": {str(path.relative_to(ROOT)): fingerprint(path) for path in code_paths},
     }
     write_json(out / "manifest.json", manifest)
@@ -214,7 +221,7 @@ def run(args: argparse.Namespace) -> None:
     frames, funding, hashes = load_dataset(args.data_dir, DEV_SYMBOLS, TRAIN_START)
     manifest["development_data_sha256"] = hashes
     write_json(out / "manifest.json", manifest)
-    events = generate_events(frames, PARAMS)
+    events = generate_events(frames, params)
     _events_csv(events, out / "candidate-events.csv")
     train_metrics = _label_scenarios(frames, funding, events, TRAIN_START, SPLIT_A, out, "training")
     write_json(out / "training-metrics.json", train_metrics)
@@ -279,7 +286,7 @@ def run(args: argparse.Namespace) -> None:
     manifest["heldout_prices_opened"] = True
     manifest["audit_data_sha256"] = audit_hashes
     write_json(out / "manifest.json", manifest)
-    audit_events = generate_events(audit_frames, PARAMS)
+    audit_events = generate_events(audit_frames, params)
     audit_metrics = _label_scenarios(
         audit_frames, audit_funding, audit_events, AUDIT_START, END, out, "reserve",
     )
@@ -321,6 +328,8 @@ def main() -> None:
                         default=ROOT / "user_data/data/okx_profit_holdout")
     parser.add_argument("--output-dir", type=Path,
                         default=ROOT / "user_data/backtest_results/cross-sectional-momentum-20260927")
+    parser.add_argument("--reversal", action="store_true",
+                        help="Fade the strongest/weakest one-hour cross-sectional performers")
     args = parser.parse_args()
     try:
         run(args)

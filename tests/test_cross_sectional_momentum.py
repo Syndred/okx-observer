@@ -40,6 +40,18 @@ def test_ranks_completed_returns_and_enters_next_rebalance_open():
     assert all(event.stop_price > 0 for event in events)
 
 
+def test_reversal_fades_the_one_hour_extremes():
+    events = generate_events(
+        {"A": _frame(.001), "B": _frame(-.001)},
+        CrossSectionalMomentumParameters(reversal=True),
+    )
+
+    at_first_entry = [event for event in events if event.date == events[0].date]
+    assert {(event.pair, event.side) for event in at_first_entry} == {
+        ("A", "short"), ("B", "long"),
+    }
+
+
 def test_decision_is_causal_to_future_candle_changes():
     frames = {"A": _frame(.001), "B": _frame(-.001)}
     original = generate_events(frames)
